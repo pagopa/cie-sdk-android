@@ -20,9 +20,9 @@ fun MainActivity?.CieSdkNavHost(
     NavHost(
         navController = navController,
         modifier = Modifier.padding(innerPadding),
-        startDestination = Home
+        startDestination = Routes.Home
     ) {
-        composable<Home> {
+        composable<Routes.Home> {
             HomeView(onClick = UserInteraction {
                 navController.navigate(Routes.CieSdkMethods)
             })
