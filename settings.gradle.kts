@@ -21,4 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "CieSDK"
 include(":app")
- 
+include(":ReadCie")
