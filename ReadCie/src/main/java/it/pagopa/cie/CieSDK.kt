@@ -1,6 +1,9 @@
 package it.pagopa.cie
 
+import android.content.Context
+import android.nfc.NfcAdapter
+
 class CieSDK {
-    fun stringFromLib() = "Hello from CIE SDK!!"
-    fun methodFromSdk() = "Method from CIE SDK!!"
+    fun hasNfc(context: Context?) = NfcAdapter.getDefaultAdapter(context) != null
+    fun isNfcAvailable(context: Context?) = NfcAdapter.getDefaultAdapter(context)?.isEnabled == true
 }

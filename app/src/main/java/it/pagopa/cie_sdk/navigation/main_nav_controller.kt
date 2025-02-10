@@ -3,19 +3,29 @@ package it.pagopa.cie_sdk.navigation
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableIntState
+import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import it.pagopa.cie_sdk.MainActivity
 import it.pagopa.cie_sdk.ui.UserInteraction
+import it.pagopa.cie_sdk.ui.header.BackArrowIcon
+import it.pagopa.cie_sdk.ui.header.HeaderImage
+import it.pagopa.cie_sdk.ui.header.HomeIcon
+import it.pagopa.cie_sdk.ui.header.hideAll
 import it.pagopa.cie_sdk.ui.view.CieSdkMethods
 import it.pagopa.cie_sdk.ui.view.HomeView
+import it.pagopa.cie_sdk.R
 
 @Composable
 fun MainActivity?.CieSdkNavHost(
     navController: NavHostController,
     innerPadding: PaddingValues,
+    headerLeft: MutableState<HeaderImage?>,
+    titleResId: MutableIntState,
+    headerRight: MutableState<HeaderImage?>
 ) {
     NavHost(
         navController = navController,
@@ -23,11 +33,16 @@ fun MainActivity?.CieSdkNavHost(
         startDestination = Routes.Home
     ) {
         composable<Routes.Home> {
+            listOf(headerLeft, headerRight).hideAll()
+            titleResId.intValue = R.string.app_name
             HomeView(onClick = UserInteraction {
                 navController.navigate(Routes.CieSdkMethods)
             })
         }
         composable<Routes.CieSdkMethods> {
+            headerLeft.BackArrowIcon(navController)
+            headerRight.HomeIcon(navController)
+            titleResId.intValue = R.string.test_methods_title
             CieSdkMethods()
         }
     }

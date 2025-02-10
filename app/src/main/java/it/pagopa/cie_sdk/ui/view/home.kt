@@ -8,7 +8,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import it.pagopa.cie.CieSDK
+import androidx.compose.ui.res.stringResource
+import it.pagopa.cie_sdk.R
 import it.pagopa.cie_sdk.ui.BasePreview
 import it.pagopa.cie_sdk.ui.ThemePreviews
 import it.pagopa.cie_sdk.ui.UserInteraction
@@ -23,7 +24,7 @@ fun HomeView(onClick: UserInteraction) {
             modifier = Modifier.align(Alignment.Center).clickable{
                 onClick.action()
             },
-            text = CieSDK().stringFromLib(),
+            text = stringResource(R.string.hello),
             color = MaterialTheme.colorScheme.primary
         )
     }
