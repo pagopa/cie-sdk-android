@@ -62,6 +62,7 @@ dependencies {
     implementation(libs.material)
     implementation(libs.play.services.basement)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.material.icons.ext)
     implementation(libs.kotlinx.serialization.json)
 
     testImplementation(libs.junit)
