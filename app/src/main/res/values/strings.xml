@@ -12,4 +12,7 @@
     <string name="auth_with_cie">Autenticazione con CIE</string>
     <string name="insert_pin">Inserisci il pin</string>
     <string name="start">Inizia</string>
+    <string name="read_cie_dialog_title">Leggiamo la CIE</string>
+    <string name="read_cie_dialog_description">Avvicina la CIE al telefono</string>
+    <string name="ok">OK</string>
 </resources>

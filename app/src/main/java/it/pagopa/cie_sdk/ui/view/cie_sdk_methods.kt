@@ -29,7 +29,7 @@ fun CieSdkMethods(
         items(viewModel.provideLazyButtons {
             onNavigate.action()
         }) {
-            PrimaryButton(modifier = Modifier, model = it)
+            PrimaryButton(model = it)
             when (it.ctrlOk) {
                 true -> Icon(Icons.Default.Done, "ok", tint = MaterialTheme.colorScheme.primary)
                 false -> Icon(Icons.Default.Clear, "no", tint = MaterialTheme.colorScheme.error)

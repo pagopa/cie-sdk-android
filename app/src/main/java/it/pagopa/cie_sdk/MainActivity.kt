@@ -12,6 +12,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
+import it.pagopa.cie.CieLogger
 import it.pagopa.cie_sdk.navigation.CieSdkNavHost
 import it.pagopa.cie_sdk.theme.CieSDKPocTheme
 import it.pagopa.cie_sdk.ui.ThemePreviews
@@ -21,6 +22,7 @@ import it.pagopa.cie_sdk.ui.header.TopBar
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        CieLogger.enabled = BuildConfig.DEBUG
         enableEdgeToEdge()
         setContent {
             this.MainApp()
