@@ -83,8 +83,8 @@ class CieSDK private constructor() {
         val callTag = "CALLING IDP"
         val repo: Repository = Repository(certificate, idpCustomUrl)
         val mapValues = hashMapOf<String, String>().apply {
-            put(deepLinkInfo.name!!, deepLinkInfo.value!!)
-            put(authnRequest, deepLinkInfo.authnRequest ?: "")
+            put(deepLinkInfo.name, deepLinkInfo.value)
+            put(authnRequest, deepLinkInfo.authnRequest)
             put(generaCodice, "1")
         }
         CoroutineScope(Dispatchers.Default + SupervisorJob()).launch {
@@ -165,7 +165,7 @@ class CieSDK private constructor() {
             authnRequest = appLinkData.getQueryParameter(DeepLinkInfo.KEY_AUTHN_REQUEST_STRING),
             nextUrl = appLinkData.getQueryParameter(DeepLinkInfo.KEY_NEXT_UTL),
             opText = appLinkData.getQueryParameter(DeepLinkInfo.KEY_OP_TEXT),
-            host = appLinkData.host ?: "",
+            host = appLinkData.host,
             logo = appLinkData.getQueryParameter(DeepLinkInfo.KEY_LOGO)
         )
     }
