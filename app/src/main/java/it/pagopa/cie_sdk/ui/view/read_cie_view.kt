@@ -66,7 +66,7 @@ fun ReadCie(viewModel: ReadCieViewModel?) {
                 translateY = 20f
             )
         )
-        viewModel.readCie {
+        viewModel.readCie(viewModel.pin.value) {
             viewModel.dialogMessage.value = it
         }
     }

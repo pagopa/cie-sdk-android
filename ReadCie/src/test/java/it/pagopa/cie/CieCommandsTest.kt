@@ -1,7 +1,7 @@
 package it.pagopa.cie
 
 import it.pagopa.cie.cie.ApduResponse
-import it.pagopa.cie.cie.CieCommands
+import it.pagopa.cie.cie.commands.CieCommands
 import it.pagopa.cie.cie.NisAuthenticated
 import it.pagopa.cie.cie.OnTransmit
 import it.pagopa.cie.cie.ReadCie
@@ -32,7 +32,10 @@ class CieCommandsTest {
     private val onTransmitApduTest = object : OnTransmit {
         override fun sendCommand(apdu: ByteArray, message: String): ApduResponse {
             return if (message == "test")
-                ApduResponse(Utils.hexStringToByteArray("back_from_test"), Utils.hexStringToByteArray("9000"))
+                ApduResponse(
+                    Utils.hexStringToByteArray("back_from_test"),
+                    Utils.hexStringToByteArray("9000")
+                )
             else
                 ApduResponse(Utils.hexStringToByteArray(""), Utils.hexStringToByteArray("2456"))
         }
@@ -49,7 +52,11 @@ class CieCommandsTest {
                     Utils.hexStringToByteArray("9000")
                 )
 
-                "00B081000C" -> ApduResponse(Utils.hexStringToByteArray("393843139389135159633972"), Utils.hexStringToByteArray("9000"))
+                "00B081000C" -> ApduResponse(
+                    Utils.hexStringToByteArray("393843139389135159633972"),
+                    Utils.hexStringToByteArray("9000")
+                )
+
                 "00B0850000" -> ApduResponse(
                     Utils.hexStringToByteArray("3082010A0282010100BCB2C666F4E163961D1BD44CCB51FAC61BFB6FA5957767650673101A483F3757AFGDB4DEAB0DEBD61A94631F455EFA37C12AE539B5553704CB45BEF2531804A1CEB304E3C9331C64039BC8D4D4C7623B6281B517E7EFC7E11A4A84F434D4F06653583D6E82309A681088DBD06016E4254B01CD869D4D39A74E8505097B80EB61E02C979A283CD16761682515B8728B076D79AA2A42A21484ED4B17AF9D92438244C615E1A80BCF52B70AAC6FA7B039ABCD363F83F9156282CBF591EE1CA33B5DD2A10AB40C0B9E367CD5291CBF18A6BD529D635CF468BB0ACFA15431DF73"),
                     Utils.hexStringToByteArray("9000")
@@ -60,8 +67,15 @@ class CieCommandsTest {
                     Utils.hexStringToByteArray("9000")
                 )
 
-                "0000000008DF9FEFECFAEFDFFE" -> ApduResponse(Utils.hexStringToByteArray(""), Utils.hexStringToByteArray("6D00"))
-                "0022410006800102840100" -> ApduResponse(Utils.hexStringToByteArray(""), Utils.hexStringToByteArray("6A81"))
+                "0000000008DF9FEFECFAEFDFFE" -> ApduResponse(
+                    Utils.hexStringToByteArray(""),
+                    Utils.hexStringToByteArray("6D00")
+                )
+
+                "0022410006800102840100" -> ApduResponse(
+                    Utils.hexStringToByteArray(""),
+                    Utils.hexStringToByteArray("6A81")
+                )
 
                 "00B100060454020000E7" -> ApduResponse(
                     Utils.hexStringToByteArray("5381E477820B2030820B1C06092A864886F70D010702A0820B0D30820B09020103310D300B0609608648016503040203308201E20606678108010101A08201D6048201D2308201CE020101300B0609608648016503040203308201AA30450201A50440C831B743B4DD7174E575B8F7D01F16FB83D7B369686AAA39CEF3F7A6C4CE5A26B02E9C0D728E0C04247A87191F68212A103B428BAF07B459D7F074CD3897A068304502011B0440ED082BBBC8A9F758B59509048A8A95B1D5A44AA68D4EA13C140228F5F6636D39B79096C42F8E05A038000032DBA435B7D2448677CD0B377D26C0746721"),
@@ -155,7 +169,7 @@ class CieCommandsTest {
 
             override fun error(why: String) {
             }
-        }, onTransmit).transmit("ch")
+        }, onTransmit).transmit(10000, "ch")
     }
 
     @Test
@@ -164,7 +178,12 @@ class CieCommandsTest {
         val list = ArrayList<Byte>()
         for (i in 0 until 256)
             list.add(if (i % 2 == 0) 0x00 else 0x02)
-        val response = commands.sendApdu(byteArrayOf(0x00), list.toByteArray(), null, onTransmitApduTest, "test")
+        val response = commands.sendApdu(
+            byteArrayOf(0x00),
+            list.toByteArray(),
+            null,
+            "test"
+        )
         assert(Utils.bytesToString(response.response) == "BABFFFEFEFFEEF")
         assert(Utils.bytesToString(response.swByte) == "9000")
     }
@@ -172,7 +191,8 @@ class CieCommandsTest {
     @Test
     fun sendApduDataEmptyTest() {
         val commands = CieCommands(onTransmitApduTest)
-        val response = commands.sendApdu(byteArrayOf(0x00), byteArrayOf(), null, onTransmitApduTest, "test")
+        val response =
+            commands.sendApdu(byteArrayOf(0x00), byteArrayOf(), null, "test")
         assert(Utils.bytesToString(response.swByte) == "9000")
     }
 
@@ -183,7 +203,12 @@ class CieCommandsTest {
         for (i in 0 until 256)
             list.add(if (i % 2 == 0) 0x00 else 0x02)
         try {
-            commands.sendApdu(byteArrayOf(0x00), list.toByteArray(), null, onTransmitApduTest, "testException")
+            commands.sendApdu(
+                byteArrayOf(0x00),
+                list.toByteArray(),
+                null,
+                "testException"
+            )
         } catch (e: Exception) {
             assert(e.message == "Errore apdu")
         }
@@ -222,20 +247,18 @@ class CieCommandsTest {
 
             override fun error(why: String) {
             }
-        }, onTransmitForException).transmit("ch")
+        }, onTransmitForException).transmit(1000, "ch")
     }
 
     @Test
     fun get_resp_test() {
         val response = CieCommands(onTransmitGetRespTest).getResp(
             ApduResponse(Utils.hexStringToByteArray("test"), byteArrayOf(97.toByte(), 1.toByte())),
-            onTransmitGetRespTest,
             "myTest"
         )
         assert(response.swHex == "9000")
         val response2 = CieCommands(onTransmitGetRespTest).getResp(
             ApduResponse(Utils.hexStringToByteArray("test"), byteArrayOf(97.toByte(), 0.toByte())),
-            onTransmitGetRespTest,
             "myTest"
         )
         assert(response2.swHex == "9000")
@@ -250,7 +273,7 @@ class CieCommandsTest {
             this.onTransmit = onTransmit
         }
 
-        override fun connect(actionDone: () -> Unit) {
+        override fun connect(isoDepTimeout: Int, actionDone: () -> Unit) {
             actionDone.invoke()
         }
 

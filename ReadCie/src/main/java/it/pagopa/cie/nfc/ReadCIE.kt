@@ -1,17 +1,23 @@
 package it.pagopa.cie.nfc
 
-import android.app.Activity
+import android.content.Context
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class ReadCIE(private val ownerActivity: Activity, challenge: String? = null) :
-    BaseReadCie(challenge) {
+class ReadCIE(
+    private val context: Context,
+    challenge: String? = null
+) : BaseReadCie(challenge) {
     private var implementation: NfcImpl? = null
-    override suspend fun workNfc(challenge: String, readingInterface: NfcReading) {
+    override suspend fun workNfc(
+        isoDepTimeout: Int,
+        challenge: String,
+        readingInterface: NfcReading
+    ) {
         withContext(Dispatchers.Default) {
-            implementation = NfcImpl(ownerActivity, readingInterface)
+            implementation = NfcImpl(context, readingInterface)
             try {
-                implementation!!.transmit(challenge)
+                implementation!!.transmit(isoDepTimeout, challenge)
             } catch (e: Exception) {
                 readingInterface.error(e.message.orEmpty())
             }

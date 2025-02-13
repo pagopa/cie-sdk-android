@@ -3,7 +3,6 @@ package it.pagopa.cie.nfc
 import android.content.Context
 import android.nfc.NfcAdapter
 import android.nfc.tech.IsoDep
-import androidx.core.os.bundleOf
 import it.pagopa.cie.CieLogger
 import it.pagopa.cie.cie.ApduResponse
 import it.pagopa.cie.cie.OnTransmit
@@ -22,13 +21,14 @@ class NfcImpl private constructor() : BaseNfcImpl() {
         this.adapter = NfcAdapter.getDefaultAdapter(context)
     }
 
-    override fun connect(actionDone: () -> Unit) {
+    override fun connect(isoDepTimeout: Int, actionDone: () -> Unit) {
         val activity = context.findActivity()
         try {
             adapter?.enableReaderMode(
                 activity, {
                     if (isoDep == null)
                         isoDep = IsoDep.get(it)
+                    isoDep?.timeout = isoDepTimeout
                     if (isoDep?.isConnected != true)
                         isoDep?.connect()
                     if (isoDep?.isConnected == true) {
@@ -41,9 +41,8 @@ class NfcImpl private constructor() : BaseNfcImpl() {
                 }, NfcAdapter.FLAG_READER_NFC_A or
                         NfcAdapter.FLAG_READER_NFC_B or
                         NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK or
-                        NfcAdapter.FLAG_READER_NO_PLATFORM_SOUNDS, bundleOf(
-                    NfcAdapter.EXTRA_READER_PRESENCE_CHECK_DELAY to 1000
-                )
+                        NfcAdapter.FLAG_READER_NO_PLATFORM_SOUNDS,
+                null
             )
         } catch (e: UnsupportedOperationException) {
             disconnect()

@@ -8,14 +8,17 @@ import kotlinx.coroutines.launch
 abstract class BaseReadCie(
     private val challenge: String? = null
 ) {
+    /**Interface to receive events while NFC is working
+     * @property onTransmit return true if we are transmitting
+     * @property backResource return an interface which returns success or fail events*/
     interface ReadingCieInterface {
         fun onTransmit(value: Boolean)
         fun backResource(action: FunInterfaceResource<NisAuthenticated?>)
     }
 
-    fun read(scope: CoroutineScope, readingInterface: ReadingCieInterface) {
+    fun read(scope: CoroutineScope, isoDepTimeout: Int, readingInterface: ReadingCieInterface) {
         scope.launch {
-            workNfc(challenge.orEmpty(), object : NfcReading {
+            workNfc(isoDepTimeout, challenge.orEmpty(), object : NfcReading {
                 override fun onTransmit(message: String) {
                     CieLogger.i("message from CIE", message)
                     if (message == "connected")
@@ -34,14 +37,22 @@ abstract class BaseReadCie(
     }
 
     abstract suspend fun workNfc(
+        isoDepTimeout: Int,
         challenge: String,
         readingInterface: NfcReading
     )
 
-    data class FunInterfaceResource<out T>(val status: FunInterfaceStatus, val data: T?, val msg: String = "") {
+    data class FunInterfaceResource<out T>(
+        val status: FunInterfaceStatus,
+        val data: T?,
+        val msg: String = ""
+    ) {
         companion object {
-            fun <T> success(data: T): FunInterfaceResource<T> = FunInterfaceResource(FunInterfaceStatus.SUCCESS, data)
-            fun <T> error(msg: String): FunInterfaceResource<T> = FunInterfaceResource(FunInterfaceStatus.ERROR, null, msg)
+            fun <T> success(data: T): FunInterfaceResource<T> =
+                FunInterfaceResource(FunInterfaceStatus.SUCCESS, data)
+
+            fun <T> error(msg: String): FunInterfaceResource<T> =
+                FunInterfaceResource(FunInterfaceStatus.ERROR, null, msg)
         }
     }
 

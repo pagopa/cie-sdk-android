@@ -14,8 +14,9 @@ class ReadCieViewModel(
     var showDialog = mutableStateOf(false)
     var dialogMessage = mutableStateOf("")
 
-    fun readCie(onMessage: (String) -> Unit) {
-        cieSdk.startReading(object : BaseReadCie.ReadingCieInterface {
+    fun readCie(pin: String, onMessage: (String) -> Unit) {
+        cieSdk.setPin(pin)
+        cieSdk.startReading(10000, object : BaseReadCie.ReadingCieInterface {
             override fun onTransmit(value: Boolean) {
                 CieLogger.i("READING CIE", "Transmitting :${value}")
             }
@@ -24,7 +25,7 @@ class ReadCieViewModel(
                 CieLogger.i("MESSAGE:", action.msg)
                 CieLogger.i("DATA:", action.data?.toString().orEmpty())
                 CieLogger.i("STATUS:", action.status.name)
-                onMessage.invoke(action.msg)
+                onMessage.invoke(action.status.name)
             }
         })
     }

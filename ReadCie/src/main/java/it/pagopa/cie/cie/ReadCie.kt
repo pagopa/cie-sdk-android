@@ -1,6 +1,7 @@
 package it.pagopa.cie.cie
 
 import android.util.Base64
+import it.pagopa.cie.cie.commands.CieCommands
 import it.pagopa.cie.nfc.NfcReading
 import it.pagopa.cie.nfc.Utils
 import java.nio.charset.StandardCharsets
