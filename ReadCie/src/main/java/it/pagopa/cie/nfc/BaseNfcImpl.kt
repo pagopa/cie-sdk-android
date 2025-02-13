@@ -2,7 +2,7 @@ package it.pagopa.cie.nfc
 
 import it.pagopa.cie.cie.ReadCie
 
-abstract class BaseNfcImpl {
+internal abstract class BaseNfcImpl {
     lateinit var readingInterface: NfcReading
     abstract fun connect(isoDepTimeout: Int, actionDone: () -> Unit)
     abstract val readCie: ReadCie

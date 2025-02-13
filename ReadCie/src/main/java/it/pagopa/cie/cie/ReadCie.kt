@@ -7,7 +7,7 @@ import it.pagopa.cie.nfc.Utils
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 
-class ReadCie(private val onTransmit: OnTransmit, private val readingInterface: NfcReading) {
+internal class ReadCie(private val onTransmit: OnTransmit, private val readingInterface: NfcReading) {
     fun read(challenge: String, itsOk: () -> Unit) {
         try {
             val commands = CieCommands(onTransmit)

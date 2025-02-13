@@ -1,6 +1,5 @@
 package it.pagopa.cie.cie.key_store
 
-
 import java.security.Provider
 
 internal class CieProvider : Provider(CieProvider::class.java.simpleName, 1.0, "Provider per cie") {

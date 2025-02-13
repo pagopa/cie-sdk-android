@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.flow
 import okhttp3.ResponseBody
 import retrofit2.Response
 
-class Repository(
+internal class Repository(
     private val certificate: ByteArray,
     private val idpCustomUrl: String?
 ) {

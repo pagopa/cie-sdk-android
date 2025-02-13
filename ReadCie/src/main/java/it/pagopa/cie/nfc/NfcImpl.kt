@@ -10,7 +10,7 @@ import it.pagopa.cie.cie.ReadCie
 import it.pagopa.cie.cie.transmitLogic
 import it.pagopa.cie.findActivity
 
-class NfcImpl private constructor() : BaseNfcImpl() {
+internal class NfcImpl private constructor() : BaseNfcImpl() {
     private var adapter: NfcAdapter? = null
     private lateinit var context: Context
     private var isoDep: IsoDep? = null

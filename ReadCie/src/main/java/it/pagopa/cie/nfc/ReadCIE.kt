@@ -4,7 +4,7 @@ import android.content.Context
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class ReadCIE(
+internal class ReadCIE(
     private val context: Context,
     challenge: String? = null
 ) : BaseReadCie(challenge) {
