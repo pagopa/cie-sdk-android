@@ -4,14 +4,10 @@ import java.io.ByteArrayInputStream
 import java.lang.IllegalStateException
 import java.util.*
 
-internal class Asn1TagParseException(message : String) : IllegalStateException(message)
+internal class Asn1TagParseException(message: String) : IllegalStateException(message)
 
 internal class Asn1Tag @Throws(Exception::class)
 constructor(objects: Array<Any>) {
-
-
-
-
     var unusedBits: Byte = 0
     var tag: ByteArray = byteArrayOf()
     var data: ByteArray = byteArrayOf()
@@ -24,15 +20,10 @@ constructor(objects: Array<Any>) {
     val isTagConstructed: Boolean
         @Throws(Exception::class)
         get() = this.tag[0].toInt() and 0x20 != 0
-    private val tagRawNumber: Int
-        @Throws(Exception::class)
-        get() {
-            var num = tag[0].toInt()
-            for (i in 1 until tag.size) {
-                num = num shl 8 or tag[i].toInt()
-            }
-            return num
-        }
+
+    override fun toString(): String {
+        return "ASN1Tag:\nunusedBits: $unusedBits\ntag: $tag\ndata: $data\nchildren: $children"
+    }
 
     init {
         this.tag = ByteArray(objects.size)
@@ -46,15 +37,6 @@ constructor(objects: Array<Any>) {
     }
 
     @Throws(Exception::class)
-    fun Child(tagNum: Int, tagCheck: Byte): Asn1Tag {
-        val tag = children[tagNum]
-        if (tag.tagRawNumber != tagCheck.toInt())
-            throw Asn1TagParseException("Check del tag fallito")
-        return tag
-    }
-
-
-    @Throws(Exception::class)
     fun childWithTagID(tag: ByteArray): Asn1Tag? {
         for (subTag in children) {
             if (subTag.tag.contentEquals(tag))
@@ -62,7 +44,6 @@ constructor(objects: Array<Any>) {
         }
         return null
     }
-
 
     companion object {
 
@@ -76,7 +57,12 @@ constructor(objects: Array<Any>) {
 
 
         @Throws(Exception::class)
-        fun parse(asn: ByteArrayInputStream, start: Long, length: Long, reparse: Boolean): Asn1Tag? {
+        fun parse(
+            asn: ByteArrayInputStream,
+            start: Long,
+            length: Long,
+            reparse: Boolean
+        ): Asn1Tag? {
             iterazione++
             var readPos = 0
             var tag = unsignedToBytes(asn.read().toByte())//96
@@ -140,7 +126,8 @@ constructor(objects: Array<Any>) {
             if (parseSubTags) {
                 childern = ArrayList()
                 while (true) {
-                    val child = parse(ms, start + readPos.toLong() + parsedLen, len - parsedLen, reparse)
+                    val child =
+                        parse(ms, start + readPos.toLong() + parsedLen, len - parsedLen, reparse)
                     if (child != null)
                         childern!!.add(child)
 
@@ -156,7 +143,7 @@ constructor(objects: Array<Any>) {
             newTag.startPos = start
             newTag.endPos = start + size
             if (childern == null) {
-                newTag.data =data
+                newTag.data = data
             } else {
                 newTag.children = childern
                 newTag.constructed = len
@@ -194,7 +181,7 @@ constructor(objects: Array<Any>) {
         @Throws(Exception::class)
         fun parse(efCom: ByteArray, reparse: Boolean): Asn1Tag? {
             val input = ByteArrayInputStream(efCom)
-            return parse(input,0, efCom.size.toLong(), reparse)
+            return parse(input, 0, efCom.size.toLong(), reparse)
         }
 
     }

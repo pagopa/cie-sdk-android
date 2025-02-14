@@ -1,7 +1,6 @@
 package it.pagopa.cie_sdk.ui.view_model
 
 import android.webkit.WebResourceRequest
-import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.runtime.mutableStateOf
@@ -23,19 +22,6 @@ class ReadCieViewModel(
     var shouldShowUI = mutableStateOf(false)
 
     inner class WebViewClientWithRedirect : WebViewClient() {
-        override fun shouldInterceptRequest(
-            view: WebView?,
-            request: WebResourceRequest?
-        ): WebResourceResponse? {
-            CieLogger.i("WebView shouldInterceptRequest", "${request?.url}")
-            return super.shouldInterceptRequest(view, request)
-        }
-
-        override fun onLoadResource(view: WebView?, url: String?) {
-            CieLogger.i("WebView onLoadResource", url.orEmpty())
-            super.onLoadResource(view, url)
-        }
-
         override fun shouldOverrideUrlLoading(
             view: WebView?,
             request: WebResourceRequest?
@@ -52,38 +38,49 @@ class ReadCieViewModel(
     }
 
     fun readCie(
-        pin: String,
-        onMessage: (String) -> Unit,
-        onError: (String) -> Unit,
-        onSuccess: (String) -> Unit
+        pin: String
     ) {
         cieSdk.setPin(pin)
         try {
             cieSdk.startReading(10000, object : NfcReading {
                 override fun <T> read(element: T) {}
                 override fun onTransmit(message: String) {
-                    onMessage.invoke(message)
+                    dialogMessage.value = message
                 }
 
                 override fun error(why: String) {
-                    onError.invoke(why)
+                    errorMessage.value = why
                 }
             }, object : NetworkCallback {
                 override fun onSuccess(url: String) {
-                    onSuccess.invoke(url)
+                    dialogMessage.value = "ALL OK!!"
+                    errorMessage.value = ""
+                    successMessage.value = url
+                    stopNfc()
                 }
 
                 override fun onEvent(event: Event) {
-                    onMessage.invoke(event.event.toString())
+                    dialogMessage.value = event.event.toString()
                 }
 
                 override fun onError(error: Throwable) {
-                    onError.invoke(error.message.orEmpty())
+                    errorMessage.value = error.message.orEmpty()
+                    stopNfc()
                 }
             })
         } catch (e: Exception) {
-            onError.invoke(e.message.orEmpty())
+            errorMessage.value = e.message.orEmpty()
         }
+    }
+
+    fun stopNfc() {
+        cieSdk.stopNFCListening()
+    }
+
+    fun clearMessages() {
+        errorMessage.value = ""
+        successMessage.value = ""
+        dialogMessage.value = ""
     }
 
     fun clear() {

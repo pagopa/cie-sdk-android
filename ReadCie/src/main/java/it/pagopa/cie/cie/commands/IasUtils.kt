@@ -29,7 +29,7 @@ internal fun CieCommands.initExtAuthKeyParam() {
     val asn1 = Asn1Tag.Companion.parse(response.response, true)
     caModule = asn1!!.child(0).child(0).childWithTagID(byteArrayOf(0x81.toByte()))!!.data
     caPubExp = asn1.child(0).child(0).childWithTagID(byteArrayOf(0x82.toByte()))!!.data
-    baExtAuth_PrivExp = byteArrayOf(
+    baExtAuthPrivExp = byteArrayOf(
         0x18,
         0x6B,
         0x31,
@@ -287,7 +287,7 @@ internal fun CieCommands.initExtAuthKeyParam() {
         0xBF.toByte(),
         0xC1.toByte()
     )
-    caPrivExp = baExtAuth_PrivExp
+    caPrivExp = baExtAuthPrivExp
     val caCha = asn1.child(0).child(0).childWithTagID(byteArrayOf(0x5f, 0x4c))!!.data
     val caChr = asn1.child(0).child(0).childWithTagID(byteArrayOf(0x5f, 0x20))!!.data
     caCar = Utils.getSub(caChr, 4)

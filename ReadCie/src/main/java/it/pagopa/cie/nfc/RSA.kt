@@ -17,25 +17,18 @@ constructor(mod: ByteArray, exp: ByteArray) {
         createPrivateKey(mod, exp)
     }
 
-
     @Throws(Exception::class)
     fun createPrivateKey(modulo: ByteArray, esponente: ByteArray) {
-
         val modulus = BigInteger(modulo.toHex(), 16)
         val privateExp = BigInteger(esponente.toHex(), 16)
-
         val keyFactory: KeyFactory? = KeyFactory.getInstance("RSA")
         val pubKeySpec = RSAPrivateKeySpec(modulus, privateExp)
-
         cipher = Cipher.getInstance("RSA/ECB/NoPadding")
         this.key = keyFactory!!.generatePrivate(pubKeySpec) as RSAPrivateKey
-
-
     }
 
     @Throws(Exception::class)
     fun encrypt(data: ByteArray): ByteArray {
-
         cipher!!.init(Cipher.DECRYPT_MODE, key)
         return cipher!!.doFinal(data)
     }

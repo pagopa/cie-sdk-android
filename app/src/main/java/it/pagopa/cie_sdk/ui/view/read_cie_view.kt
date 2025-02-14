@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -23,6 +25,7 @@ import it.pagopa.cie_sdk.ui.AppDialog
 import it.pagopa.cie_sdk.ui.PasswordTextField
 import it.pagopa.cie_sdk.ui.PrimaryButton
 import it.pagopa.cie_sdk.ui.ShakeConfig
+import it.pagopa.cie_sdk.ui.SimpleLoader
 import it.pagopa.cie_sdk.ui.ThemePreviews
 import it.pagopa.cie_sdk.ui.WebView
 import it.pagopa.cie_sdk.ui.model.LazyButtonModel
@@ -34,11 +37,14 @@ import it.pagopa.cie_sdk.ui.view_model.ReadCieViewModel
 fun ReadCie(viewModel: ReadCieViewModel?) {
     MainUI(viewModel)
     Dialog(viewModel)
-    if (viewModel?.shouldShowUI?.value != true)
+    val showDialog = remember { mutableStateOf(true) }
+    if (viewModel?.shouldShowUI?.value != true) {
         WebView(
             url = "https://app-backend.io.italia.it/login?entityID=xx_servizicie&authLevel=SpidL3",
             webViewClient = viewModel?.WebViewClientWithRedirect() ?: WebViewClient()
         )
+        SimpleLoader(showDialog)
+    }
 }
 
 @Composable
@@ -71,7 +77,7 @@ private fun Dialog(viewModel: ReadCieViewModel?) {
     if (viewModel?.showDialog?.value == true) {
         shakeController.shake(
             ShakeConfig(
-                iterations = 20,
+                iterations = 50,
                 intensity = 500f,
                 rotateX = -20f,
                 translateY = 20f
@@ -79,22 +85,13 @@ private fun Dialog(viewModel: ReadCieViewModel?) {
         )
         cardShakeController.shake(
             ShakeConfig(
-                iterations = 20,
+                iterations = 50,
                 intensity = 500f,
                 rotateX = 20f,
                 translateY = 20f
             )
         )
-        viewModel.readCie(
-            pin = viewModel.pin.value,
-            onMessage = { msg ->
-                viewModel.dialogMessage.value = msg
-            }, onError = { error ->
-                viewModel.errorMessage.value = error
-            }) { successUrl ->
-            viewModel.errorMessage.value = ""
-            viewModel.successMessage.value = successUrl
-        }
+        viewModel.readCie(pin = viewModel.pin.value)
     }
     AppDialog(
         viewModel?.showDialog,
@@ -102,7 +99,8 @@ private fun Dialog(viewModel: ReadCieViewModel?) {
         R.string.read_cie_dialog_description,
         R.string.ok,
         btnAction = {
-            viewModel?.dialogMessage?.value = ""
+            viewModel?.clearMessages()
+            viewModel?.stopNfc()
         }
     ) {
         Box(
@@ -131,6 +129,7 @@ private fun Dialog(viewModel: ReadCieViewModel?) {
         }
         Spacer(Modifier.height(16.dp))
         Text(
+            modifier = Modifier.padding(4.dp),
             text = if (viewModel?.dialogMessage?.value?.isEmpty() == true)
                 "cie reading status"
             else
@@ -141,6 +140,7 @@ private fun Dialog(viewModel: ReadCieViewModel?) {
         if (errorMessage?.isNotEmpty() == true) {
             Spacer(Modifier.height(16.dp))
             Text(
+                modifier = Modifier.padding(4.dp),
                 text = errorMessage,
                 color = MaterialTheme.colorScheme.error
             )
@@ -149,8 +149,9 @@ private fun Dialog(viewModel: ReadCieViewModel?) {
         if (successMessage?.isNotEmpty() == true) {
             Spacer(Modifier.height(16.dp))
             Text(
+                modifier = Modifier.padding(4.dp),
                 text = successMessage,
-                color = MaterialTheme.colorScheme.error
+                color = MaterialTheme.colorScheme.primary
             )
         }
     }

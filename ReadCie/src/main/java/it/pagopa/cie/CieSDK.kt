@@ -34,6 +34,7 @@ class CieSDK private constructor() {
     private val ciePinRegex = Regex("^[0-9]{8}$")
     private var deepLinkInfo: DeepLinkInfo = DeepLinkInfo()
     private var idpCustomUrl: String? = null
+    private val tag = this.javaClass.name
 
     /**It checks if device has NFC feature*/
     fun hasNfcFeature() = NfcAdapter.getDefaultAdapter(context) != null
@@ -80,9 +81,12 @@ class CieSDK private constructor() {
         readCie?.read(scope, isoDepTimeout, nfcListener, object : BaseReadCie.ReadingCieInterface {
             override fun onTransmit(value: Boolean) {}
             override fun backResource(action: BaseReadCie.FunInterfaceResource<ByteArray>) {
-                CieLogger.i("on back resource", "${action.data}")
-                if (action.status == FunInterfaceStatus.SUCCESS)
+                if (action.status == FunInterfaceStatus.SUCCESS) {
+                    CieLogger.i(tag, "CALLING REPOSITORY with ${action.data}")
                     this@CieSDK.call(action.data!!, callback)
+                } else {
+                    CieLogger.e(tag, "PROCESS FINISHED WITH ERROR: ${action.msg}")
+                }
             }
         })
     }
@@ -170,7 +174,6 @@ class CieSDK private constructor() {
         }
     }
 
-    //APRI WEBVIEW DENTRO L'APP
     fun withUrl(url: String) = apply {
         val appLinkData = Uri.parse(url)
         deepLinkInfo = DeepLinkInfo(

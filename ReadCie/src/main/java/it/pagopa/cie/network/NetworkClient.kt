@@ -10,7 +10,6 @@ import retrofit2.converter.scalars.ScalarsConverterFactory
 import java.io.ByteArrayInputStream
 import java.security.KeyStore
 import java.security.Security
-import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.KeyManagerFactory
 import javax.net.ssl.SSLContext

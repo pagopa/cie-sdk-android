@@ -6,8 +6,8 @@ import kotlinx.coroutines.withContext
 
 internal class ReadCIE(
     private val context: Context,
-    challenge: String? = null
-) : BaseReadCie(challenge) {
+    pin: String? = null
+) : BaseReadCie(pin) {
     private var implementation: NfcImpl? = null
     override suspend fun workNfc(
         isoDepTimeout: Int,

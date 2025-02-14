@@ -1,11 +1,8 @@
 package it.pagopa.cie.cie.key_store
 
 import it.pagopa.cie.CieLogger
-import it.pagopa.cie.cie.ApduResponse
-import it.pagopa.cie.cie.commands.CieCommands
-import it.pagopa.cie.cie.OnTransmit
+import it.pagopa.cie.cie.ReadCie
 import java.security.*
-
 
 internal open class CieSignatureImpl : SignatureSpi() {
     private var byteToSign: ByteArray = byteArrayOf()
@@ -29,22 +26,10 @@ internal open class CieSignatureImpl : SignatureSpi() {
         if (bytes != null) {
             byteToSign += bytes
         }
-
     }
 
     @Throws(NullPointerException::class)
-    override fun engineSign(): ByteArray = CieCommands(object: OnTransmit{
-        override fun sendCommand(
-            apdu: ByteArray,
-            message: String
-        ): ApduResponse {
-            TODO("Not yet implemented")
-        }
-
-        override fun error(why: String) {
-            TODO("Not yet implemented")
-        }
-    }).sign(byteToSign)!!
+    override fun engineSign(): ByteArray? = ReadCie.cieCommands?.sign(byteToSign)
 
     override fun engineVerify(bytes: ByteArray): Boolean {
         return false

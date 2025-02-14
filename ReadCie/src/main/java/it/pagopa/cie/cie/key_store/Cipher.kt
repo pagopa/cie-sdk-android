@@ -1,8 +1,6 @@
 package it.pagopa.cie.cie.key_store
 
-import it.pagopa.cie.cie.ApduResponse
-import it.pagopa.cie.cie.commands.CieCommands
-import it.pagopa.cie.cie.OnTransmit
+import it.pagopa.cie.cie.ReadCie
 import java.security.AlgorithmParameters
 import java.security.Key
 import java.security.SecureRandom
@@ -36,19 +34,9 @@ internal class Cipher : CipherSpi() {
         return ByteArray(0)
     }
 
-    override fun engineDoFinal(input: ByteArray?, inputOffset: Int, inputLen: Int): ByteArray {
+    override fun engineDoFinal(input: ByteArray?, inputOffset: Int, inputLen: Int): ByteArray? {
         if (input == null) return byteArrayOf()
-        val outputTmp = CieCommands(object : OnTransmit {
-            override fun sendCommand(
-                apdu: ByteArray,
-                message: String
-            ): ApduResponse {
-                return ApduResponse(apdu)
-            }
-
-            override fun error(why: String) {}
-        }).sign(input)
-        return outputTmp!!
+        return ReadCie.cieCommands?.sign(input)
     }
 
     override fun engineDoFinal(

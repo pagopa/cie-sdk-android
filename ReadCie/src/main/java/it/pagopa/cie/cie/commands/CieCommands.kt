@@ -15,20 +15,20 @@ import kotlin.math.min
 internal class CieCommands(internal val onTransmit: OnTransmit) {
     internal var sessionEncryption: ByteArray = byteArrayOf()
     internal var sessMac: ByteArray = byteArrayOf()
-    internal var dh_g: ByteArray = byteArrayOf()
-    internal var dh_p: ByteArray = byteArrayOf()
-    internal var dh_q: ByteArray = byteArrayOf()
+    internal var dhG: ByteArray = byteArrayOf()
+    internal var dhP: ByteArray = byteArrayOf()
+    internal var dhQ: ByteArray = byteArrayOf()
     internal var dappPubKey: ByteArray = byteArrayOf()
     internal var dappModule: ByteArray = byteArrayOf()
     internal var caModule: ByteArray = byteArrayOf()
     internal var caPubExp: ByteArray = byteArrayOf()
-    internal var baExtAuth_PrivExp: ByteArray = byteArrayOf()
+    internal var baExtAuthPrivExp: ByteArray = byteArrayOf()
     internal var caCar: ByteArray = byteArrayOf()
     internal var caAid: ByteArray = byteArrayOf()
     internal var caPrivExp: ByteArray = byteArrayOf()
     internal var seq: ByteArray = byteArrayOf()
-    internal var dh_pubKey: ByteArray = byteArrayOf()
-    internal var dh_ICCpubKey: ByteArray = byteArrayOf()
+    internal var dhpubKey: ByteArray = byteArrayOf()
+    internal var dhICCpubKey: ByteArray = byteArrayOf()
     private fun hiByte(b: Int): Byte {
         return (b shr 8 and 0xFF).toByte()
     }
@@ -80,7 +80,7 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
      */
     @Throws(Exception::class)
     private fun verifyPin(pin: String): Int {
-        CieLogger.i("COOMANDS", "verifyPin()")
+        CieLogger.i("COMMANDS", "verifyPin()")
         if (pin.length != 8) {
             throw Exception("pin not valid")
         }
@@ -132,58 +132,26 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
         if (this.dappPubKey.isNotEmpty())
             throw Exception("public key is not empty")
         //selectAidCie()
-        val asn1 = Asn1Tag.Companion.parse(dappKey, false)
+        val asn1 = Asn1Tag.parse(dappKey, false)
         dappModule = asn1!!.child(0).data
+        if (dappModule.isNotEmpty())
+            CieLogger.i("dappModule", "${dappModule[0].toInt() == 0}")
+        else
+            CieLogger.i("dappModule", "is empty")
         while (dappModule[0].toInt() == 0)
             dappModule = Utils.getSub(dappModule, 1, dappModule.size - 1)
         dappPubKey = asn1.child(1).data
-
+        if (dappPubKey.isNotEmpty())
+            CieLogger.i("dappPubKey", "${dappPubKey[0].toInt() == 0}")
+        else
+            CieLogger.i("dappPubKey", "is empty")
         while (dappPubKey[0].toInt() == 0)
             dappPubKey = Utils.getSub(dappPubKey, 1, dappPubKey.size - 1)
     }
 
-    private fun signIntAuth(dataToSign: ByteArray): ByteArray? {
-        onTransmit.sendCommand(
-            byteArrayOf(
-                0x00,
-                0x22,
-                0x41,
-                0xA4.toByte(),
-                0x06,
-                0x80.toByte(),
-                0x01,
-                0x02,
-                0x84.toByte(),
-                0x01,
-                0x83.toByte()
-            ),
-            "setting auth"
-        )
-        val intAuthArray = byteArrayOf(0x00, 0x88.toByte(), 0x00, 0x00, dataToSign.size.toByte())
-        val command = onTransmit.sendCommand(
-            Utils.appendByteArray(
-                intAuthArray,
-                Utils.appendByteArray(dataToSign, byteArrayOf(0x00))
-            ), "authentication"
-        )
-        return when (command.swHex) {
-            "9000" -> command.response
-            "6100" -> onTransmit.sendCommand(
-                byteArrayOf(
-                    0x00,
-                    0xC0.toByte(),
-                    0x00,
-                    0x00.toByte(),
-                    0x00
-                ), "get response"
-            ).response
-
-            else -> null
-        }
-    }
-
     @Throws(Exception::class)
     fun sign(dataToSign: ByteArray): ByteArray? {
+        CieLogger.i("COMMAND", "SIGN")
         val setKey = byteArrayOf(0x00, 0x22, 0x41, 0xA4.toByte())
         val val02 = byteArrayOf(0x02)
         val keyId = byteArrayOf(0x81.toByte())//CIE_KEY_Sign_ID
@@ -240,18 +208,15 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
         data: ByteArray,
         le: ByteArray?
     ): ApduResponse {
-        //CieIDSdkLogger.log("sendApduSM()");
         var apduSm: ByteArray
         val ds = data.size
         if (ds < unsignedToBytes(0xe7)) {
-            //CieIDSdkLogger.log("ds < unsignedToBytes((byte)0xe7): ");
             apduSm = byteArrayOf()
             apduSm = Utils.appendByteArray(apduSm, head)
             apduSm = Utils.appendByte(apduSm, ds.toByte())
             apduSm = Utils.appendByteArray(apduSm, data)
             if (le != null)
                 apduSm = Utils.appendByteArray(apduSm, le)
-            //CieIDSdkLogger.log("apduSm:  " + apduSm);
             apduSm = sm(sessionEncryption, sessMac, apduSm)
             var apduResponse = onTransmit.sendCommand(apduSm, "sending apduSM")
             apduResponse = getRespSM(apduResponse)
@@ -288,7 +253,6 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
                     return response
                 }
             }
-
         }
     }
 
@@ -304,7 +268,7 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
                 val ln = (sw and 0xff).toByte()
                 if (ln.toInt() != 0) {
                     val apdu = byteArrayOf(0x00, 0xc0.toByte(), 0x00, 0x00, ln)
-                    responseTmp = onTransmit.sendCommand(apdu, "")
+                    responseTmp = onTransmit.sendCommand(apdu, "GETTING TEMPORARY SM RESP")
                     elaboraResp = Utils.appendByteArray(elaboraResp, responseTmp.response)
                     if (responseTmp.swInt == 0x9000)
                         break
@@ -313,7 +277,10 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
                     }
                 } else {
                     val apdu = byteArrayOf(0x00, 0xc0.toByte(), 0x00, 0x00, 0x00)
-                    responseTmp = onTransmit.sendCommand(apdu, "")
+                    responseTmp = onTransmit.sendCommand(
+                        apdu,
+                        "GETTING TEMPORARY SM RESP with ln.toInt() ==0x"
+                    )
                     elaboraResp = Utils.appendByteArray(elaboraResp, responseTmp.response)
                 }
             } else return if (Utils.byteArrayCompare(
@@ -341,18 +308,18 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
         var tmpIndex = 0
         var tmpSegno: Int
         for (i in argomenti.indices) {
-            if (Math.signum(argomenti[i].toFloat()) < 0) {
+            if (kotlin.math.sign(argomenti[i].toFloat()) < 0) {
                 tmpSegno = argomenti[i] and 0xFF
                 tmpIndex += tmpSegno
             } else
                 tmpIndex += argomenti[i]
-            //System.out.print("sommo: " +  tmpIndex+" , ");
         }
         return tmpIndex
     }
 
     @Throws(Exception::class)
     private fun respSM(keyEnc: ByteArray, keySig: ByteArray, resp: ByteArray): ApduResponse {
+        CieLogger.i("RESP_SM","CALLED")
         Utils.increment(seq)
         // cerco il tag 87
         var index = setIndex(0)
@@ -417,17 +384,12 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
                 }
                 continue
             } else if (resp[index].compareTo(0x85.toByte()) == 0) {
-                if (resp[index + 1].compareTo(0x80.toByte()) > 0) {
-                    var lgn = 0
+                if (resp[index + 1] > 0x80.toByte()) {
                     val llen = resp[index + 1] - 0x80
-                    if (llen == 1)
-                        lgn = resp[index + 2].toInt()
-                    if (llen == 2)
-                        lgn = resp[index + 2].toInt().shl(8) or resp[index + 3].toInt()
-                    encObj = Utils.getSub(resp, index, llen + lgn + 2)
+                    encObj = Utils.getSub(resp, index, llen + 2)
                     encData =
-                        Utils.getSub(resp, index + llen + 2, lgn) // ' levo il padding indicator
-                    index = setIndex(index, llen, lgn, 2)//index += llen + lgn + 2;
+                        Utils.getSub(resp, index + llen + 2, 0) // ' levo il padding indicator
+                    index = setIndex(index, llen, 0, 2)//index += llen + lgn + 2;
                 } else {
                     encObj = Utils.getSub(resp, index, resp[index + 1] + 2)
                     encData = Utils.getSub(resp, index + 2, resp[index + 1].toInt())
@@ -493,7 +455,6 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
         val smMac: ByteArray
         var dataField = byteArrayOf()
         var doob: ByteArray
-        //CieIDSdkLogger.log("calcMac: " + AppUtil.bytesToHex(calcMac));
 
         if (apdu[4].toInt() != 0 && apdu.size > 5) {
             //encript la parte di dati
@@ -532,22 +493,19 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
 
     @Throws(Exception::class)
     private fun readFile(id: Int): ByteArray {
-        //CieIDSdkLogger.log("readFile()");
         var content = byteArrayOf()
         val selectFile = byteArrayOf(0x00, 0xa4.toByte(), 0x02, 0x04)
         val fileId = byteArrayOf(hiByte(id), loByte(id))
-
         sendApdu(selectFile, fileId, null, "SELECT FOR READ FILE")
-
         var cnt = 0
-        var chunk = 256
-
+        val chunk = 256
         while (true) {
             val readFile = byteArrayOf(0x00, 0xb0.toByte(), hiByte(cnt), loByte(cnt))
             val response =
                 sendApdu(readFile, byteArrayOf(), byteArrayOf(chunk.toByte()), "reading file..")
             var chn = response.response
             if ((response.swInt shr 8).toByte().compareTo(0x6c.toByte()) == 0) {
+                CieLogger.i("ENTERING", "response.swInt shr 8!!")
                 val le = Utils.unsignedToBytes(response.swInt and 0xff)
                 val respApdu =
                     sendApdu(readFile, byteArrayOf(), byteArrayOf(le), "response from reading")
@@ -556,13 +514,9 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
             if (response.swHex == "9000") {
                 content = Utils.appendByteArray(content, chn)
                 cnt += chn.size
-                chunk = 256
             } else {
-                if (response.swHex == "0x6282") {
+                if (response.swHex == "0x6282")
                     content = Utils.appendByteArray(content, chn)
-                } else if (response.swHex != "0x6b00") {
-                    return content
-                }
                 break
             }
         }
@@ -602,7 +556,6 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
                 break
             }
         }
-        //CieIDSdkLogger.log("fine readfile SM");
         return content
     }
 }

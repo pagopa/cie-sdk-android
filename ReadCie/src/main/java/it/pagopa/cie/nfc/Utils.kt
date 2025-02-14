@@ -61,7 +61,7 @@ object Utils {
         var numHere = num
         if (sign(num.toFloat()) < 0) numHere = num and 0xff
         val data = ByteArray(numHere)
-        data.copyInto(array, start, 0, data.size)
+        System.arraycopy(array, start, data, 0, data.size)
         return data
     }
 

@@ -29,7 +29,7 @@ internal fun CieCommands.initDHParam() {
     )
     var resp = sendApdu(getDHDoup, getDHDuopData_g, null, "Init dh param")
     var asn1Tag = Asn1Tag.Companion.parse(resp.response, false)
-    dh_g = asn1Tag!!.child(0).child(0).child(0).data
+    dhG = asn1Tag!!.child(0).child(0).child(0).data
     val getDHDuopData_p = byteArrayOf(
         0x4D,
         0x0A,
@@ -46,7 +46,7 @@ internal fun CieCommands.initDHParam() {
     )
     resp = sendApdu(getDHDoup, getDHDuopData_p, null, "init dh param")
     asn1Tag = Asn1Tag.Companion.parse(resp.response, false)
-    dh_p = asn1Tag!!.child(0).child(0).child(0).data
+    dhP = asn1Tag!!.child(0).child(0).child(0).data
     val getDHDuopData_q = byteArrayOf(
         0x4D,
         0x0A,
@@ -63,7 +63,7 @@ internal fun CieCommands.initDHParam() {
     )
     resp = sendApdu(getDHDoup, getDHDuopData_q, null, "init dh param")
     asn1Tag = Asn1Tag.Companion.parse(resp.response, false)
-    dh_q = asn1Tag!!.child(0).child(0).child(0).data
+    dhQ = asn1Tag!!.child(0).child(0).child(0).data
 }
 
 /**
@@ -75,18 +75,18 @@ internal fun CieCommands.dhKeyExchange() {
     CieLogger.i("COMMAND", "dhKeyExchange()")
     var dh_prKey: ByteArray = byteArrayOf()
     do {
-        dh_prKey = Utils.getRandomByte(dh_q.size)
-    } while (dh_q[0] < dh_prKey[0])
+        dh_prKey = Utils.getRandomByte(dhQ.size)
+    } while (dhQ[0] < dh_prKey[0])
 
-    val dhg = dh_g.clone()
-    val rsa = RSA(dh_p, dh_prKey)
-    dh_pubKey = rsa.encrypt(dhg)
+    val dhg = dhG.clone()
+    val rsa = RSA(dhP, dh_prKey)
+    dhpubKey = rsa.encrypt(dhg)
 
     val algo = byteArrayOf(0x9b.toByte())
     val keyId = byteArrayOf(0x81.toByte())
     val tmp1 = Utils.appendByteArray(
         Utils.appendByteArray(Utils.asn1Tag(algo, 0x80), Utils.asn1Tag(keyId, 0x83)),
-        Utils.asn1Tag(dh_pubKey, 0x91)
+        Utils.asn1Tag(dhpubKey, 0x91)
     )
     val MSE_SET = byteArrayOf(0x00, 0x22, 0x41, 0xa6.toByte())
     sendApdu(MSE_SET, tmp1, null, "SETTING MSE")
@@ -95,8 +95,8 @@ internal fun CieCommands.dhKeyExchange() {
     val GET_DATA_Data = byteArrayOf(0x4d, 0x04, 0xa6.toByte(), 0x02, 0x91.toByte(), 0x00)
     val respAsn = sendApdu(GET_DATA, GET_DATA_Data, null, "GET DATA")
     val asn1 = Asn1Tag.Companion.parse(respAsn.response, true)
-    dh_ICCpubKey = asn1!!.child(0).data
-    val secret = rsa.encrypt(dh_ICCpubKey)
+    dhICCpubKey = asn1!!.child(0).data
+    val secret = rsa.encrypt(dhICCpubKey)
 
     val diffENC = byteArrayOf(0x00, 0x00, 0x00, 0x01)
     val diffMAC = byteArrayOf(0x00, 0x00, 0x00, 0x02)

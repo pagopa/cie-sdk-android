@@ -9,13 +9,18 @@ internal class ReadCie(
 ) {
     fun read(pin: String) {
         try {
-            val commands = CieCommands(onTransmit)
-            commands.getServiceID()
-            commands.startSecureChannel(pin)
-            val certificate = commands.readCertCie()
+            cieCommands = CieCommands(onTransmit)
+            cieCommands!!.getServiceID()
+            cieCommands!!.startSecureChannel(pin)
+            val certificate = cieCommands!!.readCertCie()
             readingInterface.read<ByteArray>(certificate)
         } catch (e: Exception) {
             onTransmit.error("exception occurred: ${e.message}")
+            readingInterface.error("exception occurred: ${e.message}")
         }
+    }
+
+    companion object {
+        internal var cieCommands: CieCommands? = null
     }
 }
