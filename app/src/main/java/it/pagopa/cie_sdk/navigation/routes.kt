@@ -2,10 +2,13 @@ package it.pagopa.cie_sdk.navigation
 
 import kotlinx.serialization.Serializable
 
-sealed class Routes {
+sealed interface Routes {
     @Serializable
-    data object Home : Routes()
+    data object Home : Routes
 
     @Serializable
-    data object CieSdkMethods : Routes()
+    data object CieSdkMethods : Routes
+
+    @Serializable
+    data object ReadCIE : Routes
 }

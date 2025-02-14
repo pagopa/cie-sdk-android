@@ -1,37 +1,40 @@
 package it.pagopa.cie_sdk.ui.view
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Done
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
-import it.pagopa.cie.CieSDK
-import it.pagopa.cie_sdk.R
+import it.pagopa.cie_sdk.ui.PrimaryButton
+import it.pagopa.cie_sdk.ui.UserInteraction
+import it.pagopa.cie_sdk.ui.view_model.CieSdkMethodsViewModel
 
 @Composable
-fun CieSdkMethods() {
-    val ctx = LocalContext.current
-    val cieSdk = CieSDK()
-    Column(
-        modifier = Modifier.fillMaxSize(),
+fun CieSdkMethods(
+    viewModel: CieSdkMethodsViewModel,
+    onNavigate: UserInteraction
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Button(onClick = {
-            Toast.makeText(ctx, cieSdk.hasNfc(ctx).toString(), Toast.LENGTH_LONG).show()
+        items(viewModel.provideLazyButtons {
+            onNavigate.action()
         }) {
-            Text(stringResource(R.string.has_nfc))
-        }
-        Button(onClick = {
-            Toast.makeText(ctx, cieSdk.isNfcAvailable(ctx).toString(), Toast.LENGTH_LONG).show()
-        }) {
-            Text(stringResource(R.string.has_nfc_enabled))
+            PrimaryButton(model = it)
+            when (it.ctrlOk) {
+                true -> Icon(Icons.Default.Done, "ok", tint = MaterialTheme.colorScheme.primary)
+                false -> Icon(Icons.Default.Clear, "no", tint = MaterialTheme.colorScheme.error)
+                else -> Unit
+            }
         }
     }
 }
