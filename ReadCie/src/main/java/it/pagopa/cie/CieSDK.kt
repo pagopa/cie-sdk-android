@@ -5,7 +5,6 @@ import android.content.Intent
 import android.net.Uri
 import android.nfc.NfcAdapter
 import android.provider.Settings
-import android.util.Base64
 import it.pagopa.cie.network.DeepLinkInfo
 import it.pagopa.cie.network.Event
 import it.pagopa.cie.network.EventCertificate
@@ -15,6 +14,8 @@ import it.pagopa.cie.network.Repository
 import it.pagopa.cie.network.authnRequest
 import it.pagopa.cie.network.generaCodice
 import it.pagopa.cie.nfc.BaseReadCie
+import it.pagopa.cie.nfc.BaseReadCie.FunInterfaceStatus
+import it.pagopa.cie.nfc.NfcReading
 import it.pagopa.cie.nfc.ReadCIE
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -32,6 +33,7 @@ class CieSDK private constructor() {
     private lateinit var ciePin: String
     private val ciePinRegex = Regex("^[0-9]{8}$")
     private var deepLinkInfo: DeepLinkInfo = DeepLinkInfo()
+    private var idpCustomUrl: String? = null
 
     /**It checks if device has NFC feature*/
     fun hasNfcFeature() = NfcAdapter.getDefaultAdapter(context) != null
@@ -58,19 +60,31 @@ class CieSDK private constructor() {
     }
 
     /**It starts reading CIE
-     * @param readingInterface :[BaseReadCie.ReadingCieInterface]
+     * @param isoDepTimeout : Timeout to set on nfc reader
+     * @param callback : [NetworkCallback]
      * @throws Exception if setPin has not been called before*/
     @Throws(Exception::class)
-    fun startReading(isoDepTimeout: Int, readingInterface: BaseReadCie.ReadingCieInterface) {
+    fun startReading(
+        isoDepTimeout: Int,
+        nfcListener: NfcReading,
+        callback: NetworkCallback
+    ) {
         if (!::ciePin.isInitialized)
             throw Exception("You must call setPin before start Reading CIE")
         if (this.context == null) return
         val scope = CoroutineScope(Dispatchers.IO)
         readCie = ReadCIE(
             this.context!!,
-            Base64.encodeToString(byteArrayOf(0x00, 0x00), Base64.DEFAULT)
+            ciePin
         )
-        readCie?.read(scope, isoDepTimeout, readingInterface)
+        readCie?.read(scope, isoDepTimeout, nfcListener, object : BaseReadCie.ReadingCieInterface {
+            override fun onTransmit(value: Boolean) {}
+            override fun backResource(action: BaseReadCie.FunInterfaceResource<ByteArray>) {
+                CieLogger.i("on back resource", "${action.data}")
+                if (action.status == FunInterfaceStatus.SUCCESS)
+                    this@CieSDK.call(action.data!!, callback)
+            }
+        })
     }
 
     /**It stops NFC*/
@@ -79,7 +93,7 @@ class CieSDK private constructor() {
     }
 
 
-    fun call(certificate: ByteArray, idpCustomUrl: String? = null, callback: NetworkCallback) {
+    private fun call(certificate: ByteArray, callback: NetworkCallback) {
         val callTag = "CALLING IDP"
         val repo: Repository = Repository(certificate, idpCustomUrl)
         val mapValues = hashMapOf<String, String>().apply {
@@ -125,7 +139,6 @@ class CieSDK private constructor() {
                     is SocketTimeoutException, is UnknownHostException -> {
                         CieLogger.e(callTag, "SocketTimeoutException or UnknownHostException")
                         callback.onEvent(Event(EventError.ON_NO_INTERNET_CONNECTION))
-
                     }
 
                     is SSLProtocolException -> {
@@ -157,6 +170,7 @@ class CieSDK private constructor() {
         }
     }
 
+    //APRI WEBVIEW DENTRO L'APP
     fun withUrl(url: String) = apply {
         val appLinkData = Uri.parse(url)
         deepLinkInfo = DeepLinkInfo(
@@ -168,6 +182,10 @@ class CieSDK private constructor() {
             host = appLinkData.host,
             logo = appLinkData.getQueryParameter(DeepLinkInfo.KEY_LOGO)
         )
+    }
+
+    fun setCustomIdpUrl(idpUrl: String?) {
+        this.idpCustomUrl = idpUrl
     }
 
     companion object {

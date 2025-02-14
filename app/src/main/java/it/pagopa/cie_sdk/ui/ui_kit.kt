@@ -1,5 +1,9 @@
 package it.pagopa.cie_sdk.ui
 
+import android.annotation.SuppressLint
+import android.view.ViewGroup
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
@@ -14,11 +18,11 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.Modifier.Companion
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.viewinterop.AndroidView
 import it.pagopa.cie_sdk.theme.CieSDKPocTheme
 import it.pagopa.cie_sdk.ui.model.LazyButtonModel
 
@@ -67,6 +71,29 @@ fun PasswordTextField(
             IconButton(onClick = { passwordVisible.value = !passwordVisible.value }) {
                 Icon(imageVector = image, description)
             }
+        }
+    )
+}
+
+@SuppressLint("SetJavaScriptEnabled")
+@Composable
+fun WebView(
+    url: String,
+    webViewClient: WebViewClient = WebViewClient()
+) {
+    AndroidView(
+        factory = { context ->
+            WebView(context).apply {
+                layoutParams = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
+                this.webViewClient = webViewClient
+                this.settings.javaScriptEnabled = true
+            }
+        },
+        update = { webView ->
+            webView.loadUrl(url)
         }
     )
 }

@@ -1,25 +1,22 @@
 package it.pagopa.cie.network
 
-interface  EventEnum
+interface EventEnum
 
 enum class EventTag : EventEnum {
-    //tag
     ON_TAG_DISCOVERED_NOT_CIE,
     ON_TAG_DISCOVERED,
     ON_TAG_LOST;
-
 }
-enum class EventCard: EventEnum {
-    //card
+
+enum class EventCard : EventEnum {
     ON_CARD_PIN_LOCKED,
     ON_PIN_ERROR;
-
 }
+
 enum class EventCertificate : EventEnum {
     //certificate
     CERTIFICATE_EXPIRED,
     CERTIFICATE_REVOKED;
-
 }
 
 enum class EventSmartphone : EventEnum {
@@ -35,4 +32,4 @@ enum class EventError : EventEnum {
     ON_NO_INTERNET_CONNECTION;
 }
 
-data class Event(var event : EventEnum,var attemptsLeft : Int? = null,var url : String? = null)
+data class Event(var event: EventEnum, var attemptsLeft: Int? = null, var url: String? = null)

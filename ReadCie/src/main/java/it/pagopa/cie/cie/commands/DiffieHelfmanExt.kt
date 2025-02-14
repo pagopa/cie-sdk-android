@@ -102,7 +102,7 @@ internal fun CieCommands.dhKeyExchange() {
     val diffMAC = byteArrayOf(0x00, 0x00, 0x00, 0x02)
 
     var d1 = Sha256.encrypt(Utils.appendByteArray(secret, diffENC))
-    sessEnc = Utils.getLeft(d1, 16)
+    sessionEncryption = Utils.getLeft(d1, 16)
 
     d1 = Sha256.encrypt(Utils.appendByteArray(secret, diffMAC))
     sessMac = Utils.getLeft(d1, 16)

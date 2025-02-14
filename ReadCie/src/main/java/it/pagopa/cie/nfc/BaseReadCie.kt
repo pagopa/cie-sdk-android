@@ -1,35 +1,42 @@
 package it.pagopa.cie.nfc
 
 import it.pagopa.cie.CieLogger
-import it.pagopa.cie.cie.NisAuthenticated
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 abstract class BaseReadCie(
-    private val challenge: String? = null
+    private val pin: String? = null
 ) {
     /**Interface to receive events while NFC is working
      * @property onTransmit return true if we are transmitting
      * @property backResource return an interface which returns success or fail events*/
     interface ReadingCieInterface {
         fun onTransmit(value: Boolean)
-        fun backResource(action: FunInterfaceResource<NisAuthenticated?>)
+        fun backResource(action: FunInterfaceResource<ByteArray>)
     }
 
-    fun read(scope: CoroutineScope, isoDepTimeout: Int, readingInterface: ReadingCieInterface) {
+    fun read(
+        scope: CoroutineScope,
+        isoDepTimeout: Int,
+        nfcListener: NfcReading,
+        readingInterface: ReadingCieInterface
+    ) {
         scope.launch {
-            workNfc(isoDepTimeout, challenge.orEmpty(), object : NfcReading {
+            workNfc(isoDepTimeout, pin.orEmpty(), object : NfcReading {
                 override fun onTransmit(message: String) {
                     CieLogger.i("message from CIE", message)
+                    nfcListener.onTransmit(message)
                     if (message == "connected")
                         readingInterface.onTransmit(true)
                 }
 
                 override fun <T> read(element: T) {
-                    readingInterface.backResource(FunInterfaceResource.success(element as? NisAuthenticated))
+                    nfcListener.read(element)
+                    readingInterface.backResource(FunInterfaceResource.success(element as ByteArray))
                 }
 
                 override fun error(why: String) {
+                    nfcListener.error(why)
                     readingInterface.backResource(FunInterfaceResource.error(why))
                 }
             })

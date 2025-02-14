@@ -1,21 +1,19 @@
 package it.pagopa.cie.cie.commands
 
-import android.util.Base64
 import androidx.annotation.VisibleForTesting
 import it.pagopa.cie.CieLogger
 import it.pagopa.cie.cie.ApduResponse
 import it.pagopa.cie.cie.Asn1Tag
 import it.pagopa.cie.cie.OnTransmit
-import it.pagopa.cie.cie.highByte
-import it.pagopa.cie.cie.lowByte
 import it.pagopa.cie.cie.unsignedToBytes
+import it.pagopa.cie.hexStringToByteArray
 import it.pagopa.cie.nfc.Algorithms
 import it.pagopa.cie.nfc.Utils
 import kotlin.experimental.or
 import kotlin.math.min
 
 internal class CieCommands(internal val onTransmit: OnTransmit) {
-    internal var sessEnc: ByteArray = byteArrayOf()
+    internal var sessionEncryption: ByteArray = byteArrayOf()
     internal var sessMac: ByteArray = byteArrayOf()
     internal var dh_g: ByteArray = byteArrayOf()
     internal var dh_p: ByteArray = byteArrayOf()
@@ -31,17 +29,47 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
     internal var seq: ByteArray = byteArrayOf()
     internal var dh_pubKey: ByteArray = byteArrayOf()
     internal var dh_ICCpubKey: ByteArray = byteArrayOf()
-    private fun HIBYTE(b: Int): Byte {
+    private fun hiByte(b: Int): Byte {
         return (b shr 8 and 0xFF).toByte()
     }
 
-    private fun LOBYTE(b: Int): Byte {
+    private fun loByte(b: Int): Byte {
         return b.toByte()
     }
 
-    fun intAuth(challenge: String): ByteArray? {
-        val challengeByte: ByteArray = Base64.decode(challenge, Base64.DEFAULT)
-        return signIntAuth(challengeByte)
+    /**
+     * @return il certificato dell'utente
+     * @throws Exception
+     */
+    @Throws(Exception::class)
+    fun readCertCie(): ByteArray {
+        CieLogger.i("COMMAND", "readCieCertificate()")
+        return readFileSM(0x1003)
+    }
+
+    @Throws(Exception::class)
+    fun getServiceID(): String {
+        CieLogger.i("COMMAND", "getServiceID()")
+        this.onTransmit.sendCommand(
+            "00A4040C0DA0000000308000000009816001".hexStringToByteArray(),
+            "Service ID 1"
+        )
+        this.onTransmit.sendCommand(
+            "00A4040406A00000000039".hexStringToByteArray(),
+            "Service ID 2"
+        )
+        this.onTransmit.sendCommand(
+            "00a40204021001".hexStringToByteArray(),
+            "Service ID 3"
+        )
+        val response = this.onTransmit.sendCommand(
+            "00b000000c".hexStringToByteArray(),
+            "Service ID GET RESPONSE"
+        )
+        if (response.swHex != "9000") {
+            throw Exception("Not a CIE")
+        }
+        return Utils.bytesToHex(response.response)
     }
 
     /**
@@ -166,58 +194,6 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
         return response.response
     }
 
-
-    /**Reads the NIS value from the card and returns it
-     *@return: The NIS value in form of [ByteArray]*/
-    fun readNis(): ByteArray {
-        selectIAS()
-        selectCie()
-        return onTransmit.sendCommand(
-            Utils.hexStringToByteArray("00B081000C"),
-            "reading NIS.."
-        ).response
-    }
-
-    fun readPublicKey(): ByteArray {
-        val first = onTransmit.sendCommand(
-            Utils.hexStringToByteArray("00B0850000"),
-            "reading public key 0"
-        ).response
-        val second = onTransmit.sendCommand(
-            Utils.hexStringToByteArray("00B085E700"),
-            "reading public key 1"
-        ).response
-        return Utils.appendByteArray(first, second)
-    }
-
-    fun readSodFileCompleted(): ByteArray {
-        //Read SOD data record
-        var idx = 0
-        val size = 0xe4
-        var sodIASData = ByteArray(0)
-        var sodLoaded = false
-        val apdu = byteArrayOf(0x00, 0xB1.toByte(), 0x00, 0x06)
-        while (!sodLoaded) {
-            //byte[] dataInput = { 0x54, (byte)0x02, Byte.parseByte(hexS.substring(0, 2), 16), Byte.parseByte(hexS.substring(2, 4), 16) };
-            val dataInput = byteArrayOf(0x54, 0x02.toByte(), highByte(idx), lowByte(idx))
-            val respApdu =
-                sendApdu(apdu, dataInput, byteArrayOf(0xe7.toByte()), "reading sod")
-            val chn: ByteArray = respApdu.response
-            var offset = 2
-            if (chn[1] > 0x80) offset = 2 + (chn[1] - 0x80)
-            val buf = chn.copyOfRange(offset, chn.size)
-            val combined = ByteArray(sodIASData.size + buf.size)
-            sodIASData.copyInto(combined, 0, 0, sodIASData.size)
-            buf.copyInto(combined, sodIASData.size, 0, buf.size)
-            sodIASData = combined
-            //idx += size;
-            if (respApdu.swHex != "9000") {
-                sodLoaded = true
-            } else idx += size
-        }
-        return sodIASData
-    }
-
     @Throws(Exception::class)
     fun sendApdu(
         head: ByteArray,
@@ -276,7 +252,7 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
             if (le != null)
                 apduSm = Utils.appendByteArray(apduSm, le)
             //CieIDSdkLogger.log("apduSm:  " + apduSm);
-            apduSm = sm(sessEnc, sessMac, apduSm)
+            apduSm = sm(sessionEncryption, sessMac, apduSm)
             var apduResponse = onTransmit.sendCommand(apduSm, "sending apduSM")
             apduResponse = getRespSM(apduResponse)
             return apduResponse
@@ -304,7 +280,7 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
                     if (le != null)
                         apduSm = Utils.appendByteArray(apduSm, le)
                 }
-                apduSm = sm(sessEnc, sessMac, apduSm)
+                apduSm = sm(sessionEncryption, sessMac, apduSm)
 
                 var response = onTransmit.sendCommand(apduSm, "sending apduSM")
                 response = getRespSM(response)
@@ -357,7 +333,7 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
             } else
                 ApduResponse(byteArrayOf(), byteArrayOf(sw.toByte()))
         }
-        return respSM(sessEnc, sessMac, elaboraResp)
+        return respSM(sessionEncryption, sessMac, elaboraResp)
     }
 
     @Throws(Exception::class)
@@ -559,7 +535,7 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
         //CieIDSdkLogger.log("readFile()");
         var content = byteArrayOf()
         val selectFile = byteArrayOf(0x00, 0xa4.toByte(), 0x02, 0x04)
-        val fileId = byteArrayOf(HIBYTE(id), LOBYTE(id))
+        val fileId = byteArrayOf(hiByte(id), loByte(id))
 
         sendApdu(selectFile, fileId, null, "SELECT FOR READ FILE")
 
@@ -567,7 +543,7 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
         var chunk = 256
 
         while (true) {
-            val readFile = byteArrayOf(0x00, 0xb0.toByte(), HIBYTE(cnt), LOBYTE(cnt))
+            val readFile = byteArrayOf(0x00, 0xb0.toByte(), hiByte(cnt), loByte(cnt))
             val response =
                 sendApdu(readFile, byteArrayOf(), byteArrayOf(chunk.toByte()), "reading file..")
             var chn = response.response
@@ -590,6 +566,43 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
                 break
             }
         }
+        return content
+    }
+
+    @Throws(Exception::class)
+    private fun readFileSM(id: Int): ByteArray {
+        CieLogger.i("ON COMMAND", "readfileSM()");
+        var content = byteArrayOf()
+        val selectFile = byteArrayOf(0x00, 0xa4.toByte(), 0x02, 0x04)
+        val fileId = byteArrayOf(hiByte(id), loByte(id))
+
+        sendApduSM(selectFile, fileId, null)
+        var cnt = 0
+        var chunk = 256
+
+        while (true) {
+            val readFile = byteArrayOf(0x00, 0xb0.toByte(), hiByte(cnt), loByte(cnt))
+            val response = sendApduSM(readFile, byteArrayOf(), byteArrayOf(chunk.toByte()))
+            var chn = response.response
+            if ((response.swInt shr 8).toByte().compareTo(0x6c.toByte()) == 0) {
+                val le = Utils.unsignedToBytes(response.swInt and 0xff)
+                val respApdu = sendApduSM(readFile, byteArrayOf(), byteArrayOf(le))
+                chn = respApdu.response
+            }
+            if (response.swHex == "9000") {
+                content = Utils.appendByteArray(content, chn)
+                cnt += chn.size
+                chunk = 256
+            } else {
+                if (response.swHex == "6282") {
+                    content = Utils.appendByteArray(content, chn)
+                } else if (response.swHex != "6b00") {
+                    return content
+                }
+                break
+            }
+        }
+        //CieIDSdkLogger.log("fine readfile SM");
         return content
     }
 }

@@ -11,13 +11,13 @@ internal class ReadCIE(
     private var implementation: NfcImpl? = null
     override suspend fun workNfc(
         isoDepTimeout: Int,
-        challenge: String,
+        pin: String,
         readingInterface: NfcReading
     ) {
         withContext(Dispatchers.Default) {
             implementation = NfcImpl(context, readingInterface)
             try {
-                implementation!!.transmit(isoDepTimeout, challenge)
+                implementation!!.transmit(isoDepTimeout, pin)
             } catch (e: Exception) {
                 readingInterface.error(e.message.orEmpty())
             }

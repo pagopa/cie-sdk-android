@@ -7,12 +7,10 @@ internal abstract class BaseNfcImpl {
     abstract fun connect(isoDepTimeout: Int, actionDone: () -> Unit)
     abstract val readCie: ReadCie
     abstract fun disconnect()
-    fun transmit(isoDepTimeout: Int,challenge: String) {
+    fun transmit(isoDepTimeout: Int, pin: String) {
         connect(isoDepTimeout) {
             readingInterface.onTransmit("connected")
-            readCie.read(challenge) {
-                disconnect()
-            }
+            readCie.read(pin)
         }
     }
 }

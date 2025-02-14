@@ -2,8 +2,6 @@ package it.pagopa.cie.cie.commands
 
 import it.pagopa.cie.CieLogger
 import it.pagopa.cie.cie.Asn1Tag
-import it.pagopa.cie.nfc.RSA
-import it.pagopa.cie.nfc.Sha256
 import it.pagopa.cie.nfc.Utils
 
 /**

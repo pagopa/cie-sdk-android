@@ -1,5 +1,6 @@
 package it.pagopa.cie_sdk.ui.view
 
+import android.webkit.WebViewClient
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -22,6 +24,7 @@ import it.pagopa.cie_sdk.ui.PasswordTextField
 import it.pagopa.cie_sdk.ui.PrimaryButton
 import it.pagopa.cie_sdk.ui.ShakeConfig
 import it.pagopa.cie_sdk.ui.ThemePreviews
+import it.pagopa.cie_sdk.ui.WebView
 import it.pagopa.cie_sdk.ui.model.LazyButtonModel
 import it.pagopa.cie_sdk.ui.rememberShakeController
 import it.pagopa.cie_sdk.ui.shake
@@ -29,26 +32,42 @@ import it.pagopa.cie_sdk.ui.view_model.ReadCieViewModel
 
 @Composable
 fun ReadCie(viewModel: ReadCieViewModel?) {
+    MainUI(viewModel)
+    Dialog(viewModel)
+    if (viewModel?.shouldShowUI?.value != true)
+        WebView(
+            url = "https://app-backend.io.italia.it/login?entityID=xx_servizicie&authLevel=SpidL3",
+            webViewClient = viewModel?.WebViewClientWithRedirect() ?: WebViewClient()
+        )
+}
+
+@Composable
+private fun MainUI(viewModel: ReadCieViewModel?) {
+    if (viewModel?.shouldShowUI?.value == true) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(Modifier.height(120.dp))
+            PasswordTextField(
+                viewModel.pin,
+                stringResource(R.string.insert_pin),
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            PrimaryButton(modifier = Modifier.padding(bottom = 16.dp), model = LazyButtonModel(
+                textId = R.string.start
+            ) {
+                if (viewModel.pin.value.isNotEmpty())
+                    viewModel.showDialog.value = true
+            })
+        }
+    }
+}
+
+@Composable
+private fun Dialog(viewModel: ReadCieViewModel?) {
     val cardShakeController = rememberShakeController()
     val shakeController = rememberShakeController()
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Spacer(Modifier.height(120.dp))
-        PasswordTextField(
-            viewModel?.pin,
-            stringResource(R.string.insert_pin),
-        )
-        Spacer(modifier = Modifier.weight(1f))
-        PrimaryButton(modifier = Modifier.padding(bottom = 16.dp), model = LazyButtonModel(
-            textId = R.string.start
-        ) {
-            if (viewModel == null) return@LazyButtonModel
-            if (viewModel.pin.value.isNotEmpty())
-                viewModel.showDialog.value = true
-        })
-    }
     if (viewModel?.showDialog?.value == true) {
         shakeController.shake(
             ShakeConfig(
@@ -66,8 +85,15 @@ fun ReadCie(viewModel: ReadCieViewModel?) {
                 translateY = 20f
             )
         )
-        viewModel.readCie(viewModel.pin.value) {
-            viewModel.dialogMessage.value = it
+        viewModel.readCie(
+            pin = viewModel.pin.value,
+            onMessage = { msg ->
+                viewModel.dialogMessage.value = msg
+            }, onError = { error ->
+                viewModel.errorMessage.value = error
+            }) { successUrl ->
+            viewModel.errorMessage.value = ""
+            viewModel.successMessage.value = successUrl
         }
     }
     AppDialog(
@@ -108,8 +134,25 @@ fun ReadCie(viewModel: ReadCieViewModel?) {
             text = if (viewModel?.dialogMessage?.value?.isEmpty() == true)
                 "cie reading status"
             else
-                viewModel?.dialogMessage?.value.orEmpty()
+                viewModel?.dialogMessage?.value.orEmpty(),
+            color = MaterialTheme.colorScheme.onBackground
         )
+        val errorMessage = viewModel?.errorMessage?.value
+        if (errorMessage?.isNotEmpty() == true) {
+            Spacer(Modifier.height(16.dp))
+            Text(
+                text = errorMessage,
+                color = MaterialTheme.colorScheme.error
+            )
+        }
+        val successMessage = viewModel?.successMessage?.value
+        if (successMessage?.isNotEmpty() == true) {
+            Spacer(Modifier.height(16.dp))
+            Text(
+                text = successMessage,
+                color = MaterialTheme.colorScheme.error
+            )
+        }
     }
 }
 
