@@ -1,6 +1,7 @@
 package it.pagopa.cie.cie.commands
 
 import it.pagopa.cie.CieLogger
+import it.pagopa.cie.cie.ApduManager
 import it.pagopa.cie.cie.Asn1Tag
 import it.pagopa.cie.nfc.Utils
 
@@ -25,7 +26,8 @@ internal fun CieCommands.initExtAuthKeyParam() {
         0x49,
         0x80.toByte()
     )
-    val response = sendApdu(getKeyDoup, getKeyDuopData, null, "getKeyDuopData")
+    val response = ApduManager(onTransmit)
+        .sendApdu(getKeyDoup, getKeyDuopData, null, "getKeyDuopData")
     val asn1 = Asn1Tag.Companion.parse(response.response, true)
     caModule = asn1!!.child(0).child(0).childWithTagID(byteArrayOf(0x81.toByte()))!!.data
     caPubExp = asn1.child(0).child(0).childWithTagID(byteArrayOf(0x82.toByte()))!!.data

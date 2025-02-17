@@ -15,8 +15,13 @@ internal class ReadCie(
             val certificate = cieCommands!!.readCertCie()
             readingInterface.read<ByteArray>(certificate)
         } catch (e: Exception) {
-            onTransmit.error("exception occurred: ${e.message}")
-            readingInterface.error("exception occurred: ${e.message}")
+            if (e is CieSdkException) {
+                onTransmit.error(e.getError())
+            } else {
+                onTransmit.error(NfcError.GENERAL_EXCEPTION.apply {
+                    this.msg = e.message.orEmpty()
+                })
+            }
         }
     }
 

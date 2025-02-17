@@ -5,11 +5,11 @@ import android.content.Intent
 import android.net.Uri
 import android.nfc.NfcAdapter
 import android.provider.Settings
+import it.pagopa.cie.cie.CieSdkException
+import it.pagopa.cie.cie.NfcError
 import it.pagopa.cie.network.DeepLinkInfo
-import it.pagopa.cie.network.Event
-import it.pagopa.cie.network.EventCertificate
-import it.pagopa.cie.network.EventError
 import it.pagopa.cie.network.NetworkCallback
+import it.pagopa.cie.network.NetworkError
 import it.pagopa.cie.network.Repository
 import it.pagopa.cie.network.authnRequest
 import it.pagopa.cie.network.generaCodice
@@ -52,11 +52,11 @@ class CieSDK private constructor() {
     }
 
     /**It sets PIN to use from SDK
-     * @throws IllegalArgumentException if pin doesn't match regex for CIE PIN*/
-    @Throws(IllegalArgumentException::class)
+     * @throws CieSdkException if pin doesn't match regex for CIE PIN*/
+    @Throws(CieSdkException::class)
     fun setPin(pin: String) {
         if (!ciePinRegex.matches(pin))
-            throw IllegalArgumentException("pin is not matching regex..")
+            throw CieSdkException(NfcError.PIN_REGEX_NOT_VALID)
         this.ciePin = pin
     }
 
@@ -85,7 +85,10 @@ class CieSDK private constructor() {
                     CieLogger.i(tag, "CALLING REPOSITORY with ${action.data}")
                     this@CieSDK.call(action.data!!, callback)
                 } else {
-                    CieLogger.e(tag, "PROCESS FINISHED WITH ERROR: ${action.msg}")
+                    CieLogger.e(
+                        tag,
+                        "PROCESS FINISHED WITH ERROR: ${action.nfcError?.msg ?: action.nfcError?.name}"
+                    )
                 }
             }
         })
@@ -96,7 +99,7 @@ class CieSDK private constructor() {
         readCie?.disconnect()
     }
 
-
+    /**It calls IDP service*/
     private fun call(certificate: ByteArray, callback: NetworkCallback) {
         val callTag = "CALLING IDP"
         val repo: Repository = Repository(certificate, idpCustomUrl)
@@ -122,27 +125,26 @@ class CieSDK private constructor() {
                                     .toTypedArray()
                                 if (responseParts.size >= 2) {
                                     val serverCode = responseParts[1]
-                                    if (!Regex("^[0-9]{16}$").matches(serverCode)) {
-                                        callback.onEvent(Event(EventError.GENERAL_ERROR))
-                                    }
+                                    if (!Regex("^[0-9]{16}$").matches(serverCode))
+                                        callback.onError(NetworkError.NOT_VALID_SERVER_CODE)
                                     val url =
                                         "${deepLinkInfo.nextUrl}?${deepLinkInfo.name}=${deepLinkInfo.value}&login=1&codice=$serverCode"
                                     callback.onSuccess(url)
                                 } else {
                                     CieLogger.e(callTag, "Missing server code")
-                                    callback.onEvent(Event(EventError.AUTHENTICATION_ERROR))
+                                    callback.onError(NetworkError.NO_SERVER_CODE)
                                 }
                             }
                         } else {
                             CieLogger.e(callTag, "RESPONSE NOT SUCCESSFULL")
-                            callback.onEvent(Event(EventError.AUTHENTICATION_ERROR))
+                            callback.onError(NetworkError.AUTHENTICATION_ERROR)
                         }
                     }
             } catch (e: Exception) {
                 when (e) {
                     is SocketTimeoutException, is UnknownHostException -> {
                         CieLogger.e(callTag, "SocketTimeoutException or UnknownHostException")
-                        callback.onEvent(Event(EventError.ON_NO_INTERNET_CONNECTION))
+                        callback.onError(NetworkError.NO_INTERNET_CONNECTION)
                     }
 
                     is SSLProtocolException -> {
@@ -150,30 +152,32 @@ class CieSDK private constructor() {
                         CieLogger.e(callTag, "SSLProtocolException")
                         e.message?.let {
                             when {
-                                it.contains("SSLV3_ALERT_CERTIFICATE_EXPIRED") -> callback.onEvent(
-                                    Event(
-                                        EventCertificate.CERTIFICATE_EXPIRED
-                                    )
+                                it.contains("SSLV3_ALERT_CERTIFICATE_EXPIRED") -> callback.onError(
+                                    NetworkError.CERTIFICATE_EXPIRED
                                 )
 
-                                it.contains("SSLV3_ALERT_CERTIFICATE_REVOKED") -> callback.onEvent(
-                                    Event(
-                                        EventCertificate.CERTIFICATE_REVOKED
-                                    )
+                                it.contains("SSLV3_ALERT_CERTIFICATE_REVOKED") -> callback.onError(
+                                    NetworkError.CERTIFICATE_REVOKED
                                 )
 
-                                else -> callback.onError(e)
+                                else -> callback.onError(NetworkError.GENERAL_ERROR.apply {
+                                    this.msg = it
+                                })
                             }
                         }
 
                     }
 
-                    else -> callback.onError(e)
+                    else -> callback.onError(NetworkError.GENERAL_ERROR.apply {
+                        this.msg = e.message.orEmpty()
+                    })
                 }
             }
         }
     }
 
+    /**it applies the url found by web_view which contains OpenApp to header params
+     * with [DeepLinkInfo] class*/
     fun withUrl(url: String) = apply {
         val appLinkData = Uri.parse(url)
         deepLinkInfo = DeepLinkInfo(

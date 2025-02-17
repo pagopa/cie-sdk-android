@@ -2,9 +2,10 @@ package it.pagopa.cie.nfc
 
 import android.content.Context
 import android.nfc.NfcAdapter
+import android.nfc.TagLostException
 import android.nfc.tech.IsoDep
-import it.pagopa.cie.CieLogger
 import it.pagopa.cie.cie.ApduResponse
+import it.pagopa.cie.cie.NfcError
 import it.pagopa.cie.cie.OnTransmit
 import it.pagopa.cie.cie.ReadCie
 import it.pagopa.cie.cie.transmitLogic
@@ -32,11 +33,13 @@ internal class NfcImpl private constructor() : BaseNfcImpl() {
                     if (isoDep?.isConnected != true)
                         isoDep?.connect()
                     if (isoDep?.isConnected == true) {
-                        isoDep?.timeout = 5000
-                        actionDone.invoke()
+                        if (!isoDep!!.isExtendedLengthApduSupported)
+                            readingInterface.error(NfcError.EXTENDED_APDU_NOT_SUPPORTED)
+                        else
+                            actionDone.invoke()
                     } else {
                         disconnect()
-                        readingInterface.error("no connection to nfc tag..")
+                        readingInterface.error(NfcError.FAIL_TO_CONNECT_WITH_TAG)
                     }
                 }, NfcAdapter.FLAG_READER_NFC_A or
                         NfcAdapter.FLAG_READER_NFC_B or
@@ -44,17 +47,23 @@ internal class NfcImpl private constructor() : BaseNfcImpl() {
                         NfcAdapter.FLAG_READER_NO_PLATFORM_SOUNDS,
                 null
             )
-        } catch (e: UnsupportedOperationException) {
+        } catch (throwable: Throwable) {
+            readingInterface.error(
+                when (throwable) {
+                    is TagLostException -> NfcError.TAG_LOST
+                    else -> NfcError.GENERAL_EXCEPTION.apply {
+                        this.msg = throwable.message.orEmpty()
+                    }
+                }
+            )
             disconnect()
-            CieLogger.e("NFC", e.toString())
         }
     }
 
     override val readCie: ReadCie
         get() = ReadCie(object : OnTransmit {
-            override fun error(why: String) {
-                disconnect()
-                readingInterface.error(why)
+            override fun error(error: NfcError) {
+                readingInterface.error(error)
             }
 
             override fun sendCommand(apdu: ByteArray, message: String): ApduResponse {
@@ -66,9 +75,13 @@ internal class NfcImpl private constructor() : BaseNfcImpl() {
         }, readingInterface)
 
     override fun disconnect() {
-        val activity = context.findActivity()
-        adapter?.disableReaderMode(activity)
-        isoDep?.close()
-        isoDep = null
+        try {
+            val activity = context.findActivity()
+            adapter?.disableReaderMode(activity)
+            isoDep?.close()
+            isoDep = null
+        } catch (_: Exception) {
+            readingInterface.error(NfcError.STOP_NFC_ERROR)
+        }
     }
 }

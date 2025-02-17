@@ -7,8 +7,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import it.pagopa.cie.CieLogger
 import it.pagopa.cie.CieSDK
-import it.pagopa.cie.network.Event
+import it.pagopa.cie.cie.CieSdkException
+import it.pagopa.cie.cie.NfcError
 import it.pagopa.cie.network.NetworkCallback
+import it.pagopa.cie.network.NetworkError
 import it.pagopa.cie.nfc.NfcReading
 
 class ReadCieViewModel(
@@ -40,16 +42,16 @@ class ReadCieViewModel(
     fun readCie(
         pin: String
     ) {
-        cieSdk.setPin(pin)
         try {
+            cieSdk.setPin(pin)
             cieSdk.startReading(10000, object : NfcReading {
                 override fun <T> read(element: T) {}
                 override fun onTransmit(message: String) {
                     dialogMessage.value = message
                 }
 
-                override fun error(why: String) {
-                    errorMessage.value = why
+                override fun error(error: NfcError) {
+                    errorMessage.value = error.msg ?: error.name
                 }
             }, object : NetworkCallback {
                 override fun onSuccess(url: String) {
@@ -59,17 +61,16 @@ class ReadCieViewModel(
                     stopNfc()
                 }
 
-                override fun onEvent(event: Event) {
-                    dialogMessage.value = event.event.toString()
-                }
-
-                override fun onError(error: Throwable) {
-                    errorMessage.value = error.message.orEmpty()
+                override fun onError(error: NetworkError) {
+                    errorMessage.value = error.msg ?: error.name
                     stopNfc()
                 }
             })
         } catch (e: Exception) {
-            errorMessage.value = e.message.orEmpty()
+            if (e is CieSdkException)
+                errorMessage.value = e.getError().msg ?: e.getError().name
+            else
+                errorMessage.value = e.message.orEmpty()
         }
     }
 

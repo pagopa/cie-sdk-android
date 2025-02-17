@@ -1,6 +1,7 @@
 package it.pagopa.cie.cie.commands
 
 import it.pagopa.cie.CieLogger
+import it.pagopa.cie.cie.ApduManager
 import it.pagopa.cie.cie.Asn1Tag
 import it.pagopa.cie.nfc.RSA
 import it.pagopa.cie.nfc.Sha256
@@ -27,7 +28,8 @@ internal fun CieCommands.initDHParam() {
         0x97.toByte(),
         0x00
     )
-    var resp = sendApdu(getDHDoup, getDHDuopData_g, null, "Init dh param")
+    val manager= ApduManager(onTransmit)
+    var resp = manager.sendApdu(getDHDoup, getDHDuopData_g, null, "Init dh param")
     var asn1Tag = Asn1Tag.Companion.parse(resp.response, false)
     dhG = asn1Tag!!.child(0).child(0).child(0).data
     val getDHDuopData_p = byteArrayOf(
@@ -44,7 +46,7 @@ internal fun CieCommands.initDHParam() {
         0x98.toByte(),
         0x00
     )
-    resp = sendApdu(getDHDoup, getDHDuopData_p, null, "init dh param")
+    resp =  manager.sendApdu(getDHDoup, getDHDuopData_p, null, "init dh param")
     asn1Tag = Asn1Tag.Companion.parse(resp.response, false)
     dhP = asn1Tag!!.child(0).child(0).child(0).data
     val getDHDuopData_q = byteArrayOf(
@@ -61,7 +63,7 @@ internal fun CieCommands.initDHParam() {
         0x99.toByte(),
         0x00
     )
-    resp = sendApdu(getDHDoup, getDHDuopData_q, null, "init dh param")
+    resp =  manager.sendApdu(getDHDoup, getDHDuopData_q, null, "init dh param")
     asn1Tag = Asn1Tag.Companion.parse(resp.response, false)
     dhQ = asn1Tag!!.child(0).child(0).child(0).data
 }
@@ -89,11 +91,12 @@ internal fun CieCommands.dhKeyExchange() {
         Utils.asn1Tag(dhpubKey, 0x91)
     )
     val MSE_SET = byteArrayOf(0x00, 0x22, 0x41, 0xa6.toByte())
-    sendApdu(MSE_SET, tmp1, null, "SETTING MSE")
+    val manager= ApduManager(onTransmit)
+    manager.sendApdu(MSE_SET, tmp1, null, "SETTING MSE")
 
     val GET_DATA = byteArrayOf(0x00, 0xcb.toByte(), 0x3f, 0xff.toByte())
     val GET_DATA_Data = byteArrayOf(0x4d, 0x04, 0xa6.toByte(), 0x02, 0x91.toByte(), 0x00)
-    val respAsn = sendApdu(GET_DATA, GET_DATA_Data, null, "GET DATA")
+    val respAsn =  manager.sendApdu(GET_DATA, GET_DATA_Data, null, "GET DATA")
     val asn1 = Asn1Tag.Companion.parse(respAsn.response, true)
     dhICCpubKey = asn1!!.child(0).data
     val secret = rsa.encrypt(dhICCpubKey)

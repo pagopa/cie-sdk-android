@@ -1,6 +1,7 @@
 package it.pagopa.cie.nfc
 
 import it.pagopa.cie.CieLogger
+import it.pagopa.cie.cie.NfcError
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -35,9 +36,9 @@ abstract class BaseReadCie(
                     readingInterface.backResource(FunInterfaceResource.success(element as ByteArray))
                 }
 
-                override fun error(why: String) {
-                    nfcListener.error(why)
-                    readingInterface.backResource(FunInterfaceResource.error(why))
+                override fun error(error: NfcError) {
+                    nfcListener.error(error)
+                    readingInterface.backResource(FunInterfaceResource.error(error))
                 }
             })
         }
@@ -52,14 +53,14 @@ abstract class BaseReadCie(
     data class FunInterfaceResource<out T>(
         val status: FunInterfaceStatus,
         val data: T?,
-        val msg: String = ""
+        val nfcError: NfcError? = null
     ) {
         companion object {
             fun <T> success(data: T): FunInterfaceResource<T> =
                 FunInterfaceResource(FunInterfaceStatus.SUCCESS, data)
 
-            fun <T> error(msg: String): FunInterfaceResource<T> =
-                FunInterfaceResource(FunInterfaceStatus.ERROR, null, msg)
+            fun <T> error(error: NfcError): FunInterfaceResource<T> =
+                FunInterfaceResource(FunInterfaceStatus.ERROR, null, error)
         }
     }
 

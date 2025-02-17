@@ -2,6 +2,8 @@ package it.pagopa.cie.cie.commands
 
 import it.pagopa.cie.CieLogger
 import it.pagopa.cie.cie.ApduResponse
+import it.pagopa.cie.cie.CieSdkException
+import it.pagopa.cie.cie.NfcError
 import it.pagopa.cie.nfc.RSA
 import it.pagopa.cie.nfc.Sha256
 import it.pagopa.cie.nfc.Utils
@@ -128,7 +130,7 @@ internal fun CieCommands.dApp() {
     intAuthResp = rsaIntAuthKey.encrypt(Utils.getSub(resp.response, 8, resp.response.size - 8))
 
     if (intAuthResp[0].compareTo(0x6a.toByte()) != 0)
-        throw Exception("Errore nell'autenticazione del chip- Byte.compare(intAuthResp[0], (byte)0x6a) != 0")
+        throw CieSdkException(NfcError.CHIP_AUTH_ERROR)
 
     val PRND2 = Utils.getSub(intAuthResp, 1, intAuthResp.size - 32 - 2)
     val hashICC = Utils.getSub(intAuthResp, PRND2.size + 1, 32)
@@ -143,9 +145,9 @@ internal fun CieCommands.dApp() {
     toHashIFD = Utils.appendByteArray(toHashIFD, dhQ)
     val calcHashIFD = Sha256.encrypt(toHashIFD)
     if (Utils.bytesToHex(calcHashIFD) != Utils.bytesToHex(hashICC))
-        throw Exception("Errore nell'autenticazione del chip (calcHashIFD,hashICC)")
+        throw CieSdkException(NfcError.CHIP_AUTH_ERROR)
     if (intAuthResp[intAuthResp.size - 1].compareTo(0xbc.toByte()) != 0)
-        throw Exception("Errore nell'autenticazione del chip Utils.byteCompare(intAuthResp[intAuthResp.length - 1],0xcb")
+        throw CieSdkException(NfcError.CHIP_AUTH_ERROR)
     val ba888 = Utils.getRight(challengeResp.response, 4)
     val ba889 = Utils.getRight(rndIFD, 4)
     seq = Utils.appendByteArray(ba888, ba889)

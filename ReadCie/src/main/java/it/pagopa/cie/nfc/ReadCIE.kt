@@ -1,6 +1,7 @@
 package it.pagopa.cie.nfc
 
 import android.content.Context
+import it.pagopa.cie.cie.NfcError
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -19,7 +20,9 @@ internal class ReadCIE(
             try {
                 implementation!!.transmit(isoDepTimeout, pin)
             } catch (e: Exception) {
-                readingInterface.error(e.message.orEmpty())
+                readingInterface.error(NfcError.GENERAL_EXCEPTION.apply {
+                    this.msg = e.message.orEmpty()
+                })
             }
         }
     }
