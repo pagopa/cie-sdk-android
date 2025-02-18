@@ -2,7 +2,6 @@ package it.pagopa.cie.cie.commands
 
 import it.pagopa.cie.CieLogger
 import it.pagopa.cie.cie.ApduSecureMessageManager
-import it.pagopa.cie.cie.Asn1Tag
 import it.pagopa.cie.cie.CieSdkException
 import it.pagopa.cie.cie.NfcError
 import it.pagopa.cie.cie.OnTransmit
@@ -69,39 +68,6 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
     }
 
     /**
-     *
-     * @param pin verifica il pin dell'utente
-     * @return restituisce il numero di tentativi possibili
-     * @throws Exception
-     */
-    @Throws(Exception::class)
-    private fun verifyPin(pin: String): Int {
-        CieLogger.i("COMMANDS", "verifyPin()")
-        if (pin.length != 8) {
-            throw CieSdkException(NfcError.PIN_REGEX_NOT_VALID)
-        }
-        val verifyPIN = byteArrayOf(0x00, 0x20, 0x00, 0x81.toByte())
-        val secureMessageManager = ApduSecureMessageManager(onTransmit)
-        val pairBack = secureMessageManager.sendApduSM(
-            seq,
-            sessionEncryption,
-            sessMac,
-            verifyPIN,
-            pin.toByteArray(),
-            null
-        )
-        seq = pairBack.first
-        val response = pairBack.second
-        val nt = Utils.bytesToHex(response.swByte)
-        return when {
-            nt.equals("9000", ignoreCase = true) -> 3
-            nt.equals("ffc2", ignoreCase = true) -> 2
-            nt.equals("ffc1", ignoreCase = true) -> 1
-            else -> 0
-        }
-    }
-
-    /**
      * inizializza un canale sicuro tra carta e dispositivo passando il pin dell'utente
      * @param pin
      * @throws Exception
@@ -112,11 +78,11 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
         this.selectCie()
         this.initDHParam()
         if (dappPubKey.isEmpty())
-            readDappPubKey()
+            this.readDappPubKey()
         this.initExtAuthKeyParam()
         this.dhKeyExchange()
         this.dApp()
-        val numberOfAttempts = verifyPin(pin)
+        val numberOfAttempts = this.verifyPin(pin)
         if (numberOfAttempts < 3) {
             if (numberOfAttempts == 0)
                 throw CieSdkException(NfcError.PIN_BLOCKED)
@@ -125,35 +91,6 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
                     this.numberOfAttempts = numberOfAttempts
                 })
         }
-    }
-
-
-    /**
-     * recupera la chiave per la Internal Authentication
-     * @throws Exception
-     */
-    @Throws(Exception::class)
-    private fun readDappPubKey() {
-        CieLogger.i("Command", "readDappPubKey()")
-        val readFileManager = ReadFileManager(onTransmit)
-        val dappKey: ByteArray = readFileManager.readFile(0x1004)
-        dappModule = byteArrayOf()
-        //selectAidCie()
-        val asn1 = Asn1Tag.parse(dappKey, false)
-        dappModule = asn1!!.child(0).data
-        if (dappModule.isNotEmpty())
-            CieLogger.i("dappModule", "${dappModule[0].toInt() == 0}")
-        else
-            CieLogger.i("dappModule", "is empty")
-        while (dappModule[0].toInt() == 0)
-            dappModule = Utils.getSub(dappModule, 1, dappModule.size - 1)
-        dappPubKey = asn1.child(1).data
-        if (dappPubKey.isNotEmpty())
-            CieLogger.i("dappPubKey", "${dappPubKey[0].toInt() == 0}")
-        else
-            CieLogger.i("dappPubKey", "is empty")
-        while (dappPubKey[0].toInt() == 0)
-            dappPubKey = Utils.getSub(dappPubKey, 1, dappPubKey.size - 1)
     }
 
     @Throws(Exception::class)

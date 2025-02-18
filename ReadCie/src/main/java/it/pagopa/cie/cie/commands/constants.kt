@@ -1,5 +1,7 @@
 package it.pagopa.cie.cie.commands
 
+internal val ciePinRegex = Regex("^[0-9]{8}$")
+
 internal val defModule = byteArrayOf(
     0xba.toByte(),
     0x28,
