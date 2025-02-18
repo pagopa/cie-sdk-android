@@ -13,10 +13,12 @@ import it.pagopa.cie.network.IdpNetworkCall
 import it.pagopa.cie.network.NetworkCallback
 import it.pagopa.cie.nfc.BaseReadCie
 import it.pagopa.cie.nfc.BaseReadCie.FunInterfaceStatus
-import it.pagopa.cie.nfc.NfcReading
+import it.pagopa.cie.nfc.NfcEvents
 import it.pagopa.cie.nfc.ReadCIE
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 
 class CieSDK private constructor() {
     private var context: Context? = null
@@ -56,27 +58,29 @@ class CieSDK private constructor() {
     @Throws(Exception::class)
     fun startReading(
         isoDepTimeout: Int,
-        nfcListener: NfcReading,
+        nfcListener: NfcEvents,
         callback: NetworkCallback
     ) {
         if (!::ciePin.isInitialized)
             throw Exception("You must call setPin before start Reading CIE")
         if (this.context == null)
             throw Exception("Context not initialized well, is null..")
-        val scope = CoroutineScope(Dispatchers.IO)
+        val job = Job()
+        val scope = CoroutineScope(Dispatchers.IO + job + SupervisorJob())
         readCie = ReadCIE(
             this.context!!,
             ciePin
         )
+        if (this@CieSDK::idpNetworkCall.isInitialized)
+            idpNetworkCall.withReadCieJob(job)
+        else
+            throw Exception("You never call withUrl method to initialize the header!!")
         readCie?.read(scope, isoDepTimeout, nfcListener, object : BaseReadCie.ReadingCieInterface {
             override fun onTransmit(value: Boolean) {}
             override fun backResource(action: BaseReadCie.FunInterfaceResource<ByteArray>) {
                 if (action.status == FunInterfaceStatus.SUCCESS) {
                     CieLogger.i(tag, "CALLING REPOSITORY with ${action.data}")
-                    if (this@CieSDK::idpNetworkCall.isInitialized)
-                        idpNetworkCall.withCallback(callback) callWith action.data!!
-                    else
-                        throw Exception("You never call withUrl method to initialize the header!!")
+                    idpNetworkCall.withCallback(callback) callWith action.data!!
                 } else {
                     CieLogger.e(
                         tag,

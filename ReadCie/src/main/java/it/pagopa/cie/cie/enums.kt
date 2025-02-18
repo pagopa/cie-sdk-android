@@ -18,6 +18,11 @@ enum class NfcError(var numberOfAttempts: Int? = null, var msg: String? = null) 
     GENERAL_EXCEPTION
 }
 
+enum class NfcEvent {
+    ON_TAG_DISCOVERED,
+    ON_TAG_DISCOVERED_NOT_CIE
+}
+
 class CieSdkException(private val nfcError: NfcError) : Exception() {
     fun getError() = nfcError
 }

@@ -3,6 +3,7 @@ package it.pagopa.cie.network
 import it.pagopa.cie.CieLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flowOn
@@ -12,6 +13,9 @@ import java.net.UnknownHostException
 import javax.net.ssl.SSLProtocolException
 
 internal class IdpNetworkCall private constructor() {
+    private val job = Job()
+    private var readCieJob: Job? = null
+    private val myScope = CoroutineScope(Dispatchers.Default + job + SupervisorJob())
     private var idpCustomUrl: String? = null
     private lateinit var deepLinkInfo: DeepLinkInfo
     private lateinit var callback: NetworkCallback
@@ -26,7 +30,7 @@ internal class IdpNetworkCall private constructor() {
             put(authnRequest, deepLinkInfo.authnRequest)
             put(generaCodice, "1")
         }
-        CoroutineScope(Dispatchers.Default + SupervisorJob()).launch {
+        myScope.launch {
             try {
                 repo.callIdp(mapValues)
                     .flowOn(Dispatchers.IO)
@@ -48,14 +52,17 @@ internal class IdpNetworkCall private constructor() {
                                     val url =
                                         "${deepLinkInfo.nextUrl}?${deepLinkInfo.name}=${deepLinkInfo.value}&login=1&codice=$serverCode"
                                     callback.onSuccess(url)
+                                    this@IdpNetworkCall.cancelAllJobs()
                                 } else {
                                     CieLogger.e(callTag, "Missing server code")
                                     callback.onError(NetworkError.NO_SERVER_CODE)
+                                    this@IdpNetworkCall.cancelAllJobs()
                                 }
                             }
                         } else {
                             CieLogger.e(callTag, "RESPONSE NOT SUCCESSFULL")
                             callback.onError(NetworkError.AUTHENTICATION_ERROR)
+                            this@IdpNetworkCall.cancelAllJobs()
                         }
                     }
             } catch (e: Exception) {
@@ -63,6 +70,7 @@ internal class IdpNetworkCall private constructor() {
                     is SocketTimeoutException, is UnknownHostException -> {
                         CieLogger.e(callTag, "SocketTimeoutException or UnknownHostException")
                         callback.onError(NetworkError.NO_INTERNET_CONNECTION)
+                        this@IdpNetworkCall.cancelAllJobs()
                     }
 
                     is SSLProtocolException -> {
@@ -82,13 +90,17 @@ internal class IdpNetworkCall private constructor() {
                                     this.msg = it
                                 })
                             }
+                            this@IdpNetworkCall.cancelAllJobs()
                         }
 
                     }
 
-                    else -> callback.onError(NetworkError.GENERAL_ERROR.apply {
-                        this.msg = e.message.orEmpty()
-                    })
+                    else -> {
+                        callback.onError(NetworkError.GENERAL_ERROR.apply {
+                            this.msg = e.message.orEmpty()
+                        })
+                        this@IdpNetworkCall.cancelAllJobs()
+                    }
                 }
             }
         }
@@ -104,6 +116,15 @@ internal class IdpNetworkCall private constructor() {
 
     fun withCallback(callback: NetworkCallback) = apply {
         this.callback = callback
+    }
+
+    fun withReadCieJob(job: Job) {
+        this.readCieJob = job
+    }
+
+    fun cancelAllJobs(){
+        this.readCieJob?.cancel()
+        this.job.cancel()
     }
 
     companion object {

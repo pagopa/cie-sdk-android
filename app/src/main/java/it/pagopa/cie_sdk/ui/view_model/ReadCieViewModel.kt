@@ -9,9 +9,10 @@ import it.pagopa.cie.CieLogger
 import it.pagopa.cie.CieSDK
 import it.pagopa.cie.cie.CieSdkException
 import it.pagopa.cie.cie.NfcError
+import it.pagopa.cie.cie.NfcEvent
 import it.pagopa.cie.network.NetworkCallback
 import it.pagopa.cie.network.NetworkError
-import it.pagopa.cie.nfc.NfcReading
+import it.pagopa.cie.nfc.NfcEvents
 
 class ReadCieViewModel(
     private val cieSdk: CieSDK
@@ -44,14 +45,17 @@ class ReadCieViewModel(
     ) {
         try {
             cieSdk.setPin(pin)
-            cieSdk.startReading(10000, object : NfcReading {
-                override fun <T> read(element: T) {}
+            cieSdk.startReading(10000, object : NfcEvents {
                 override fun onTransmit(message: String) {
                     dialogMessage.value = message
                 }
 
                 override fun error(error: NfcError) {
                     errorMessage.value = error.msg ?: error.name
+                }
+
+                override fun event(event: NfcEvent) {
+                    dialogMessage.value = event.name
                 }
             }, object : NetworkCallback {
                 override fun onSuccess(url: String) {

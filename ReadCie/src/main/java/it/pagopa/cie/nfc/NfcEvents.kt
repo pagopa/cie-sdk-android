@@ -1,9 +1,10 @@
 package it.pagopa.cie.nfc
 
 import it.pagopa.cie.cie.NfcError
+import it.pagopa.cie.cie.NfcEvent
 
-internal interface NfcReading {
+interface NfcEvents {
     fun onTransmit(message: String)
-    fun <T> read(element: T)
     fun error(error: NfcError)
+    fun event(event: NfcEvent)
 }

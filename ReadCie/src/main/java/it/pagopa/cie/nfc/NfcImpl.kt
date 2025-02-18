@@ -22,11 +22,14 @@ internal class NfcImpl private constructor() : BaseNfcImpl() {
         this.adapter = NfcAdapter.getDefaultAdapter(context)
     }
 
-    override fun connect(isoDepTimeout: Int, actionDone: () -> Unit) {
+    override fun connect(isoDepTimeout: Int,
+                         onTagDiscovered: () -> Unit,
+                         actionDone: () -> Unit) {
         val activity = context.findActivity()
         try {
             adapter?.enableReaderMode(
                 activity, {
+                    onTagDiscovered.invoke()
                     if (isoDep == null)
                         isoDep = IsoDep.get(it)
                     isoDep?.timeout = isoDepTimeout

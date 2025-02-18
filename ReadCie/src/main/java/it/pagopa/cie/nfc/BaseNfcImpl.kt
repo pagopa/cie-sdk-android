@@ -4,11 +4,20 @@ import it.pagopa.cie.cie.ReadCie
 
 internal abstract class BaseNfcImpl {
     lateinit var readingInterface: NfcReading
-    abstract fun connect(isoDepTimeout: Int, actionDone: () -> Unit)
+    abstract fun connect(
+        isoDepTimeout: Int,
+        onTagDiscovered: () -> Unit,
+        actionDone: () -> Unit
+    )
+
     abstract val readCie: ReadCie
     abstract fun disconnect()
-    fun transmit(isoDepTimeout: Int, pin: String) {
-        connect(isoDepTimeout) {
+    fun transmit(
+        isoDepTimeout: Int,
+        pin: String,
+        onTagDiscovered: () -> Unit,
+    ) {
+        connect(isoDepTimeout, onTagDiscovered) {
             readingInterface.onTransmit("connected")
             readCie.read(pin)
         }

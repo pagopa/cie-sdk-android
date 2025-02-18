@@ -2,6 +2,7 @@ package it.pagopa.cie.nfc
 
 import it.pagopa.cie.CieLogger
 import it.pagopa.cie.cie.NfcError
+import it.pagopa.cie.cie.NfcEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -19,7 +20,7 @@ abstract class BaseReadCie(
     fun read(
         scope: CoroutineScope,
         isoDepTimeout: Int,
-        nfcListener: NfcReading,
+        nfcListener: NfcEvents,
         readingInterface: ReadingCieInterface
     ) {
         scope.launch {
@@ -32,22 +33,26 @@ abstract class BaseReadCie(
                 }
 
                 override fun <T> read(element: T) {
-                    nfcListener.read(element)
                     readingInterface.backResource(FunInterfaceResource.success(element as ByteArray))
                 }
 
                 override fun error(error: NfcError) {
                     nfcListener.error(error)
+                    if (error == NfcError.NOT_A_CIE)
+                        nfcListener.event(NfcEvent.ON_TAG_DISCOVERED_NOT_CIE)
                     readingInterface.backResource(FunInterfaceResource.error(error))
                 }
-            })
+            }) {
+                nfcListener.event(NfcEvent.ON_TAG_DISCOVERED)
+            }
         }
     }
 
-    abstract suspend fun workNfc(
+    internal abstract suspend fun workNfc(
         isoDepTimeout: Int,
         challenge: String,
-        readingInterface: NfcReading
+        readingInterface: NfcReading,
+        onTagDiscovered: () -> Unit
     )
 
     data class FunInterfaceResource<out T>(
