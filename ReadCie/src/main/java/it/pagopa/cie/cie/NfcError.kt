@@ -4,7 +4,7 @@ enum class NfcError(var numberOfAttempts: Int? = null, var msg: String? = null) 
     NOT_A_CIE,
     PIN_REGEX_NOT_VALID,
     PIN_BLOCKED,
-    PIN_NOT_RIGHT,
+    WRONG_PIN,
     APDU_ERROR,
     VERIFY_SM_DATA_OBJECT_LENGTH,
     VERIFY_SM_MAC_LENGTH,

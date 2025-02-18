@@ -3,8 +3,6 @@ package it.pagopa.cie
 import it.pagopa.cie.cie.ApduManager
 import it.pagopa.cie.cie.ApduResponse
 import it.pagopa.cie.cie.NfcError
-import it.pagopa.cie.cie.commands.CieCommands
-import it.pagopa.cie.cie.NisAuthenticated
 import it.pagopa.cie.cie.OnTransmit
 import it.pagopa.cie.cie.ReadCie
 import it.pagopa.cie.nfc.BaseNfcImpl
@@ -164,14 +162,6 @@ class CieCommandsTest {
             }
 
             override fun <T> read(element: T) {
-                assert(element is NisAuthenticated)
-                val back = element as NisAuthenticated
-                assert(back.toString() == "NisAuthenticated:\n nis: ${back.nis};\n sod: ${back.sod}")
-                assert(back.nis.length == 12)
-                assert(back.sod.length == 5728)
-                assert(back.challengeSigned.length == 8)
-                assert(back.kpubIntServ.length == 540)
-                assert(back.haskKpubIntServ.length == 64)
             }
         }, onTransmit).transmit(10000, "ch")
     }

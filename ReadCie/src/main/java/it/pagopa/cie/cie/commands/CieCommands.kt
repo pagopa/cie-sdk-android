@@ -123,7 +123,7 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
             if (numberOfAttempts == 0)
                 throw CieSdkException(NfcError.PIN_BLOCKED)
             else
-                throw CieSdkException(NfcError.PIN_NOT_RIGHT.apply {
+                throw CieSdkException(NfcError.WRONG_PIN.apply {
                     this.numberOfAttempts = numberOfAttempts
                 })
         }
