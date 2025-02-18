@@ -5,7 +5,7 @@ import it.pagopa.cie.nfc.Utils
 import kotlin.experimental.or
 import kotlin.math.min
 
-class ApduManager(private val onTransmit: OnTransmit) {
+internal class ApduManager(private val onTransmit: OnTransmit) {
     @Throws(Exception::class)
     fun sendApdu(
         head: ByteArray,

@@ -2,6 +2,7 @@ package it.pagopa.cie.cie.commands
 
 import it.pagopa.cie.CieLogger
 import it.pagopa.cie.cie.ApduResponse
+import it.pagopa.cie.cie.ApduSecureMessageManager
 import it.pagopa.cie.cie.CieSdkException
 import it.pagopa.cie.cie.NfcError
 import it.pagopa.cie.nfc.RSA
@@ -73,17 +74,47 @@ internal fun CieCommands.dApp() {
         Utils.asn1Tag(psoVerifyAlgo, 0x80),
         Utils.asn1Tag(byteArrayOf(0x84.toByte()), 0x83)
     )
-    sendApduSM(selectKey, dataTmp, null)
+    val secureMessageManager = ApduSecureMessageManager(onTransmit)
+    seq = secureMessageManager.sendApduSM(
+        seq,
+        sessionEncryption,
+        sessMac,
+        selectKey,
+        dataTmp,
+        null
+    ).first
 
     val verifyCert = byteArrayOf(0x00, 0x2A, 0x00, 0xAE.toByte())
-    sendApduSM(verifyCert, cert, null)
+    seq = secureMessageManager.sendApduSM(
+        seq,
+        sessionEncryption,
+        sessMac,
+        verifyCert,
+        cert,
+        null
+    ).first
     val setCHR = byteArrayOf(0x00, 0x22, 0x81.toByte(), 0xA4.toByte())
-    sendApduSM(setCHR, Utils.asn1Tag(CHR, 0x83), null)
+    seq = secureMessageManager.sendApduSM(
+        seq,
+        sessionEncryption,
+        sessMac,
+        setCHR,
+        Utils.asn1Tag(CHR, 0x83),
+        null
+    ).first
 
     val getChallenge = byteArrayOf(0x00.toByte(), 0x84.toByte(), 0x00.toByte(), 0x00.toByte())
     val chLen = byteArrayOf(8)
-    val challengeResp = sendApduSM(getChallenge, byteArrayOf(), chLen)
-
+    val pairBack = secureMessageManager.sendApduSM(
+        seq,
+        sessionEncryption,
+        sessMac,
+        getChallenge,
+        byteArrayOf(),
+        chLen
+    )
+    seq = pairBack.first
+    val challengeResp = pairBack.second
     val padSize = module.size - shaSize - 2
     val PRND = Utils.getRandomByte(padSize)
     var toHash = byteArrayOf()
@@ -112,17 +143,41 @@ internal fun CieCommands.dApp() {
     chResponse = Utils.appendByteArray(chResponse, signResp)
     val resp: ApduResponse?
     val extAuth = byteArrayOf(0x00, 0x82.toByte(), 0x00, 0x00)
-    sendApduSM(extAuth, chResponse, null)
+    seq = secureMessageManager.sendApduSM(
+        seq,
+        sessionEncryption,
+        sessMac,
+        extAuth,
+        chResponse,
+        null
+    ).first
     val intAuth = byteArrayOf(0x00, 0x22, 0x41, 0xa4.toByte())
     val val82 = byteArrayOf(0x82.toByte())
     val pKdScheme = byteArrayOf(0x9b.toByte())
 
     val temp: ByteArray =
         Utils.appendByteArray(Utils.asn1Tag(val82, 0x84), Utils.asn1Tag(pKdScheme, 0x80))
-    sendApduSM(intAuth, temp, null)
+
+    seq = secureMessageManager.sendApduSM(
+        seq,
+        sessionEncryption,
+        sessMac,
+        intAuth,
+        temp,
+        null
+    ).first
     val rndIFD = Utils.getRandomByte(8)
     val giveRandom = byteArrayOf(0x00, 0x88.toByte(), 0x00, 0x00)
-    resp = sendApduSM(giveRandom, rndIFD, null)
+    val pair = secureMessageManager.sendApduSM(
+        seq,
+        sessionEncryption,
+        sessMac,
+        giveRandom,
+        rndIFD,
+        null
+    )
+    seq = pair.first
+    resp = pair.second
 
     val SN_ICC = Utils.getSub(resp.response, 0, 8)
     val intAuthResp: ByteArray
