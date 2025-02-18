@@ -47,7 +47,7 @@ internal fun CieCommands.initDHParam() {
         0x00
     )
     resp =  manager.sendApdu(getDHDoup, getDHDuopData_p, null, "init dh param")
-    asn1Tag = Asn1Tag.Companion.parse(resp.response, false)
+    asn1Tag = Asn1Tag.parse(resp.response, false)
     dhP = asn1Tag!!.child(0).child(0).child(0).data
     val getDHDuopData_q = byteArrayOf(
         0x4D,
@@ -64,7 +64,7 @@ internal fun CieCommands.initDHParam() {
         0x00
     )
     resp =  manager.sendApdu(getDHDoup, getDHDuopData_q, null, "init dh param")
-    asn1Tag = Asn1Tag.Companion.parse(resp.response, false)
+    asn1Tag = Asn1Tag.parse(resp.response, false)
     dhQ = asn1Tag!!.child(0).child(0).child(0).data
 }
 
@@ -97,7 +97,7 @@ internal fun CieCommands.dhKeyExchange() {
     val GET_DATA = byteArrayOf(0x00, 0xcb.toByte(), 0x3f, 0xff.toByte())
     val GET_DATA_Data = byteArrayOf(0x4d, 0x04, 0xa6.toByte(), 0x02, 0x91.toByte(), 0x00)
     val respAsn =  manager.sendApdu(GET_DATA, GET_DATA_Data, null, "GET DATA")
-    val asn1 = Asn1Tag.Companion.parse(respAsn.response, true)
+    val asn1 = Asn1Tag.parse(respAsn.response, true)
     dhICCpubKey = asn1!!.child(0).data
     val secret = rsa.encrypt(dhICCpubKey)
 

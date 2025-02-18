@@ -1,12 +1,12 @@
 package it.pagopa.cie.cie.commands
 
 import it.pagopa.cie.CieLogger
-import it.pagopa.cie.cie.ApduManager
 import it.pagopa.cie.cie.ApduSecureMessageManager
 import it.pagopa.cie.cie.Asn1Tag
 import it.pagopa.cie.cie.CieSdkException
 import it.pagopa.cie.cie.NfcError
 import it.pagopa.cie.cie.OnTransmit
+import it.pagopa.cie.cie.ReadFileManager
 import it.pagopa.cie.hexStringToByteArray
 import it.pagopa.cie.nfc.Utils
 
@@ -19,21 +19,11 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
     internal var dappPubKey: ByteArray = byteArrayOf()
     internal var dappModule: ByteArray = byteArrayOf()
     internal var caModule: ByteArray = byteArrayOf()
-    internal var caPubExp: ByteArray = byteArrayOf()
-    internal var baExtAuthPrivExp: ByteArray = byteArrayOf()
     internal var caCar: ByteArray = byteArrayOf()
     internal var caAid: ByteArray = byteArrayOf()
-    internal var caPrivExp: ByteArray = byteArrayOf()
     internal var seq: ByteArray = byteArrayOf()
     internal var dhpubKey: ByteArray = byteArrayOf()
     internal var dhICCpubKey: ByteArray = byteArrayOf()
-    private fun hiByte(b: Int): Byte {
-        return (b shr 8 and 0xFF).toByte()
-    }
-
-    private fun loByte(b: Int): Byte {
-        return b.toByte()
-    }
 
     /**
      * @return il certificato dell'utente
@@ -42,7 +32,15 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
     @Throws(Exception::class)
     fun readCertCie(): ByteArray {
         CieLogger.i("COMMAND", "readCieCertificate()")
-        return readFileSM(0x1003)
+        val readFileManager = ReadFileManager(onTransmit)
+        val pairBack = readFileManager.readFileSM(
+            0x1003,
+            seq,
+            sessionEncryption,
+            sessMac
+        )
+        seq = pairBack.first
+        return pairBack.second
     }
 
     @Throws(Exception::class)
@@ -137,7 +135,8 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
     @Throws(Exception::class)
     private fun readDappPubKey() {
         CieLogger.i("Command", "readDappPubKey()")
-        val dappKey: ByteArray = readFile(0x1004)
+        val readFileManager = ReadFileManager(onTransmit)
+        val dappKey: ByteArray = readFileManager.readFile(0x1004)
         dappModule = byteArrayOf()
         //selectAidCie()
         val asn1 = Asn1Tag.parse(dappKey, false)
@@ -185,109 +184,5 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
         seq = pairBack.first
         val response = pairBack.second
         return response.response
-    }
-
-    @Throws(Exception::class)
-    private fun readFile(id: Int): ByteArray {
-        var content = byteArrayOf()
-        val selectFile = byteArrayOf(0x00, 0xa4.toByte(), 0x02, 0x04)
-        val fileId = byteArrayOf(hiByte(id), loByte(id))
-        val apduManager = ApduManager(onTransmit)
-        apduManager.sendApdu(selectFile, fileId, null, "SELECT FOR READ FILE")
-        var cnt = 0
-        val chunk = 256
-        while (true) {
-            val readFile = byteArrayOf(0x00, 0xb0.toByte(), hiByte(cnt), loByte(cnt))
-            val response =
-                apduManager.sendApdu(
-                    readFile,
-                    byteArrayOf(),
-                    byteArrayOf(chunk.toByte()),
-                    "reading file.."
-                )
-            var chn = response.response
-            if ((response.swInt shr 8).toByte().compareTo(0x6c.toByte()) == 0) {
-                CieLogger.i("ENTERING", "response.swInt shr 8!!")
-                val le = Utils.unsignedToBytes(response.swInt and 0xff)
-                val respApdu =
-                    apduManager.sendApdu(
-                        readFile,
-                        byteArrayOf(),
-                        byteArrayOf(le),
-                        "response from reading"
-                    )
-                chn = respApdu.response
-            }
-            if (response.swHex == "9000") {
-                content = Utils.appendByteArray(content, chn)
-                cnt += chn.size
-            } else {
-                if (response.swHex == "0x6282")
-                    content = Utils.appendByteArray(content, chn)
-                break
-            }
-        }
-        return content
-    }
-
-    @Throws(Exception::class)
-    private fun readFileSM(id: Int): ByteArray {
-        CieLogger.i("ON COMMAND", "readfileSM()")
-        val secureMessageManager = ApduSecureMessageManager(onTransmit)
-        var content = byteArrayOf()
-        val selectFile = byteArrayOf(0x00, 0xa4.toByte(), 0x02, 0x04)
-        val fileId = byteArrayOf(hiByte(id), loByte(id))
-        seq = secureMessageManager.sendApduSM(
-            seq,
-            sessionEncryption,
-            sessMac,
-            selectFile,
-            fileId,
-            null
-        ).first
-        var cnt = 0
-        var chunk = 256
-
-        while (true) {
-            val readFile = byteArrayOf(0x00, 0xb0.toByte(), hiByte(cnt), loByte(cnt))
-            val pairBack = secureMessageManager.sendApduSM(
-                seq,
-                sessionEncryption,
-                sessMac,
-                readFile,
-                byteArrayOf(),
-                byteArrayOf(chunk.toByte())
-            )
-            seq = pairBack.first
-            val response = pairBack.second
-            var chn = response.response
-            if ((response.swInt shr 8).toByte().compareTo(0x6c.toByte()) == 0) {
-                val le = Utils.unsignedToBytes(response.swInt and 0xff)
-                val pairBack = secureMessageManager.sendApduSM(
-                    seq,
-                    sessionEncryption,
-                    sessMac,
-                    readFile,
-                    byteArrayOf(),
-                    byteArrayOf(le)
-                )
-                seq = pairBack.first
-                val respApdu = pairBack.second
-                chn = respApdu.response
-            }
-            if (response.swHex == "9000") {
-                content = Utils.appendByteArray(content, chn)
-                cnt += chn.size
-                chunk = 256
-            } else {
-                if (response.swHex == "6282") {
-                    content = Utils.appendByteArray(content, chn)
-                } else if (response.swHex != "6b00") {
-                    return content
-                }
-                break
-            }
-        }
-        return content
     }
 }
