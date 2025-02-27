@@ -1,5 +1,6 @@
 package it.pagopa.cie.nfc
 
+import it.pagopa.cie.cie.NfcEvent
 import it.pagopa.cie.cie.ReadCie
 
 internal abstract class BaseNfcImpl {
@@ -18,7 +19,7 @@ internal abstract class BaseNfcImpl {
         onTagDiscovered: () -> Unit,
     ) {
         connect(isoDepTimeout, onTagDiscovered) {
-            readingInterface.onTransmit("connected")
+            readingInterface.onTransmit(NfcEvent.CONNECTED)
             readCie.read(pin)
         }
     }

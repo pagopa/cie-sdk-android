@@ -25,10 +25,10 @@ abstract class BaseReadCie(
     ) {
         scope.launch {
             workNfc(isoDepTimeout, pin.orEmpty(), object : NfcReading {
-                override fun onTransmit(message: String) {
-                    CieLogger.i("message from CIE", message)
+                override fun onTransmit(message: NfcEvent) {
+                    CieLogger.i("message from CIE", message.name)
                     nfcListener.onTransmit(message)
-                    if (message == "connected")
+                    if (message == NfcEvent.CONNECTED)
                         readingInterface.onTransmit(true)
                 }
 

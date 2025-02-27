@@ -6,6 +6,7 @@ import it.pagopa.cie.cie.ApduResponse
 import it.pagopa.cie.cie.ApduSecureMessageManager
 import it.pagopa.cie.cie.CieSdkException
 import it.pagopa.cie.cie.NfcError
+import it.pagopa.cie.cie.NfcEvent
 import it.pagopa.cie.nfc.RSA
 import it.pagopa.cie.nfc.Sha256
 import it.pagopa.cie.nfc.Utils
@@ -81,7 +82,8 @@ internal fun CieCommands.dApp() {
         sessMac,
         selectKey,
         dataTmp,
-        null
+        null,
+        NfcEvent.SIGN1_SELECT
     ).first
     val verifyCert = byteArrayOf(0x00, 0x2A, 0x00, 0xAE.toByte())
     seq = secureMessageManager.sendApduSM(
@@ -90,7 +92,8 @@ internal fun CieCommands.dApp() {
         sessMac,
         verifyCert,
         cert,
-        null
+        null,
+        NfcEvent.SIGN1_VERIFY_CERT
     ).first
     val setCHR = byteArrayOf(0x00, 0x22, 0x81.toByte(), 0xA4.toByte())
     CieLogger.i("SEQ BEFORE:", Base64.encodeToString(seq, Base64.DEFAULT))
@@ -102,7 +105,8 @@ internal fun CieCommands.dApp() {
         sessMac,
         setCHR,
         asn1,
-        null
+        null,
+        NfcEvent.SET_CHALLENGE_RESPONSE
     )
     seq = appPair.first
     CieLogger.i("SEQ AFTER:", Base64.encodeToString(seq, Base64.DEFAULT))
@@ -115,7 +119,8 @@ internal fun CieCommands.dApp() {
         sessMac,
         getChallenge,
         byteArrayOf(),
-        chLen
+        chLen,
+        NfcEvent.GET_CHALLENGE_RESPONSE
     )
     seq = pairBack.first
     val challengeResp = pairBack.second
@@ -153,7 +158,8 @@ internal fun CieCommands.dApp() {
         sessMac,
         extAuth,
         chResponse,
-        null
+        null,
+        NfcEvent.EXTERNAL_AUTHENTICATION
     ).first
     val intAuth = byteArrayOf(0x00, 0x22, 0x41, 0xa4.toByte())
     val val82 = byteArrayOf(0x82.toByte())
@@ -168,7 +174,8 @@ internal fun CieCommands.dApp() {
         sessMac,
         intAuth,
         temp,
-        null
+        null,
+        NfcEvent.INTERNAL_AUTHENTICATION
     ).first
     val rndIFD = Utils.getRandomByte(8)
     val giveRandom = byteArrayOf(0x00, 0x88.toByte(), 0x00, 0x00)
@@ -178,7 +185,8 @@ internal fun CieCommands.dApp() {
         sessMac,
         giveRandom,
         rndIFD,
-        null
+        null,
+        NfcEvent.GIVE_RANDOM
     )
     seq = pair.first
     resp = pair.second

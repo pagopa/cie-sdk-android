@@ -13,7 +13,7 @@ internal class ReadFileManager(private val onTransmit: OnTransmit) {
         val selectFile = byteArrayOf(0x00, 0xa4.toByte(), 0x02, 0x04)
         val fileId = byteArrayOf(hiByte(id), loByte(id))
         val apduManager = ApduManager(onTransmit)
-        apduManager.sendApdu(selectFile, fileId, null, "SELECT FOR READ FILE")
+        apduManager.sendApdu(selectFile, fileId, null, NfcEvent.SELECT_FOR_READ_FILE)
         var cnt = 0
         val chunk = 256
         while (true) {
@@ -23,19 +23,18 @@ internal class ReadFileManager(private val onTransmit: OnTransmit) {
                     readFile,
                     byteArrayOf(),
                     byteArrayOf(chunk.toByte()),
-                    "reading file.."
+                    NfcEvent.READ_FILE
                 )
             var chn = response.response
             if ((response.swInt shr 8).toByte().compareTo(0x6c.toByte()) == 0) {
                 CieLogger.i("ENTERING", "response.swInt shr 8!!")
                 val le = Utils.unsignedToBytes(response.swInt and 0xff)
-                val respApdu =
-                    apduManager.sendApdu(
-                        readFile,
-                        byteArrayOf(),
-                        byteArrayOf(le),
-                        "response from reading"
-                    )
+                val respApdu = apduManager.sendApdu(
+                    readFile,
+                    byteArrayOf(),
+                    byteArrayOf(le),
+                    NfcEvent.READ_FILE
+                )
                 chn = respApdu.response
             }
             if (response.swHex == "9000") {
@@ -71,7 +70,8 @@ internal class ReadFileManager(private val onTransmit: OnTransmit) {
             sessMac,
             selectFile,
             fileId,
-            null
+            null,
+            NfcEvent.READ_FILE_SM
         ).first
         var cnt = 0
         var chunk = 256
@@ -84,7 +84,8 @@ internal class ReadFileManager(private val onTransmit: OnTransmit) {
                 sessMac,
                 readFile,
                 byteArrayOf(),
-                byteArrayOf(chunk.toByte())
+                byteArrayOf(chunk.toByte()),
+                NfcEvent.READ_FILE_SM
             )
             seq = pairBack.first
             val response = pairBack.second
@@ -97,7 +98,8 @@ internal class ReadFileManager(private val onTransmit: OnTransmit) {
                     sessMac,
                     readFile,
                     byteArrayOf(),
-                    byteArrayOf(le)
+                    byteArrayOf(le),
+                    NfcEvent.READ_FILE_SM
                 )
                 seq = pairBack.first
                 val respApdu = pairBack.second

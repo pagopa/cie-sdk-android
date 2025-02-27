@@ -1,6 +1,7 @@
 package it.pagopa.cie.cie.key_store
 
 import it.pagopa.cie.CieLogger
+import it.pagopa.cie.cie.NfcEvent
 import it.pagopa.cie.cie.ReadCie
 import java.security.*
 
@@ -29,7 +30,7 @@ internal open class CieSignatureImpl : SignatureSpi() {
     }
 
     @Throws(NullPointerException::class)
-    override fun engineSign(): ByteArray? = ReadCie.cieCommands?.sign(byteToSign)
+    override fun engineSign(): ByteArray? = ReadCie.cieCommands?.sign(byteToSign, NfcEvent.SIGN)
 
     override fun engineVerify(bytes: ByteArray): Boolean {
         return false

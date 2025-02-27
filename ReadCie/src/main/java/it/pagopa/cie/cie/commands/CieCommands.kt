@@ -4,6 +4,7 @@ import it.pagopa.cie.CieLogger
 import it.pagopa.cie.cie.ApduSecureMessageManager
 import it.pagopa.cie.cie.CieSdkException
 import it.pagopa.cie.cie.NfcError
+import it.pagopa.cie.cie.NfcEvent
 import it.pagopa.cie.cie.OnTransmit
 import it.pagopa.cie.cie.ReadFileManager
 import it.pagopa.cie.hexStringToByteArray
@@ -47,19 +48,19 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
         CieLogger.i("COMMAND", "getServiceID()")
         this.onTransmit.sendCommand(
             "00A4040C0DA0000000308000000009816001".hexStringToByteArray(),
-            "Service ID 1"
+            NfcEvent.SELECT_ID_1
         )
         this.onTransmit.sendCommand(
             "00A4040406A00000000039".hexStringToByteArray(),
-            "Service ID 2"
+            NfcEvent.SELECT_ID_2
         )
         this.onTransmit.sendCommand(
             "00a40204021001".hexStringToByteArray(),
-            "Service ID 3"
+            NfcEvent.SELECT_ID_3
         )
         val response = this.onTransmit.sendCommand(
             "00b000000c".hexStringToByteArray(),
-            "Service ID GET RESPONSE"
+            NfcEvent.SELECT_ID_GET_RESPONSE
         )
         if (response.swHex != "9000") {
             throw CieSdkException(NfcError.NOT_A_CIE)
@@ -94,7 +95,7 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
     }
 
     @Throws(Exception::class)
-    fun sign(dataToSign: ByteArray): ByteArray? {
+    fun sign(dataToSign: ByteArray, event: NfcEvent): ByteArray? {
         CieLogger.i("COMMAND", "SIGN")
         val setKey = byteArrayOf(0x00, 0x22, 0x41, 0xA4.toByte())
         val val02 = byteArrayOf(0x02)
@@ -107,7 +108,8 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
             sessMac,
             setKey,
             data,
-            null
+            null,
+            event
         ).first
         val signApdu = byteArrayOf(0x00, 0x88.toByte(), 0x00, 0x00)
         val pairBack = secureMessageManager.sendApduSM(
@@ -116,7 +118,8 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
             sessMac,
             signApdu,
             dataToSign,
-            null
+            null,
+            event
         )
         seq = pairBack.first
         val response = pairBack.second

@@ -6,6 +6,7 @@ import android.nfc.TagLostException
 import android.nfc.tech.IsoDep
 import it.pagopa.cie.cie.ApduResponse
 import it.pagopa.cie.cie.NfcError
+import it.pagopa.cie.cie.NfcEvent
 import it.pagopa.cie.cie.OnTransmit
 import it.pagopa.cie.cie.ReadCie
 import it.pagopa.cie.cie.transmitLogic
@@ -69,8 +70,8 @@ internal class NfcImpl private constructor() : BaseNfcImpl() {
                 readingInterface.error(error)
             }
 
-            override fun sendCommand(apdu: ByteArray, message: String): ApduResponse {
-                readingInterface.onTransmit(message)
+            override fun sendCommand(apdu: ByteArray, nfcEvents: NfcEvent): ApduResponse {
+                readingInterface.onTransmit(nfcEvents)
                 val resp = isoDep?.transceive(apdu)!!
                 val (filteredByteArray, temp) = resp.transmitLogic()
                 return ApduResponse(filteredByteArray, temp)

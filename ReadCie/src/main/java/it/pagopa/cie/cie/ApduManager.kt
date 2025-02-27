@@ -11,7 +11,7 @@ internal class ApduManager(private val onTransmit: OnTransmit) {
         head: ByteArray,
         data: ByteArray,
         le: ByteArray?,
-        why: String
+        event: NfcEvent
     ): ApduResponse {
         var apdu = byteArrayOf()
         if (data.size > 255) {
@@ -26,11 +26,11 @@ internal class ApduManager(private val onTransmit: OnTransmit) {
                 apdu = Utils.appendByte(apdu, s.size.toByte())
                 apdu = Utils.appendByteArray(apdu, s)
                 if (le != null) apdu = Utils.appendByteArray(apdu, le)
-                val apduResponse: ApduResponse = onTransmit.sendCommand(apdu, why)
+                val apduResponse: ApduResponse = onTransmit.sendCommand(apdu, event)
                 if (apduResponse.swHex != "9000")
                     throw CieSdkException(NfcError.APDU_ERROR)
                 if (i == data.size)
-                    return getResp(apduResponse, why)
+                    return getResp(apduResponse, event)
             }
         } else {
             if (data.isNotEmpty()) {
@@ -41,13 +41,13 @@ internal class ApduManager(private val onTransmit: OnTransmit) {
                 apdu = Utils.appendByteArray(apdu, head)
             if (le != null)
                 apdu = Utils.appendByteArray(apdu, le)
-            val response: ApduResponse = onTransmit.sendCommand(apdu, why)
-            return getResp(response, why)
+            val response: ApduResponse = onTransmit.sendCommand(apdu, event)
+            return getResp(response, event)
         }
     }
 
     @VisibleForTesting
-    fun getResp(responseTmp: ApduResponse, why: String): ApduResponse {
+    fun getResp(responseTmp: ApduResponse, event: NfcEvent): ApduResponse {
         var responseTmpHere: ApduResponse = responseTmp
         var response: ApduResponse
         val resp: ByteArray = responseTmp.response
@@ -60,7 +60,7 @@ internal class ApduManager(private val onTransmit: OnTransmit) {
                 val ln: Byte = (sw and 0xff).toByte()
                 if (ln.toInt() != 0) {
                     val apdu: ByteArray = Utils.appendByte(apduGetRsp, ln)
-                    response = onTransmit.sendCommand(apdu, why)
+                    response = onTransmit.sendCommand(apdu, event)
                     elaborateResp = Utils.appendByteArray(elaborateResp, response.response)
                     return ApduResponse(
                         Utils.appendByteArray(
@@ -70,7 +70,7 @@ internal class ApduManager(private val onTransmit: OnTransmit) {
                     )
                 } else {
                     val apdu: ByteArray = Utils.appendByte(apduGetRsp, 0x00.toByte())
-                    response = onTransmit.sendCommand(apdu, why)
+                    response = onTransmit.sendCommand(apdu, event)
                     sw = response.swInt
                     elaborateResp = Utils.appendByteArray(elaborateResp, response.response)
                     responseTmpHere = response

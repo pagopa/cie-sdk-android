@@ -49,8 +49,8 @@ class ReadCieViewModel(
         try {
             cieSdk.setPin(pin)
             cieSdk.startReading(10000, object : NfcEvents {
-                override fun onTransmit(message: String) {
-                    dialogMessage.value = message
+                override fun onTransmit(message: NfcEvent) {
+                    dialogMessage.value = message.name
                 }
 
                 override fun error(error: NfcError) {

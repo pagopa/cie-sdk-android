@@ -1,5 +1,7 @@
 package it.pagopa.cie.cie.commands
 
+import it.pagopa.cie.cie.NfcEvent
+
 internal fun CieCommands.selectIAS(): ByteArray {
     return onTransmit.sendCommand(
         byteArrayOf(
@@ -21,7 +23,7 @@ internal fun CieCommands.selectIAS(): ByteArray {
             0x81.toByte(),
             0x60,
             0x01
-        ), "select IAS"
+        ), NfcEvent.SELECT_IAS
     ).response
 }
 
@@ -43,6 +45,6 @@ internal fun CieCommands.selectCie(): ByteArray {
             0x00,
             0x00,
             0x39
-        ), "Select CIE"
+        ), NfcEvent.SELECT_CIE
     ).response
 }

@@ -14,7 +14,8 @@ internal class ApduSecureMessageManager(private val onTransmit: OnTransmit) {
         sessMac: ByteArray,
         head: ByteArray,
         data: ByteArray,
-        le: ByteArray?
+        le: ByteArray?,
+        event: NfcEvent
     ): Pair<ByteArray, ApduResponse> {
         var seq = sequence
         var apduSm: ByteArray
@@ -29,8 +30,8 @@ internal class ApduSecureMessageManager(private val onTransmit: OnTransmit) {
             val pair = sm(seq, sessionEncryption, sessMac, apduSm)
             seq = pair.first
             apduSm = pair.second
-            var apduResponse = onTransmit.sendCommand(apduSm, "sending apduSM")
-            return getRespSM(seq, apduResponse, sessionEncryption, sessMac)
+            var apduResponse = onTransmit.sendCommand(apduSm, event)
+            return getRespSM(seq, apduResponse, sessionEncryption, sessMac, event)
         } else {
             var i = 0
             val cla = head[0]
@@ -58,8 +59,8 @@ internal class ApduSecureMessageManager(private val onTransmit: OnTransmit) {
                 val pair = sm(seq, sessionEncryption, sessMac, apduSm)
                 seq = pair.first
                 apduSm = pair.second
-                val response = onTransmit.sendCommand(apduSm, "sending apduSM")
-                val resp = getRespSM(seq, response, sessionEncryption, sessMac)
+                val response = onTransmit.sendCommand(apduSm, event)
+                val resp = getRespSM(seq, response, sessionEncryption, sessMac, event)
                 if (i == data.size) {
                     return resp
                 }
@@ -215,7 +216,8 @@ internal class ApduSecureMessageManager(private val onTransmit: OnTransmit) {
         sequence: ByteArray,
         responseTmp: ApduResponse,
         sessionEncryption: ByteArray,
-        sessMac: ByteArray
+        sessMac: ByteArray,
+        event: NfcEvent
     ): Pair<ByteArray, ApduResponse> {
         var responseTmp = responseTmp
         var elaboraResp = byteArrayOf()
@@ -227,7 +229,7 @@ internal class ApduSecureMessageManager(private val onTransmit: OnTransmit) {
                 val ln = (sw and 0xff).toByte()
                 if (ln.toInt() != 0) {
                     val apdu = byteArrayOf(0x00, 0xc0.toByte(), 0x00, 0x00, ln)
-                    responseTmp = onTransmit.sendCommand(apdu, "GETTING TEMPORARY SM RESP")
+                    responseTmp = onTransmit.sendCommand(apdu, event)
                     elaboraResp = Utils.appendByteArray(elaboraResp, responseTmp.response)
                     if (responseTmp.swInt == 0x9000)
                         break
@@ -238,7 +240,7 @@ internal class ApduSecureMessageManager(private val onTransmit: OnTransmit) {
                     val apdu = byteArrayOf(0x00, 0xc0.toByte(), 0x00, 0x00, 0x00)
                     responseTmp = onTransmit.sendCommand(
                         apdu,
-                        "GETTING TEMPORARY SM RESP with ln.toInt() ==0x"
+                        event
                     )
                     elaboraResp = Utils.appendByteArray(elaboraResp, responseTmp.response)
                 }

@@ -20,7 +20,33 @@ enum class NfcError(var numberOfAttempts: Int? = null, var msg: String? = null) 
 
 enum class NfcEvent {
     ON_TAG_DISCOVERED,
-    ON_TAG_DISCOVERED_NOT_CIE
+    ON_TAG_DISCOVERED_NOT_CIE,
+    CONNECTED,
+    SELECT_CIE,
+    SELECT_IAS,
+    SELECT_ID_1,
+    SELECT_ID_2,
+    SELECT_ID_3,
+    SELECT_ID_GET_RESPONSE,
+    SIGN,
+    SIGN_WITH_CIPHER,
+    SIGN1_SELECT,
+    SIGN1_VERIFY_CERT,
+    SET_CHALLENGE_RESPONSE,
+    GET_CHALLENGE_RESPONSE,
+    EXTERNAL_AUTHENTICATION,
+    INTERNAL_AUTHENTICATION,
+    GIVE_RANDOM,
+    DH_INIT_GET_G,
+    DH_INIT_GET_P,
+    DH_INIT_GET_Q,
+    SET_MSE,
+    D_H_KEY_EXCHANGE_GET_DATA,
+    INIT_EXTERNAL_AUTHENTICATION,
+    VERIFY_PIN,
+    SELECT_FOR_READ_FILE,
+    READ_FILE,
+    READ_FILE_SM
 }
 
 class CieSdkException(private val nfcError: NfcError) : Exception() {

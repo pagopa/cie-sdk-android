@@ -39,11 +39,20 @@ internal class CieKeyStore : KeyStoreSpi() {
         throw UnsupportedOperationException()
     }
 
-    override fun engineSetKeyEntry(alias: String?, key: Key?, password: CharArray?, chain: Array<out Certificate>?) {
+    override fun engineSetKeyEntry(
+        alias: String?,
+        key: Key?,
+        password: CharArray?,
+        chain: Array<out Certificate>?
+    ) {
         throw UnsupportedOperationException()
     }
 
-    override fun engineSetKeyEntry(alias: String?, key: ByteArray?, chain: Array<out Certificate>?) {
+    override fun engineSetKeyEntry(
+        alias: String?,
+        key: ByteArray?,
+        chain: Array<out Certificate>?
+    ) {
         throw UnsupportedOperationException()
     }
 
@@ -65,7 +74,7 @@ internal class CieKeyStore : KeyStoreSpi() {
 
     override fun engineLoad(stream: InputStream?, password: CharArray?) {
 
-        keyStore.load(null,null)
+        keyStore.load(null, null)
         val cfCSCA = CertificateFactory.getInstance("X.509")
         val certificatoUtente =
             cfCSCA.generateCertificate(stream) as X509Certificate
@@ -91,13 +100,18 @@ internal class CieKeyStore : KeyStoreSpi() {
         return CiePrivateKey(cert)
     }
 
-    override fun engineGetEntry(alias: String?, protParam: KeyStore.ProtectionParameter?): KeyStore.Entry {
+    override fun engineGetEntry(
+        alias: String?,
+        protParam: KeyStore.ProtectionParameter?
+    ): KeyStore.Entry {
         val key = engineGetKey(alias, null) as PrivateKey
         return KeyStore.PrivateKeyEntry(key, engineGetCertificateChain(alias))
     }
 
-    override fun engineEntryInstanceOf(alias: String, entryClass: Class<out KeyStore.Entry>): Boolean {
+    override fun engineEntryInstanceOf(
+        alias: String,
+        entryClass: Class<out KeyStore.Entry>
+    ): Boolean {
         return entryClass == KeyStore.PrivateKeyEntry::class.java
     }
-
 }

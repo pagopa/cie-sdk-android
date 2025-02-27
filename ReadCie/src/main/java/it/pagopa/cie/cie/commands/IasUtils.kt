@@ -6,6 +6,7 @@ import it.pagopa.cie.cie.ApduSecureMessageManager
 import it.pagopa.cie.cie.Asn1Tag
 import it.pagopa.cie.cie.CieSdkException
 import it.pagopa.cie.cie.NfcError
+import it.pagopa.cie.cie.NfcEvent
 import it.pagopa.cie.cie.ReadFileManager
 import it.pagopa.cie.nfc.Utils
 import kotlin.Exception
@@ -33,7 +34,7 @@ internal fun CieCommands.initExtAuthKeyParam() {
         0x80.toByte()
     )
     val response = ApduManager(onTransmit)
-        .sendApdu(getKeyDoup, getKeyDuopData, null, "getKeyDuopData")
+        .sendApdu(getKeyDoup, getKeyDuopData, null, NfcEvent.INIT_EXTERNAL_AUTHENTICATION)
     val asn1 = Asn1Tag.Companion.parse(response.response, true)
     caModule = asn1!!.child(0).child(0).childWithTagID(byteArrayOf(0x81.toByte()))!!.data
     //caPubExp = asn1.child(0).child(0).childWithTagID(byteArrayOf(0x82.toByte()))!!.data
@@ -91,7 +92,8 @@ internal fun CieCommands.verifyPin(pin: String): Int {
         sessMac,
         verifyPIN,
         pin.toByteArray(),
-        null
+        null,
+        NfcEvent.VERIFY_PIN
     )
     seq = pairBack.first
     val response = pairBack.second
