@@ -1,5 +1,6 @@
 package it.pagopa.cie.cie.commands
 
+import android.util.Base64
 import it.pagopa.cie.CieLogger
 import it.pagopa.cie.cie.ApduResponse
 import it.pagopa.cie.cie.ApduSecureMessageManager
@@ -82,7 +83,6 @@ internal fun CieCommands.dApp() {
         dataTmp,
         null
     ).first
-
     val verifyCert = byteArrayOf(0x00, 0x2A, 0x00, 0xAE.toByte())
     seq = secureMessageManager.sendApduSM(
         seq,
@@ -93,15 +93,20 @@ internal fun CieCommands.dApp() {
         null
     ).first
     val setCHR = byteArrayOf(0x00, 0x22, 0x81.toByte(), 0xA4.toByte())
-    seq = secureMessageManager.sendApduSM(
+    CieLogger.i("SEQ BEFORE:", Base64.encodeToString(seq, Base64.DEFAULT))
+    val asn1=Utils.asn1Tag(CHR, 0x83)
+    CieLogger.i("Utils.asn1Tag(CHR, 0x83):", Base64.encodeToString(asn1, Base64.DEFAULT))
+    val appPair = secureMessageManager.sendApduSM(
         seq,
         sessionEncryption,
         sessMac,
         setCHR,
-        Utils.asn1Tag(CHR, 0x83),
+        asn1,
         null
-    ).first
-
+    )
+    seq = appPair.first
+    CieLogger.i("SEQ AFTER:", Base64.encodeToString(seq, Base64.DEFAULT))
+    CieLogger.i("setCHR RESPONSE", "${appPair.second}")
     val getChallenge = byteArrayOf(0x00.toByte(), 0x84.toByte(), 0x00.toByte(), 0x00.toByte())
     val chLen = byteArrayOf(8)
     val pairBack = secureMessageManager.sendApduSM(

@@ -85,9 +85,7 @@ internal class ApduSecureMessageManager(private val onTransmit: OnTransmit) {
         if (apdu[4].toInt() != 0 && apdu.size > 5) {
             //encript la parte di dati
             val d1 = Utils.getIsoPad(Utils.getSub(apdu, 5, apdu[4].toInt()))
-            //CieIDSdkLogger.log("d1: "+ AppUtil.bytesToHex(d1));
             val enc = Algorithms.desEnc(keyEnc, d1)
-            //CieIDSdkLogger.log("enc: "+ AppUtil.bytesToHex(enc));
             doob = if (apdu[1].toInt() and 1 == 0) {
                 Utils.asn1Tag(Utils.appendByteArray(byteArrayOf(0x01), enc), 0x87)
             } else Utils.asn1Tag(enc, 0x85)

@@ -163,7 +163,9 @@ class CieCommandsTest {
 
             override fun <T> read(element: T) {
             }
-        }, onTransmit).transmit(10000, "ch")
+        }, onTransmit).transmit(10000, "ch"){
+
+        }
     }
 
     @Test
@@ -239,7 +241,9 @@ class CieCommandsTest {
 
             override fun error(error: NfcError) {
             }
-        }, onTransmitForException).transmit(1000, "ch")
+        }, onTransmitForException).transmit(1000, "ch"){
+
+        }
     }
 
     @Test
@@ -265,7 +269,11 @@ class CieCommandsTest {
             this.onTransmit = onTransmit
         }
 
-        override fun connect(isoDepTimeout: Int, actionDone: () -> Unit) {
+        override fun connect(
+            isoDepTimeout: Int,
+            onTagDiscovered: () -> Unit,
+            actionDone: () -> Unit
+        ) {
             actionDone.invoke()
         }
 

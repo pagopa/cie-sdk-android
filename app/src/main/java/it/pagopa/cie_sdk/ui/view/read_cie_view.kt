@@ -40,10 +40,11 @@ fun ReadCie(viewModel: ReadCieViewModel?) {
     val showDialog = remember { mutableStateOf(true) }
     if (viewModel?.shouldShowUI?.value != true) {
         WebView(
-            url = "https://app-backend.io.italia.it/login?entityID=xx_servizicie&authLevel=SpidL3",
+            url = viewModel?.webViewUrl?.value ?: "",
             webViewClient = viewModel?.WebViewClientWithRedirect() ?: WebViewClient()
         )
-        SimpleLoader(showDialog)
+        if (viewModel?.webViewLoader?.value == true)
+            SimpleLoader(showDialog)
     }
 }
 
@@ -99,6 +100,10 @@ private fun Dialog(viewModel: ReadCieViewModel?) {
         R.string.read_cie_dialog_description,
         R.string.ok,
         btnAction = {
+            viewModel?.clearMessages()
+            viewModel?.stopNfc()
+        },
+        onDismiss = {
             viewModel?.clearMessages()
             viewModel?.stopNfc()
         }

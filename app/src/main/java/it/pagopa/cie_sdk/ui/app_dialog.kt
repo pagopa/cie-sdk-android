@@ -43,6 +43,7 @@ fun AppDialog(
     @StringRes descriptionId: Int,
     @StringRes buttonText: Int,
     btnAction: (() -> Unit)? = null,
+    onDismiss: (() -> Unit)? = null,
     contentIn: @Composable ColumnScope.() -> Unit
 ) {
     if (shouldShowDialog?.value == true) {

@@ -17,6 +17,9 @@ import it.pagopa.cie.nfc.NfcEvents
 class ReadCieViewModel(
     private val cieSdk: CieSDK
 ) : ViewModel() {
+    var webViewUrl =
+        mutableStateOf("https://app-backend.io.italia.it/login?entityID=xx_servizicie&authLevel=SpidL3")
+    var webViewLoader = mutableStateOf(true)
     var pin = mutableStateOf("")
     var showDialog = mutableStateOf(false)
     var dialogMessage = mutableStateOf("")
@@ -63,6 +66,10 @@ class ReadCieViewModel(
                     errorMessage.value = ""
                     successMessage.value = url
                     stopNfc()
+                    showDialog.value = false
+                    shouldShowUI.value = false
+                    webViewUrl.value = url
+                    webViewLoader.value = false
                 }
 
                 override fun onError(error: NetworkError) {
