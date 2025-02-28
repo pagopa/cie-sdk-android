@@ -1,20 +1,24 @@
 package it.pagopa.cie_sdk.ui.view_model
 
 import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.ViewModel
 import it.pagopa.cie.CieSDK
+import it.pagopa.cie.cie.CieType
+import it.pagopa.cie.cie.CieTypeCallback
+import it.pagopa.cie.cie.NfcError
+import it.pagopa.cie.cie.NfcEvent
+import it.pagopa.cie.nfc.NfcEvents
 import it.pagopa.cie_sdk.R
 import it.pagopa.cie_sdk.ui.model.LazyButtonModel
 
 class CieSdkMethodsViewModel(
     private val cieSdk: CieSDK
-) : ViewModel() {
+) : BaseViewModelWithNfcDialog(cieSdk) {
     var nfcSettingsVisible = mutableStateOf(false)
     var startCieAuth = mutableStateOf(false)
     var hasNfcCtrlOk = mutableStateOf<Boolean?>(null)
     var hasNfcEnabledCtrlOk = mutableStateOf<Boolean?>(null)
     var readyForCieAuthCtrlOk = mutableStateOf<Boolean?>(null)
-    private fun initLazyButtons(onInitCieAuth:()-> Unit) = listOf<LazyButtonModel>(
+    private fun initLazyButtons(onInitCieAuth: () -> Unit) = listOf<LazyButtonModel>(
         LazyButtonModel(R.string.has_nfc,
             ctrlOk = hasNfcCtrlOk.value,
             onClick = {
@@ -39,13 +43,52 @@ class CieSdkMethodsViewModel(
                 readyForCieAuthCtrlOk.value = cieSdk.isCieAuthenticationSupported()
                 startCieAuth.value = cieSdk.isCieAuthenticationSupported()
             }),
-        LazyButtonModel(R.string.start_cie_auth,
+        LazyButtonModel(
+            R.string.start_cie_auth,
             isVisible = startCieAuth.value,
             onClick = onInitCieAuth
+        ),
+        LazyButtonModel(
+            R.string.read_cie_type,
+            isVisible = startCieAuth.value,
+            onClick = {
+                this.showDialog.value = true
+            }
         )
     )
 
-    fun provideLazyButtons(onInitCieAuth:()-> Unit) = initLazyButtons(onInitCieAuth).filter {
+    fun provideLazyButtons(onInitCieAuth: () -> Unit) = initLazyButtons(onInitCieAuth).filter {
         it.isVisible
+    }
+
+    override fun readCie() {
+        cieSdk.startReadingCieType(
+            10000,
+            object : NfcEvents {
+                override fun onTransmit(message: NfcEvent) {
+                    dialogMessage.value = message.name
+                }
+
+                override fun error(error: NfcError) {
+                    errorMessage.value = error.msg ?: error.name
+                }
+
+                override fun event(event: NfcEvent) {
+                    dialogMessage.value = event.name
+                }
+            }, object : CieTypeCallback {
+                override fun onSuccess(type: CieType) {
+                    dialogMessage.value = "ALL OK!!"
+                    errorMessage.value = ""
+                    successMessage.value = type.name
+                    stopNfc()
+                }
+
+                override fun onError(error: NfcError) {
+                    errorMessage.value = error.msg ?: error.name
+                    stopNfc()
+                }
+            }
+        )
     }
 }

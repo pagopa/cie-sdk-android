@@ -23,4 +23,14 @@ internal abstract class BaseNfcImpl {
             readCie.read(pin)
         }
     }
+
+    fun readCieType(
+        isoDepTimeout: Int,
+        onTagDiscovered: () -> Unit
+    ) {
+        connect(isoDepTimeout, onTagDiscovered) {
+            readingInterface.onTransmit(NfcEvent.CONNECTED)
+            readCie.readCieType()
+        }
+    }
 }

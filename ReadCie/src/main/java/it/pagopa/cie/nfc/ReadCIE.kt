@@ -14,12 +14,29 @@ internal class ReadCIE(
         isoDepTimeout: Int,
         pin: String,
         readingInterface: NfcReading,
-        onTagDiscovered:()->Unit
+        onTagDiscovered: () -> Unit
     ) {
         withContext(Dispatchers.Default) {
             implementation = NfcImpl(context, readingInterface)
             try {
-                implementation!!.transmit(isoDepTimeout, pin,onTagDiscovered)
+                implementation!!.transmit(isoDepTimeout, pin, onTagDiscovered)
+            } catch (e: Exception) {
+                readingInterface.error(NfcError.GENERAL_EXCEPTION.apply {
+                    this.msg = e.message.orEmpty()
+                })
+            }
+        }
+    }
+
+    override suspend fun workNfcForCieType(
+        isoDepTimeout: Int,
+        readingInterface: NfcReading,
+        onTagDiscovered: () -> Unit
+    ) {
+        withContext(Dispatchers.Default) {
+            implementation = NfcImpl(context, readingInterface)
+            try {
+                implementation!!.readCieType(isoDepTimeout, onTagDiscovered)
             } catch (e: Exception) {
                 readingInterface.error(NfcError.GENERAL_EXCEPTION.apply {
                     this.msg = e.message.orEmpty()

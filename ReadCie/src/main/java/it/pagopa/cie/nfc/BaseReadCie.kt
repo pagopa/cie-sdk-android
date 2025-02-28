@@ -1,6 +1,7 @@
 package it.pagopa.cie.nfc
 
 import it.pagopa.cie.CieLogger
+import it.pagopa.cie.cie.CieType
 import it.pagopa.cie.cie.NfcError
 import it.pagopa.cie.cie.NfcEvent
 import kotlinx.coroutines.CoroutineScope
@@ -14,7 +15,7 @@ abstract class BaseReadCie(
      * @property backResource return an interface which returns success or fail events*/
     interface ReadingCieInterface {
         fun onTransmit(value: Boolean)
-        fun backResource(action: FunInterfaceResource<ByteArray>)
+        fun <T> backResource(action: FunInterfaceResource<T>)
     }
 
     fun read(
@@ -40,7 +41,38 @@ abstract class BaseReadCie(
                     nfcListener.error(error)
                     if (error == NfcError.NOT_A_CIE)
                         nfcListener.event(NfcEvent.ON_TAG_DISCOVERED_NOT_CIE)
-                    readingInterface.backResource(FunInterfaceResource.error(error))
+                    readingInterface.backResource<Any>(FunInterfaceResource.error(error))
+                }
+            }) {
+                nfcListener.event(NfcEvent.ON_TAG_DISCOVERED)
+            }
+        }
+    }
+
+    fun readCieType(
+        scope: CoroutineScope,
+        isoDepTimeout: Int,
+        nfcListener: NfcEvents,
+        readingInterface: ReadingCieInterface
+    ) {
+        scope.launch {
+            workNfcForCieType(isoDepTimeout, object : NfcReading {
+                override fun onTransmit(message: NfcEvent) {
+                    CieLogger.i("message from CIE", message.name)
+                    nfcListener.onTransmit(message)
+                    if (message == NfcEvent.CONNECTED)
+                        readingInterface.onTransmit(true)
+                }
+
+                override fun <T> read(element: T) {
+                    readingInterface.backResource(FunInterfaceResource.success(element as CieType))
+                }
+
+                override fun error(error: NfcError) {
+                    nfcListener.error(error)
+                    if (error == NfcError.NOT_A_CIE)
+                        nfcListener.event(NfcEvent.ON_TAG_DISCOVERED_NOT_CIE)
+                    readingInterface.backResource<Any>(FunInterfaceResource.error(error))
                 }
             }) {
                 nfcListener.event(NfcEvent.ON_TAG_DISCOVERED)
@@ -50,7 +82,13 @@ abstract class BaseReadCie(
 
     internal abstract suspend fun workNfc(
         isoDepTimeout: Int,
-        challenge: String,
+        pin: String,
+        readingInterface: NfcReading,
+        onTagDiscovered: () -> Unit
+    )
+
+    internal abstract suspend fun workNfcForCieType(
+        isoDepTimeout: Int,
         readingInterface: NfcReading,
         onTagDiscovered: () -> Unit
     )

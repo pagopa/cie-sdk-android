@@ -2,15 +2,42 @@ package it.pagopa.cie.cie.commands
 
 import it.pagopa.cie.CieLogger
 import it.pagopa.cie.cie.ApduManager
+import it.pagopa.cie.cie.ApduResponse
 import it.pagopa.cie.cie.ApduSecureMessageManager
 import it.pagopa.cie.cie.Asn1Tag
+import it.pagopa.cie.cie.Atr
 import it.pagopa.cie.cie.CieSdkException
+import it.pagopa.cie.cie.CieType
 import it.pagopa.cie.cie.NfcError
 import it.pagopa.cie.cie.NfcEvent
 import it.pagopa.cie.cie.ReadFileManager
 import it.pagopa.cie.nfc.Utils
 import kotlin.Exception
 import kotlin.jvm.Throws
+
+internal fun CieCommands.readAtr() = ReadFileManager(onTransmit).readFile(0x2f01)
+internal fun CieCommands.selectRoot(): ApduResponse {
+    val selectMF = byteArrayOf(0x00, 0xa4.toByte(), 0x00, 0x00, 0x02, 0x3f, 0x00)
+    return ApduManager(onTransmit)
+        .sendApdu(
+            selectMF,
+            byteArrayOf(),
+            null,
+            NfcEvent.SELECT_ROOT
+        )
+}
+
+@Throws(CieSdkException::class)
+internal fun CieCommands.readCieType(): CieType {
+    this.selectIAS()
+    this.selectCie()
+    val selectRoot = this.selectRoot()
+    if (selectRoot.swHex != "9000") {
+        CieLogger.i("SELECT ROOT", selectRoot.swHex)
+        throw CieSdkException(NfcError.SELECT_ROOT_EXCEPTION)
+    }
+    return Atr(this.readAtr()).getCieType()
+}
 
 /**
  * recupera i parametri delle chiavi per external authentication

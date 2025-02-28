@@ -15,7 +15,12 @@ enum class NfcError(var numberOfAttempts: Int? = null, var msg: String? = null) 
     FAIL_TO_CONNECT_WITH_TAG,
     TAG_LOST,
     STOP_NFC_ERROR,
+    SELECT_ROOT_EXCEPTION,
     GENERAL_EXCEPTION
+}
+
+class CieSdkException(private val nfcError: NfcError) : Exception() {
+    fun getError() = nfcError
 }
 
 enum class NfcEvent {
@@ -24,6 +29,7 @@ enum class NfcEvent {
     CONNECTED,
     SELECT_CIE,
     SELECT_IAS,
+    SELECT_ROOT,
     SELECT_ID_1,
     SELECT_ID_2,
     SELECT_ID_3,
@@ -49,6 +55,141 @@ enum class NfcEvent {
     READ_FILE_SM
 }
 
-class CieSdkException(private val nfcError: NfcError) : Exception() {
-    fun getError() = nfcError
+enum class CieType(val atr: ByteArray) {
+    NXP(byteArrayOf(0x80.toByte(), 0x31, 0x80.toByte(), 0x65, 0x49, 0x54, 0x4E, 0x58, 0x50)),
+    GEMALTO(
+        byteArrayOf(
+            0x80.toByte(),
+            0x31,
+            0x80.toByte(),
+            0x65,
+            0xB0.toByte(),
+            0x85.toByte(),
+            0x04,
+            0x00,
+            0x11
+        )
+    ),
+    GEMALTO_2(
+        byteArrayOf(
+            0x80.toByte(),
+            0x31,
+            0x80.toByte(),
+            0x65,
+            0xB0.toByte(),
+            0x85.toByte(),
+            0x03,
+            0x00,
+            0xEF.toByte()
+        )
+    ),
+    STM(byteArrayOf(0x80.toByte(), 0x66, 0x47, 0x50, 0x00, 0xB8.toByte(), 0x00, 0x7F)),
+    STM_2(byteArrayOf(0x80.toByte(), 0x80.toByte(), 0x01, 0x01)),
+    STM_3(
+        byteArrayOf(
+            0x80.toByte(),
+            0x01,
+            0x80.toByte(),
+            0x66,
+            0x47,
+            0x50,
+            0x00,
+            0xB8.toByte(),
+            0x00,
+            0x94.toByte(),
+            0x82.toByte(),
+            0x90.toByte(),
+            0x00,
+            0xC5.toByte()
+        )
+    ),
+    ACTALIS(
+        byteArrayOf(
+            0x80.toByte(),
+            0x01,
+            0x80.toByte(),
+            0x31,
+            0x80.toByte(),
+            0x65,
+            0x49,
+            0x54,
+            0x4A,
+            0x34,
+            0x41,
+            0x12,
+            0x0F,
+            0xFF.toByte(),
+            0x82.toByte(),
+            0x90.toByte(),
+            0x00,
+            0x88.toByte()
+        )
+    ),
+    ACTALIS_2023(
+        byteArrayOf(
+            0x80.toByte(),
+            0x01,
+            0x80.toByte(),
+            0x31,
+            0x80.toByte(),
+            0x65,
+            0x49,
+            0x54,
+            0x4A,
+            0x34,
+            0x43,
+            0x12,
+            0x0F,
+            0xFF.toByte(),
+            0x82.toByte(),
+            0x90.toByte(),
+            0x00,
+            0x8A.toByte()
+        )
+    ),
+    BIT4ID(
+        byteArrayOf(
+            0x80.toByte(),
+            0x01,
+            0x80.toByte(),
+            0x31,
+            0x80.toByte(),
+            0x65,
+            0x49,
+            0x54,
+            0x4A,
+            0x34,
+            0x42,
+            0x12,
+            0x0F,
+            0xFF.toByte(),
+            0x82.toByte(),
+            0x90.toByte(),
+            0x00,
+            0x8B.toByte()
+        )
+    ),
+    BIT4ID_2023(
+        byteArrayOf(
+            0x80.toByte(),
+            0x01,
+            0x80.toByte(),
+            0x31,
+            0x80.toByte(),
+            0x65,
+            0x49,
+            0x54,
+            0x4A,
+            0x34,
+            0x44,
+            0x12,
+            0x0F,
+            0xFF.toByte(),
+            0x82.toByte(),
+            0x90.toByte(),
+            0x00,
+            0x8D.toByte()
+        )
+    ),
+    UNKNOWN(byteArrayOf())
 }

@@ -50,6 +50,7 @@ fun AppDialog(
         BasicAlertDialog(
             onDismissRequest = {
                 shouldShowDialog.value = false
+                onDismiss?.invoke()
             },
             properties = DialogProperties(),
             content = {

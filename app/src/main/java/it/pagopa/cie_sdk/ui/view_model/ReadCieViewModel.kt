@@ -4,7 +4,6 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.ViewModel
 import it.pagopa.cie.CieLogger
 import it.pagopa.cie.CieSDK
 import it.pagopa.cie.cie.CieSdkException
@@ -16,15 +15,11 @@ import it.pagopa.cie.nfc.NfcEvents
 
 class ReadCieViewModel(
     private val cieSdk: CieSDK
-) : ViewModel() {
+) : BaseViewModelWithNfcDialog(cieSdk) {
     var webViewUrl =
         mutableStateOf("https://app-backend.io.italia.it/login?entityID=xx_servizicie&authLevel=SpidL3")
     var webViewLoader = mutableStateOf(true)
     var pin = mutableStateOf("")
-    var showDialog = mutableStateOf(false)
-    var dialogMessage = mutableStateOf("")
-    var errorMessage = mutableStateOf("")
-    var successMessage = mutableStateOf("")
     var shouldShowUI = mutableStateOf(false)
 
     inner class WebViewClientWithRedirect : WebViewClient() {
@@ -43,7 +38,7 @@ class ReadCieViewModel(
         }
     }
 
-    fun readCie(
+    private fun readCie(
         pin: String
     ) {
         try {
@@ -85,21 +80,15 @@ class ReadCieViewModel(
         }
     }
 
-    fun stopNfc() {
-        cieSdk.stopNFCListening()
-    }
-
-    fun clearMessages() {
-        errorMessage.value = ""
-        successMessage.value = ""
-        dialogMessage.value = ""
-    }
-
     fun clear() {
         pin.value = ""
         showDialog.value = false
         errorMessage.value = ""
         successMessage.value = ""
         dialogMessage.value = ""
+    }
+
+    override fun readCie() {
+        this.readCie(this.pin.value)
     }
 }

@@ -6,6 +6,8 @@ import android.net.Uri
 import android.nfc.NfcAdapter
 import android.provider.Settings
 import it.pagopa.cie.cie.CieSdkException
+import it.pagopa.cie.cie.CieType
+import it.pagopa.cie.cie.CieTypeCallback
 import it.pagopa.cie.cie.NfcError
 import it.pagopa.cie.cie.commands.ciePinRegex
 import it.pagopa.cie.network.DeepLinkInfo
@@ -77,10 +79,10 @@ class CieSDK private constructor() {
             throw Exception("You never call withUrl method to initialize the header!!")
         readCie?.read(scope, isoDepTimeout, nfcListener, object : BaseReadCie.ReadingCieInterface {
             override fun onTransmit(value: Boolean) {}
-            override fun backResource(action: BaseReadCie.FunInterfaceResource<ByteArray>) {
+            override fun <T> backResource(action: BaseReadCie.FunInterfaceResource<T>) {
                 if (action.status == FunInterfaceStatus.SUCCESS) {
                     CieLogger.i(tag, "CALLING REPOSITORY with ${action.data}")
-                    idpNetworkCall.withCallback(callback) callWith action.data!!
+                    idpNetworkCall.withCallback(callback) callWith action.data!! as ByteArray
                 } else {
                     CieLogger.e(
                         tag,
@@ -89,6 +91,35 @@ class CieSDK private constructor() {
                 }
             }
         })
+    }
+
+
+    @Throws(Exception::class)
+    fun startReadingCieType(
+        isoDepTimeout: Int,
+        nfcListener: NfcEvents,
+        callback: CieTypeCallback
+    ) {
+        if (this.context == null)
+            throw Exception("Context not initialized well, is null..")
+        val job = Job()
+        val scope = CoroutineScope(Dispatchers.IO + job + SupervisorJob())
+        readCie = ReadCIE(this.context!!)
+        readCie?.readCieType(
+            scope,
+            isoDepTimeout,
+            nfcListener,
+            object : BaseReadCie.ReadingCieInterface {
+                override fun onTransmit(value: Boolean) {}
+                override fun <T> backResource(action: BaseReadCie.FunInterfaceResource<T>) {
+                    if (action.status == FunInterfaceStatus.SUCCESS) {
+                        CieLogger.i(tag, "CALLING REPOSITORY with ${action.data}")
+                        callback.onSuccess(action.data!! as CieType)
+                    } else {
+                        callback.onError(action.nfcError ?: NfcError.GENERAL_EXCEPTION)
+                    }
+                }
+            })
     }
 
     /**It stops NFC*/

@@ -1,6 +1,7 @@
 package it.pagopa.cie.cie
 
 import androidx.annotation.VisibleForTesting
+import it.pagopa.cie.CieLogger
 import it.pagopa.cie.nfc.Utils
 import kotlin.experimental.or
 import kotlin.math.min
@@ -27,12 +28,15 @@ internal class ApduManager(private val onTransmit: OnTransmit) {
                 apdu = Utils.appendByteArray(apdu, s)
                 if (le != null) apdu = Utils.appendByteArray(apdu, le)
                 val apduResponse: ApduResponse = onTransmit.sendCommand(apdu, event)
-                if (apduResponse.swHex != "9000")
+                if (apduResponse.swHex != "9000") {
+                    CieLogger.e("APDU_ERROR", apduResponse.swHex)
                     throw CieSdkException(NfcError.APDU_ERROR)
+                }
                 if (i == data.size)
                     return getResp(apduResponse, event)
             }
         } else {
+            CieLogger.i("SEND_APDU", "data.size <= 255")
             if (data.isNotEmpty()) {
                 apdu = Utils.appendByteArray(apdu, head)
                 apdu = Utils.appendByte(apdu, data.size.toByte())

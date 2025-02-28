@@ -12,6 +12,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import it.pagopa.cie_sdk.ui.NfcDialog
 import it.pagopa.cie_sdk.ui.PrimaryButton
 import it.pagopa.cie_sdk.ui.UserInteraction
 import it.pagopa.cie_sdk.ui.view_model.CieSdkMethodsViewModel
@@ -37,4 +38,6 @@ fun CieSdkMethods(
             }
         }
     }
+    if (viewModel.showDialog.value)
+        NfcDialog(viewModel)
 }
