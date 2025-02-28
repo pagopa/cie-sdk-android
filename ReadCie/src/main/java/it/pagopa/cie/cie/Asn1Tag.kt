@@ -91,7 +91,7 @@ constructor(objects: Array<Any>) {
             if (len > unsignedToBytes(0x80.toByte())) {
                 val lenlen = unsignedToBytes((len - 0x80).toByte())
                 len = 0
-                for (i in 0 until lenlen) {
+                (0 until lenlen).asSequence().forEach {
                     if (readPos.toLong() == length)
                         throw Asn1TagParseException("Lunghezza non corretta")
                     val bTmp = unsignedToBytes(asn.read().toByte())
@@ -183,8 +183,5 @@ constructor(objects: Array<Any>) {
             val input = ByteArrayInputStream(efCom)
             return parse(input, 0, efCom.size.toLong(), reparse)
         }
-
     }
-
-
 }
