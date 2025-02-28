@@ -1,6 +1,6 @@
 package it.pagopa.cie.cie
 
-class Atr(private val atr: ByteArray) {
+internal class Atr(private val atr: ByteArray) {
     fun getCieType(): CieType {
         CieType.entries.forEach {
             if (this.atr.isSubset(it.atr))

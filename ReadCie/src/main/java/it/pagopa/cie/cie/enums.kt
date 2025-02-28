@@ -55,6 +55,7 @@ enum class NfcEvent {
     READ_FILE_SM
 }
 
+/**Returns Cie Manufacturer*/
 enum class CieType(val atr: ByteArray) {
     NXP(byteArrayOf(0x80.toByte(), 0x31, 0x80.toByte(), 0x65, 0x49, 0x54, 0x4E, 0x58, 0x50)),
     GEMALTO(

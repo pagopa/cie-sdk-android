@@ -94,6 +94,11 @@ class CieSDK private constructor() {
     }
 
 
+    /**It starts reading CIE Type
+     * @param isoDepTimeout  Timeout to set on nfc reader
+     * @param nfcListener [NfcEvents]
+     * @param callback [CieTypeCallback]
+     * @throws Exception if context is not initialized*/
     @Throws(Exception::class)
     fun startReadingCieType(
         isoDepTimeout: Int,
