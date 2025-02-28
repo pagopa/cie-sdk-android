@@ -123,6 +123,7 @@ class CieSDK private constructor() {
                     } else {
                         callback.onError(action.nfcError ?: NfcError.GENERAL_EXCEPTION)
                     }
+                    job.cancel()
                 }
             })
     }
