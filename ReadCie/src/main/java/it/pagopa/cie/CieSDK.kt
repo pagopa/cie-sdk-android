@@ -118,7 +118,7 @@ class CieSDK private constructor() {
                 override fun onTransmit(value: Boolean) {}
                 override fun <T> backResource(action: BaseReadCie.FunInterfaceResource<T>) {
                     if (action.status == FunInterfaceStatus.SUCCESS) {
-                        CieLogger.i(tag, "CALLING REPOSITORY with ${action.data}")
+                        CieLogger.i(tag, "Cie Type found ${action.data}")
                         callback.onSuccess(action.data!! as CieType)
                     } else {
                         callback.onError(action.nfcError ?: NfcError.GENERAL_EXCEPTION)

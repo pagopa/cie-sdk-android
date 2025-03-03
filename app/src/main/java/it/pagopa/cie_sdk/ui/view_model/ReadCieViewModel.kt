@@ -44,21 +44,20 @@ class ReadCieViewModel(
         try {
             cieSdk.setPin(pin)
             cieSdk.startReading(10000, object : NfcEvents {
-                override fun onTransmit(message: NfcEvent) {
-                    dialogMessage.value = message.name
-                }
-
                 override fun error(error: NfcError) {
-                    errorMessage.value = error.msg ?: error.name
+                    this@ReadCieViewModel.onError(error)
                 }
 
                 override fun event(event: NfcEvent) {
                     dialogMessage.value = event.name
+                    progressValue.floatValue =
+                        (event.numerator.toFloat() / NfcEvent.totalNumeratorEvent.toFloat()).toFloat()
                 }
             }, object : NetworkCallback {
                 override fun onSuccess(url: String) {
                     dialogMessage.value = "ALL OK!!"
                     errorMessage.value = ""
+                    progressValue.floatValue = 1f
                     successMessage.value = url
                     stopNfc()
                     showDialog.value = false
@@ -68,8 +67,7 @@ class ReadCieViewModel(
                 }
 
                 override fun onError(error: NetworkError) {
-                    errorMessage.value = error.msg ?: error.name
-                    stopNfc()
+                    this@ReadCieViewModel.onError(error)
                 }
             })
         } catch (e: Exception) {
@@ -78,14 +76,6 @@ class ReadCieViewModel(
             else
                 errorMessage.value = e.message.orEmpty()
         }
-    }
-
-    fun clear() {
-        pin.value = ""
-        showDialog.value = false
-        errorMessage.value = ""
-        successMessage.value = ""
-        dialogMessage.value = ""
     }
 
     override fun readCie() {

@@ -44,16 +44,16 @@ class CieSdkMethodsViewModel(
                 startCieAuth.value = cieSdk.isCieAuthenticationSupported()
             }),
         LazyButtonModel(
-            R.string.start_cie_auth,
-            isVisible = startCieAuth.value,
-            onClick = onInitCieAuth
-        ),
-        LazyButtonModel(
             R.string.read_cie_type,
             isVisible = startCieAuth.value,
             onClick = {
                 this.showDialog.value = true
             }
+        ),
+        LazyButtonModel(
+            R.string.start_cie_auth,
+            isVisible = startCieAuth.value,
+            onClick = onInitCieAuth
         )
     )
 
@@ -65,16 +65,14 @@ class CieSdkMethodsViewModel(
         cieSdk.startReadingCieType(
             10000,
             object : NfcEvents {
-                override fun onTransmit(message: NfcEvent) {
-                    dialogMessage.value = message.name
-                }
-
                 override fun error(error: NfcError) {
-                    errorMessage.value = error.msg ?: error.name
+                    this@CieSdkMethodsViewModel.onError(error)
                 }
 
                 override fun event(event: NfcEvent) {
                     dialogMessage.value = event.name
+                    progressValue.floatValue =
+                        (event.numeratorForKindOf.toFloat() / NfcEvent.totalKindOfNumeratorEvent.toFloat()).toFloat()
                 }
             }, object : CieTypeCallback {
                 override fun onSuccess(type: CieType) {
@@ -85,8 +83,7 @@ class CieSdkMethodsViewModel(
                 }
 
                 override fun onError(error: NfcError) {
-                    errorMessage.value = error.msg ?: error.name
-                    stopNfc()
+                    this@CieSdkMethodsViewModel.onError(error)
                 }
             }
         )

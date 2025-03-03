@@ -28,7 +28,7 @@ abstract class BaseReadCie(
             workNfc(isoDepTimeout, pin.orEmpty(), object : NfcReading {
                 override fun onTransmit(message: NfcEvent) {
                     CieLogger.i("message from CIE", message.name)
-                    nfcListener.onTransmit(message)
+                    nfcListener.event(message)
                     if (message == NfcEvent.CONNECTED)
                         readingInterface.onTransmit(true)
                 }
@@ -59,7 +59,7 @@ abstract class BaseReadCie(
             workNfcForCieType(isoDepTimeout, object : NfcReading {
                 override fun onTransmit(message: NfcEvent) {
                     CieLogger.i("message from CIE", message.name)
-                    nfcListener.onTransmit(message)
+                    nfcListener.event(message)
                     if (message == NfcEvent.CONNECTED)
                         readingInterface.onTransmit(true)
                 }
