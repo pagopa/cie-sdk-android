@@ -81,7 +81,9 @@ enum class CieType(val atr: ByteArray) {
             0x10,
             0x47,
             0x03,
-            0x94.toByte()
+            0x94.toByte(),
+            0x01,
+            0x80.toByte()
         )
     ),
     GEMALTO(
