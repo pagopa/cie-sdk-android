@@ -150,16 +150,7 @@ enum class CieType(val atr: ByteArray) {
             0x22,
             0xF8.toByte(),
             0x78,
-            0x02,
-            0x82.toByte(),
-            0x02,
-            0x90.toByte(),
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00
+            0x02
         )
     ),
     ST(
@@ -221,11 +212,7 @@ enum class CieType(val atr: ByteArray) {
             0x22,
             0xF8.toByte(),
             0x78,
-            0x02,
-            0x82.toByte(),
-            0x02,
-            0x90.toByte(),
-            0x00
+            0x02
         )
     ),
     UNKNOWN(byteArrayOf())
