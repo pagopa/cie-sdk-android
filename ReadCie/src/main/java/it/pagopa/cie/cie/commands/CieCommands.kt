@@ -48,19 +48,19 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
         CieLogger.i("COMMAND", "getServiceID()")
         this.onTransmit.sendCommand(
             "00A4040C0DA0000000308000000009816001".hexStringToByteArray(),
-            NfcEvent.SELECT_ID_1
+            NfcEvent.SELECT_IAS_SERVICE_ID
         )
         this.onTransmit.sendCommand(
             "00A4040406A00000000039".hexStringToByteArray(),
-            NfcEvent.SELECT_ID_2
+            NfcEvent.SELECT_CIE_SERVICE_ID
         )
         this.onTransmit.sendCommand(
             "00a40204021001".hexStringToByteArray(),
-            NfcEvent.SELECT_ID_3
+            NfcEvent.SELECT_READ_FILE_SERVICE_ID
         )
         val response = this.onTransmit.sendCommand(
             "00b000000c".hexStringToByteArray(),
-            NfcEvent.SELECT_ID_GET_RESPONSE
+            NfcEvent.READ_FILE_SERVICE_ID_RESPONSE
         )
         if (response.swHex != "9000") {
             throw CieSdkException(NfcError.NOT_A_CIE)

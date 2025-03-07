@@ -34,9 +34,4 @@ internal class Atr(private val atr: ByteArray) {
         }
         return true
     }
-
-    private fun ByteArray.isSubset(second: ByteArray): Boolean {
-        if (second.size < this.size) return false
-        return this.all { it in second }
-    }
 }

@@ -40,7 +40,6 @@ class CieCommandsTest {
         }
 
         override fun error(error: NfcError) {
-            TODO("Not yet implemented")
         }
     }
 
@@ -201,7 +200,7 @@ class CieCommandsTest {
                 byteArrayOf(0x00),
                 list.toByteArray(),
                 null,
-                NfcEvent.SELECT_ID_GET_RESPONSE
+                NfcEvent.READ_FILE_SERVICE_ID_RESPONSE
             )
         } catch (e: Exception) {
             assert(e.message == "Errore apdu")
