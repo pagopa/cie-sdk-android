@@ -28,7 +28,7 @@ internal class ReadCIE(
         }
     }
 
-    override suspend fun workNfcForCieType(
+    override suspend fun workNfcForCieAtr(
         isoDepTimeout: Int,
         readingInterface: NfcReading,
         onTagDiscovered: () -> Unit
@@ -36,7 +36,7 @@ internal class ReadCIE(
         withContext(Dispatchers.Default) {
             implementation = NfcImpl(context, readingInterface)
             try {
-                implementation!!.readCieType(isoDepTimeout, onTagDiscovered)
+                implementation!!.readCieAtr(isoDepTimeout, onTagDiscovered)
             } catch (e: Exception) {
                 readingInterface.error(NfcError.GENERAL_EXCEPTION.apply {
                     this.msg = e.message.orEmpty()

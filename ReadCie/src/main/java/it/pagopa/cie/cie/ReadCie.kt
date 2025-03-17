@@ -1,7 +1,7 @@
 package it.pagopa.cie.cie
 
 import it.pagopa.cie.cie.commands.CieCommands
-import it.pagopa.cie.cie.commands.readCieType
+import it.pagopa.cie.cie.commands.readCieAtr
 import it.pagopa.cie.nfc.NfcReading
 
 internal class ReadCie(
@@ -26,11 +26,12 @@ internal class ReadCie(
         }
     }
 
-    fun readCieType() {
+    fun readCieAtr() {
         try {
-            cieCommands = CieCommands(onTransmit)
-            val cieType = cieCommands!!.readCieType()
-            readingInterface.read<CieType>(cieType)
+            // no need to impl companion as here we don't sign nothing
+            val commands = CieCommands(onTransmit)
+            val cieType = commands.readCieAtr()
+            readingInterface.read<ByteArray>(cieType)
         } catch (e: Exception) {
             if (e is CieSdkException) {
                 onTransmit.error(e.getError())

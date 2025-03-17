@@ -5,15 +5,11 @@ import it.pagopa.cie.cie.ApduManager
 import it.pagopa.cie.cie.ApduResponse
 import it.pagopa.cie.cie.ApduSecureMessageManager
 import it.pagopa.cie.cie.Asn1Tag
-import it.pagopa.cie.cie.Atr
 import it.pagopa.cie.cie.CieSdkException
-import it.pagopa.cie.cie.CieType
 import it.pagopa.cie.cie.NfcError
 import it.pagopa.cie.cie.NfcEvent
 import it.pagopa.cie.cie.ReadFileManager
 import it.pagopa.cie.nfc.Utils
-import kotlin.Exception
-import kotlin.jvm.Throws
 
 internal fun CieCommands.readAtr() = ReadFileManager(onTransmit).readFile(0x2f01)
 internal fun CieCommands.selectRoot(): ApduResponse {
@@ -28,7 +24,7 @@ internal fun CieCommands.selectRoot(): ApduResponse {
 }
 
 @Throws(CieSdkException::class)
-internal fun CieCommands.readCieType(): CieType {
+internal fun CieCommands.readCieAtr(): ByteArray {
     this.selectIAS()
     this.selectCie()
     val selectRoot = this.selectRoot()
@@ -36,7 +32,7 @@ internal fun CieCommands.readCieType(): CieType {
         CieLogger.i("SELECT ROOT", selectRoot.swHex)
         throw CieSdkException(NfcError.SELECT_ROOT_EXCEPTION)
     }
-    return Atr(this.readAtr()).getCieType()
+    return this.readAtr()
 }
 
 /**

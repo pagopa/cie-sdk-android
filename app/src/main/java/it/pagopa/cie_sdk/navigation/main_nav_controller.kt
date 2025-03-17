@@ -10,6 +10,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import it.pagopa.cie_sdk.BuildConfig
 import it.pagopa.cie.CieSDK
 import it.pagopa.cie_sdk.MainActivity
 import it.pagopa.cie_sdk.ui.UserInteraction
@@ -61,7 +62,7 @@ fun MainActivity?.CieSdkNavHost(
             headerRight.HomeIcon(navController)
             titleResId.intValue = R.string.auth_with_cie
             val ctx = LocalContext.current
-            val cieSdk = CieSDK.withContext(ctx)
+            val cieSdk = CieSDK.withContext(ctx).withCustomIdpUrl(BuildConfig.BASE_URL_IDP)
             val vm = dependenciesInjectedViewModel<ReadCieViewModel>(cieSdk)
             ReadCie(vm)
         }

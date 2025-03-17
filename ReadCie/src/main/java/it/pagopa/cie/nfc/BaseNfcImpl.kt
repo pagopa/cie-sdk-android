@@ -24,13 +24,13 @@ internal abstract class BaseNfcImpl {
         }
     }
 
-    fun readCieType(
+    fun readCieAtr(
         isoDepTimeout: Int,
         onTagDiscovered: () -> Unit
     ) {
         connect(isoDepTimeout, onTagDiscovered) {
             readingInterface.onTransmit(NfcEvent.CONNECTED)
-            readCie.readCieType()
+            readCie.readCieAtr()
         }
     }
 }

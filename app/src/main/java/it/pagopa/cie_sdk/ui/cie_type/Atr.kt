@@ -1,10 +1,12 @@
-package it.pagopa.cie.cie
+package it.pagopa.cie_sdk.ui.cie_type
 
-internal class Atr(private val atr: ByteArray) {
+import it.pagopa.cie.CieLogger
+
+class Atr(private val atr: ByteArray) {
     fun getCieType(): CieType {
-        println("ATR_MAIN: ${this.atr.toHexString()}")
+        CieLogger.i("ATR_MAIN:", this.atr.toHexString())
         CieType.entries.forEach {
-            println("ATR_OTHE: ${it.atr.toHexString()}")
+            CieLogger.i("ATR_OTHE:", it.atr.toHexString())
             if (it.atr.isSubsetInOrder(this.atr))
                 return it
         }

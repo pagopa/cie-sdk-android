@@ -1,13 +1,14 @@
 package it.pagopa.cie_sdk.ui.view_model
 
+import android.util.Base64
 import androidx.compose.runtime.mutableStateOf
 import it.pagopa.cie.CieSDK
-import it.pagopa.cie.cie.CieType
-import it.pagopa.cie.cie.CieTypeCallback
+import it.pagopa.cie.cie.CieAtrCallback
 import it.pagopa.cie.cie.NfcError
 import it.pagopa.cie.cie.NfcEvent
 import it.pagopa.cie.nfc.NfcEvents
 import it.pagopa.cie_sdk.R
+import it.pagopa.cie_sdk.ui.cie_type.Atr
 import it.pagopa.cie_sdk.ui.model.LazyButtonModel
 
 class CieSdkMethodsViewModel(
@@ -19,12 +20,14 @@ class CieSdkMethodsViewModel(
     var hasNfcEnabledCtrlOk = mutableStateOf<Boolean?>(null)
     var readyForCieAuthCtrlOk = mutableStateOf<Boolean?>(null)
     private fun initLazyButtons(onInitCieAuth: () -> Unit) = listOf<LazyButtonModel>(
-        LazyButtonModel(R.string.has_nfc,
+        LazyButtonModel(
+            R.string.has_nfc,
             ctrlOk = hasNfcCtrlOk.value,
             onClick = {
                 hasNfcCtrlOk.value = cieSdk.hasNfcFeature()
             }),
-        LazyButtonModel(R.string.has_nfc_enabled,
+        LazyButtonModel(
+            R.string.has_nfc_enabled,
             ctrlOk = hasNfcEnabledCtrlOk.value,
             onClick = {
                 if (!cieSdk.isNfcAvailable() && cieSdk.hasNfcFeature()) {
@@ -32,12 +35,14 @@ class CieSdkMethodsViewModel(
                 }
                 hasNfcEnabledCtrlOk.value = cieSdk.isNfcAvailable()
             }),
-        LazyButtonModel(R.string.open_nfc_settings,
+        LazyButtonModel(
+            R.string.open_nfc_settings,
             isVisible = nfcSettingsVisible.value,
             onClick = {
                 this.cieSdk.openNfcSettings()
             }),
-        LazyButtonModel(R.string.ready_for_cie_auth,
+        LazyButtonModel(
+            R.string.ready_for_cie_auth,
             ctrlOk = readyForCieAuthCtrlOk.value,
             onClick = {
                 readyForCieAuthCtrlOk.value = cieSdk.isCieAuthenticationSupported()
@@ -62,7 +67,7 @@ class CieSdkMethodsViewModel(
     }
 
     override fun readCie() {
-        cieSdk.startReadingCieType(
+        cieSdk.startReadingCieAtr(
             10000,
             object : NfcEvents {
                 override fun error(error: NfcError) {
@@ -74,11 +79,12 @@ class CieSdkMethodsViewModel(
                     progressValue.floatValue =
                         (event.numeratorForKindOf.toFloat() / NfcEvent.totalKindOfNumeratorEvent.toFloat()).toFloat()
                 }
-            }, object : CieTypeCallback {
-                override fun onSuccess(type: CieType) {
+            }, object : CieAtrCallback {
+                override fun onSuccess(atr: ByteArray) {
                     dialogMessage.value = "ALL OK!!"
-                    errorMessage.value = ""
-                    successMessage.value = type.name
+                    successMessage.value =
+                        "Atr B64 is: ${Base64.encodeToString(atr, Base64.DEFAULT)}"
+                    errorMessage.value = "Cie type is:\n ${Atr(atr).getCieType().name}"
                     stopNfc()
                 }
 

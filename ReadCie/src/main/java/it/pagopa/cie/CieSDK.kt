@@ -2,12 +2,11 @@ package it.pagopa.cie
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.nfc.NfcAdapter
 import android.provider.Settings
+import androidx.core.net.toUri
+import it.pagopa.cie.cie.CieAtrCallback
 import it.pagopa.cie.cie.CieSdkException
-import it.pagopa.cie.cie.CieType
-import it.pagopa.cie.cie.CieTypeCallback
 import it.pagopa.cie.cie.NfcError
 import it.pagopa.cie.cie.commands.ciePinRegex
 import it.pagopa.cie.network.DeepLinkInfo
@@ -93,24 +92,23 @@ class CieSDK private constructor() {
         })
     }
 
-
-    /**It starts reading CIE Type
+    /**It starts reading CIE Atr to read CIE TYPE
      * @param isoDepTimeout  Timeout to set on nfc reader
      * @param nfcListener [NfcEvents]
-     * @param callback [CieTypeCallback]
+     * @param callback [CieAtrCallback]
      * @throws Exception if context is not initialized*/
     @Throws(Exception::class)
-    fun startReadingCieType(
+    fun startReadingCieAtr(
         isoDepTimeout: Int,
         nfcListener: NfcEvents,
-        callback: CieTypeCallback
+        callback: CieAtrCallback
     ) {
         if (this.context == null)
             throw Exception("Context not initialized well, is null..")
         val job = Job()
         val scope = CoroutineScope(Dispatchers.IO + job + SupervisorJob())
         readCie = ReadCIE(this.context!!)
-        readCie?.readCieType(
+        readCie?.readCieAtr(
             scope,
             isoDepTimeout,
             nfcListener,
@@ -119,7 +117,7 @@ class CieSDK private constructor() {
                 override fun <T> backResource(action: BaseReadCie.FunInterfaceResource<T>) {
                     if (action.status == FunInterfaceStatus.SUCCESS) {
                         CieLogger.i(tag, "Cie Type found ${action.data}")
-                        callback.onSuccess(action.data!! as CieType)
+                        callback.onSuccess(action.data!! as ByteArray)
                     } else {
                         callback.onError(action.nfcError ?: NfcError.GENERAL_EXCEPTION)
                     }
@@ -136,7 +134,7 @@ class CieSDK private constructor() {
     /**it applies the url found by web_view which contains OpenApp to header params
      * with [DeepLinkInfo] class*/
     fun withUrl(url: String) = apply {
-        val appLinkData = Uri.parse(url)
+        val appLinkData = url.toUri()
         val deepLinkInfo = DeepLinkInfo(
             value = appLinkData.getQueryParameter(DeepLinkInfo.KEY_VALUE),
             name = appLinkData.getQueryParameter(DeepLinkInfo.KEY_NAME),
@@ -152,7 +150,10 @@ class CieSDK private constructor() {
             idpNetworkCall.withDeepLinkInfo(deepLinkInfo)
     }
 
-    fun setCustomIdpUrl(idpUrl: String?) {
+    /**It sets idp Url for network call for MTLS, if this method is not called, the url applied will
+     *be which one in buildConfig parameter in sdk's gradle.
+     * @param idpUrl the custom url to apply*/
+    fun withCustomIdpUrl(idpUrl: String?) = apply {
         if (!this::idpNetworkCall.isInitialized)
             idpNetworkCall = IdpNetworkCall.withIdpCustomUrl(idpUrl)
         else

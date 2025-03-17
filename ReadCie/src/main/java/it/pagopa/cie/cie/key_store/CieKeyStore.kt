@@ -73,13 +73,11 @@ internal class CieKeyStore : KeyStoreSpi() {
     }
 
     override fun engineLoad(stream: InputStream?, password: CharArray?) {
-
         keyStore.load(null, null)
         val cfCSCA = CertificateFactory.getInstance("X.509")
         val certificatoUtente =
             cfCSCA.generateCertificate(stream) as X509Certificate
         engineSetCertificateEntry(ALIAS, certificatoUtente)
-
     }
 
     override fun engineGetCertificateChain(alias: String?): Array<Certificate> {

@@ -24,7 +24,7 @@ internal class IdpNetworkCall private constructor() {
      * @param certificate certificate signed by CIE*/
     infix fun callWith(certificate: ByteArray) {
         val callTag = "CALLING IDP"
-        val repo: Repository = Repository(certificate, idpCustomUrl)
+        val repo = Repository(certificate, idpCustomUrl)
         val mapValues = hashMapOf<String, String>().apply {
             put(deepLinkInfo.name, deepLinkInfo.value)
             put(authnRequest, deepLinkInfo.authnRequest)
