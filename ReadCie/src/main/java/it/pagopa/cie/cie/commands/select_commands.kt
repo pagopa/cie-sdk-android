@@ -2,6 +2,10 @@ package it.pagopa.cie.cie.commands
 
 import it.pagopa.cie.cie.NfcEvent
 
+/**
+ *Sends an APDU to select the IAS application
+ *@return: The response sent by the card
+ */
 internal fun CieCommands.selectIAS(): ByteArray {
     return onTransmit.sendCommand(
         byteArrayOf(
@@ -28,7 +32,7 @@ internal fun CieCommands.selectIAS(): ByteArray {
 }
 
 /**
- *Sends an APDU to select the CIE section of the card
+ *Sends an APDU to select the CIE application
  *@return: The response sent by the card
  */
 internal fun CieCommands.selectCie(): ByteArray {

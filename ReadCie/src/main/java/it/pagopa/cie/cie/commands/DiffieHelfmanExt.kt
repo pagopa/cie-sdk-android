@@ -9,7 +9,7 @@ import it.pagopa.cie.nfc.Sha256
 import it.pagopa.cie.nfc.Utils
 
 /**
- * recupera i parametri delle chiavi per Diffie Hellman
+ * It retrieves Diffie Hellman keys parameters
  */
 @Throws(Exception::class)
 internal fun CieCommands.initDHParam() {
@@ -70,12 +70,13 @@ internal fun CieCommands.initDHParam() {
 }
 
 /**
- * scambio di chiavi Diffie Hellman
+ * Diffie Hellman Key exchange
  * @throws Exception
  */
 @Throws(Exception::class)
 internal fun CieCommands.dhKeyExchange() {
     CieLogger.i("COMMAND", "dhKeyExchange()")
+    //creating RSA parameters
     var dh_prKey: ByteArray = byteArrayOf()
     do {
         dh_prKey = Utils.getRandomByte(dhQ.size)
@@ -83,8 +84,10 @@ internal fun CieCommands.dhKeyExchange() {
 
     val dhg = dhG.clone()
     val rsa = RSA(dhP, dh_prKey)
+    //creating Diffie Hellman public key
     dhpubKey = rsa.encrypt(dhg)
 
+    //internal key agreement
     val algo = byteArrayOf(0x9b.toByte())
     val keyId = byteArrayOf(0x81.toByte())
     val tmp1 = Utils.appendByteArray(
@@ -95,6 +98,7 @@ internal fun CieCommands.dhKeyExchange() {
     val manager = ApduManager(onTransmit)
     manager.sendApdu(MSE_SET, tmp1, null, NfcEvent.SET_MSE)
 
+    // get ICC public key
     val GET_DATA = byteArrayOf(0x00, 0xcb.toByte(), 0x3f, 0xff.toByte())
     val GET_DATA_Data = byteArrayOf(0x4d, 0x04, 0xa6.toByte(), 0x02, 0x91.toByte(), 0x00)
     val respAsn =
@@ -105,7 +109,7 @@ internal fun CieCommands.dhKeyExchange() {
 
     val diffENC = byteArrayOf(0x00, 0x00, 0x00, 0x01)
     val diffMAC = byteArrayOf(0x00, 0x00, 0x00, 0x02)
-
+    // set secure messaging
     var d1 = Sha256.encrypt(Utils.appendByteArray(secret, diffENC))
     sessionEncryption = Utils.getLeft(d1, 16)
 

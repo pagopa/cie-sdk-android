@@ -36,7 +36,7 @@ internal fun CieCommands.readCieAtr(): ByteArray {
 }
 
 /**
- * recupera i parametri delle chiavi per external authentication
+ * it retrieves external authentication keys parameters
  * @throws Exception
  */
 @Throws(Exception::class)
@@ -68,7 +68,7 @@ internal fun CieCommands.initExtAuthKeyParam() {
 }
 
 /**
- * recupera la chiave per la Internal Authentication
+ * It retrieves the internal authentication key
  * @throws Exception
  */
 @Throws(Exception::class)
@@ -77,7 +77,6 @@ internal fun CieCommands.readDappPubKey() {
     val readFileManager = ReadFileManager(onTransmit)
     val dappKey: ByteArray = readFileManager.readFile(0x1004)
     dappModule = byteArrayOf()
-    //selectAidCie()
     val asn1 = Asn1Tag.parse(dappKey, false)
     dappModule = asn1!!.child(0).data
     if (dappModule.isNotEmpty())
@@ -97,9 +96,9 @@ internal fun CieCommands.readDappPubKey() {
 
 /**
  *
- * @param pin verifica il pin dell'utente
- * @return restituisce il numero di tentativi possibili
- * @throws Exception
+ * @param pin it verifies user PIN
+ * @return the number of attempts left
+ * @throws CieSdkException if pin regex is not valid
  */
 @Throws(Exception::class)
 internal fun CieCommands.verifyPin(pin: String): Int {

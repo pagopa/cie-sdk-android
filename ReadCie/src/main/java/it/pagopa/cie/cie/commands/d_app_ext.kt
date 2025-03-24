@@ -13,12 +13,13 @@ import it.pagopa.cie.nfc.Utils
 
 /**
  * Device Authentication With privacy protection
- * contiene ExtAuth e IntAuth
+ * contains ExtAuth e IntAuth
  * @throws Exception
  */
 @Throws(Exception::class)
 internal fun CieCommands.dApp() {
     CieLogger.i("COMMAND", "dApp()")
+    // end entity certificate
     val psoVerifyAlgo = byteArrayOf(0x41)
     val shaOID: Byte = 0x04
     val shaSize = 32
@@ -61,7 +62,8 @@ internal fun CieCommands.dApp() {
         caModule.size - shaSize - 2,
         endEntityCert.size - (caModule.size - shaSize - 2)
     )
-
+    // end - end entity certificate
+    //IAS ECC v1_0_1UK.pdf 7.2.6.1
     val tmp = Utils.asn1Tag(certSign, 0x5f37)
     val tmp1 = Utils.asn1Tag(pkRem, 0x5F38)
     val tmp2 = Utils.asn1Tag(caCar, 0x42)
@@ -76,6 +78,7 @@ internal fun CieCommands.dApp() {
         Utils.asn1Tag(byteArrayOf(0x84.toByte()), 0x83)
     )
     val secureMessageManager = ApduSecureMessageManager(onTransmit)
+    // selecting key
     seq = secureMessageManager.sendApduSM(
         seq,
         sessionEncryption,
@@ -85,6 +88,7 @@ internal fun CieCommands.dApp() {
         null,
         NfcEvent.SIGN1_SELECT
     ).first
+    // verifying key
     val verifyCert = byteArrayOf(0x00, 0x2A, 0x00, 0xAE.toByte())
     seq = secureMessageManager.sendApduSM(
         seq,
@@ -111,6 +115,7 @@ internal fun CieCommands.dApp() {
     seq = appPair.first
     CieLogger.i("SEQ AFTER:", Base64.encodeToString(seq, Base64.DEFAULT))
     CieLogger.i("setCHR RESPONSE", "${appPair.second}")
+    //IAS ECC v1_0_1UK.pdf 9.5.1 GET CHALLENGE
     val getChallenge = byteArrayOf(0x00.toByte(), 0x84.toByte(), 0x00.toByte(), 0x00.toByte())
     val chLen = byteArrayOf(8)
     val pairBack = secureMessageManager.sendApduSM(
@@ -127,6 +132,12 @@ internal fun CieCommands.dApp() {
     val padSize = module.size - shaSize - 2
     val PRND = Utils.getRandomByte(padSize)
     var toHash = byteArrayOf()
+    //IAS ECC v1_0_1UK.pdf 5.2.3.3.1 Protocol steps
+    //PuK.IFD.DH = diffieHellmanPublicKey.modulus
+    //SN.IFD = snIFD
+    //RND.ICC = challenge
+    //PuK.ICC.DH = iccPublicKey
+    //h(PRND|PuK.IFD.DH|SN.IFD|RN D.ICC|PuK.ICC.DH|g|p|q)
     toHash = Utils.appendByteArray(toHash, PRND)
     toHash = Utils.appendByteArray(toHash, dhpubKey)
     toHash = Utils.appendByteArray(toHash, snIFD)
@@ -146,7 +157,7 @@ internal fun CieCommands.dApp() {
     val signResp: ByteArray
     val rsaCertKey = RSA(module, privExp)
     signResp = rsaCertKey.encrypt(toSign)
-
+    //IAS ECC v1_0_1UK.pdf 9.5.5 EXTERNAL AUTHENTICATE for Role authentication
     var chResponse = byteArrayOf()
     chResponse = Utils.appendByteArray(chResponse, snIFD)
     chResponse = Utils.appendByteArray(chResponse, signResp)
@@ -177,6 +188,7 @@ internal fun CieCommands.dApp() {
         null,
         NfcEvent.INTERNAL_AUTHENTICATION
     ).first
+    //IAS ECC v1_0_1UK.pdf 5.2.3.5 Internal authentication of the ICC
     val rndIFD = Utils.getRandomByte(8)
     val giveRandom = byteArrayOf(0x00, 0x88.toByte(), 0x00, 0x00)
     val pair = secureMessageManager.sendApduSM(
@@ -189,6 +201,7 @@ internal fun CieCommands.dApp() {
         NfcEvent.GIVE_RANDOM
     )
     seq = pair.first
+    //SN.ICC | SIG.ICC
     resp = pair.second
 
     val SN_ICC = Utils.getSub(resp.response, 0, 8)
@@ -217,5 +230,7 @@ internal fun CieCommands.dApp() {
         throw CieSdkException(NfcError.CHIP_AUTH_ERROR)
     val ba888 = Utils.getRight(challengeResp.response, 4)
     val ba889 = Utils.getRight(rndIFD, 4)
+    //The secure messaging for integrity for the subsequent command is computed with the correct starting value for
+    //SSC = RND.ICC (4 least significant bytes) || RND.IFD (4 least significant bytes)
     seq = Utils.appendByteArray(ba888, ba889)
 }

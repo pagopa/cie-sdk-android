@@ -26,7 +26,7 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
     internal var dhICCpubKey: ByteArray = byteArrayOf()
 
     /**
-     * @return il certificato dell'utente
+     * @return user certificate
      * @throws Exception
      */
     @Throws(Exception::class)
@@ -43,7 +43,9 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
         return pairBack.second
     }
 
-    @Throws(Exception::class)
+    /**It selects IAS, CIE service id and reads file service id
+     * @throws [CieSdkException] if tag is not a cie*/
+    @Throws(CieSdkException::class)
     fun getServiceID(): String {
         CieLogger.i("COMMAND", "getServiceID()")
         this.onTransmit.sendCommand(
@@ -94,6 +96,10 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
         }
     }
 
+    /**
+     * iso97962RSASHA256 = 0x41 //'41' ≡ algorithm identifier for signature using ISO 9796-2 scheme 1 – SHA-256
+     * diffieHellmanRSASHA256 = 0x9B //'9B' ≡ DH asymmetric authentication algorithm (privacy) with SHA-256
+     * clientServerRSAPKCS1 = 2 //'02' ≡ algorithm identifier for IFC/ICC authentication RSA PKCS#1 -SHA-1 with not data formatting*/
     @Throws(Exception::class)
     fun sign(dataToSign: ByteArray, event: NfcEvent): ByteArray? {
         CieLogger.i("COMMAND", "SIGN")
