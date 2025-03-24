@@ -71,7 +71,7 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
     }
 
     /**
-     * inizializza un canale sicuro tra carta e dispositivo passando il pin dell'utente
+     *It starts a secure channel between card and device using user PIN
      * @param pin
      * @throws Exception
      */
