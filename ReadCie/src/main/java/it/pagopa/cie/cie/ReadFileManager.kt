@@ -18,13 +18,12 @@ internal class ReadFileManager(private val onTransmit: OnTransmit) {
         val chunk = 256
         while (true) {
             val readFile = byteArrayOf(0x00, 0xb0.toByte(), hiByte(cnt), loByte(cnt))
-            val response =
-                apduManager.sendApdu(
-                    readFile,
-                    byteArrayOf(),
-                    byteArrayOf(chunk.toByte()),
-                    NfcEvent.READ_FILE
-                )
+            val response = apduManager.sendApdu(
+                readFile,
+                byteArrayOf(),
+                byteArrayOf(chunk.toByte()),
+                NfcEvent.READ_FILE
+            )
             var chn = response.response
             if ((response.swInt shr 8).toByte().compareTo(0x6c.toByte()) == 0) {
                 CieLogger.i("ENTERING", "response.swInt shr 8!!")

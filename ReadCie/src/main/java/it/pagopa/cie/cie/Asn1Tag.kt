@@ -46,15 +46,12 @@ constructor(objects: Array<Any>) {
     }
 
     companion object {
-
-
         private var iterazione: Int = 0
 
         @Throws(Exception::class)
         fun unsignedToBytes32(x: Int): Long {
             return if (x > 0) x.toLong() else Math.pow(2.0, 32.0).toLong() + x
         }
-
 
         @Throws(Exception::class)
         fun parse(
@@ -149,7 +146,6 @@ constructor(objects: Array<Any>) {
                 newTag.constructed = len
             }
             return newTag
-
         }
 
         @Throws(Exception::class)

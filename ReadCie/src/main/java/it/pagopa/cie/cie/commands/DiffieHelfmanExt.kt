@@ -15,7 +15,7 @@ import it.pagopa.cie.nfc.Utils
 internal fun CieCommands.initDHParam() {
     CieLogger.i("Starting secure channel", "initDHParam()")
     val getDHDoup = byteArrayOf(0, 0xcb.toByte(), 0x3f, 0xff.toByte())
-    val getDHDuopData_g = byteArrayOf(
+    val getDHDuopDataG = byteArrayOf(
         0x4D,
         0x0A,
         0x70,
@@ -30,10 +30,10 @@ internal fun CieCommands.initDHParam() {
         0x00
     )
     val manager = ApduManager(onTransmit)
-    var resp = manager.sendApdu(getDHDoup, getDHDuopData_g, null, NfcEvent.DH_INIT_GET_G)
+    var resp = manager.sendApdu(getDHDoup, getDHDuopDataG, null, NfcEvent.DH_INIT_GET_G)
     var asn1Tag = Asn1Tag.Companion.parse(resp.response, false)
     dhG = asn1Tag!!.child(0).child(0).child(0).data
-    val getDHDuopData_p = byteArrayOf(
+    val getDHDuopDataP = byteArrayOf(
         0x4D,
         0x0A,
         0x70,
@@ -47,10 +47,10 @@ internal fun CieCommands.initDHParam() {
         0x98.toByte(),
         0x00
     )
-    resp = manager.sendApdu(getDHDoup, getDHDuopData_p, null, NfcEvent.DH_INIT_GET_P)
+    resp = manager.sendApdu(getDHDoup, getDHDuopDataP, null, NfcEvent.DH_INIT_GET_P)
     asn1Tag = Asn1Tag.parse(resp.response, false)
     dhP = asn1Tag!!.child(0).child(0).child(0).data
-    val getDHDuopData_q = byteArrayOf(
+    val getDHDuopDataQ = byteArrayOf(
         0x4D,
         0x0A,
         0x70,
@@ -64,7 +64,7 @@ internal fun CieCommands.initDHParam() {
         0x99.toByte(),
         0x00
     )
-    resp = manager.sendApdu(getDHDoup, getDHDuopData_q, null, NfcEvent.DH_INIT_GET_Q)
+    resp = manager.sendApdu(getDHDoup, getDHDuopDataQ, null, NfcEvent.DH_INIT_GET_Q)
     asn1Tag = Asn1Tag.parse(resp.response, false)
     dhQ = asn1Tag!!.child(0).child(0).child(0).data
 }
@@ -94,15 +94,15 @@ internal fun CieCommands.dhKeyExchange() {
         Utils.appendByteArray(Utils.asn1Tag(algo, 0x80), Utils.asn1Tag(keyId, 0x83)),
         Utils.asn1Tag(dhpubKey, 0x91)
     )
-    val MSE_SET = byteArrayOf(0x00, 0x22, 0x41, 0xa6.toByte())
+    val setMse = byteArrayOf(0x00, 0x22, 0x41, 0xa6.toByte())
     val manager = ApduManager(onTransmit)
-    manager.sendApdu(MSE_SET, tmp1, null, NfcEvent.SET_MSE)
+    manager.sendApdu(setMse, tmp1, null, NfcEvent.SET_MSE)
 
     // get ICC public key
-    val GET_DATA = byteArrayOf(0x00, 0xcb.toByte(), 0x3f, 0xff.toByte())
-    val GET_DATA_Data = byteArrayOf(0x4d, 0x04, 0xa6.toByte(), 0x02, 0x91.toByte(), 0x00)
+    val getData = byteArrayOf(0x00, 0xcb.toByte(), 0x3f, 0xff.toByte())
+    val getIccData = byteArrayOf(0x4d, 0x04, 0xa6.toByte(), 0x02, 0x91.toByte(), 0x00)
     val respAsn =
-        manager.sendApdu(GET_DATA, GET_DATA_Data, null, NfcEvent.D_H_KEY_EXCHANGE_GET_DATA)
+        manager.sendApdu(getData, getIccData, null, NfcEvent.D_H_KEY_EXCHANGE_GET_DATA)
     val asn1 = Asn1Tag.parse(respAsn.response, true)
     dhICCpubKey = asn1!!.child(0).data
     val secret = rsa.encrypt(dhICCpubKey)

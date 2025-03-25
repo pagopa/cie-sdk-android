@@ -204,7 +204,7 @@ internal fun CieCommands.dApp() {
     //SN.ICC | SIG.ICC
     resp = pair.second
 
-    val SN_ICC = Utils.getSub(resp.response, 0, 8)
+    val snIcc = Utils.getSub(resp.response, 0, 8)
     val intAuthResp: ByteArray
     val rsaIntAuthKey = RSA(dappModule, dappPubKey)
     intAuthResp = rsaIntAuthKey.encrypt(Utils.getSub(resp.response, 8, resp.response.size - 8))
@@ -212,12 +212,12 @@ internal fun CieCommands.dApp() {
     if (intAuthResp[0].compareTo(0x6a.toByte()) != 0)
         throw CieSdkException(NfcError.CHIP_AUTH_ERROR)
 
-    val PRND2 = Utils.getSub(intAuthResp, 1, intAuthResp.size - 32 - 2)
-    val hashICC = Utils.getSub(intAuthResp, PRND2.size + 1, 32)
+    val prnD2 = Utils.getSub(intAuthResp, 1, intAuthResp.size - 32 - 2)
+    val hashICC = Utils.getSub(intAuthResp, prnD2.size + 1, 32)
     var toHashIFD = byteArrayOf()
-    toHashIFD = Utils.appendByteArray(toHashIFD, PRND2)
+    toHashIFD = Utils.appendByteArray(toHashIFD, prnD2)
     toHashIFD = Utils.appendByteArray(toHashIFD, dhICCpubKey)
-    toHashIFD = Utils.appendByteArray(toHashIFD, SN_ICC)
+    toHashIFD = Utils.appendByteArray(toHashIFD, snIcc)
     toHashIFD = Utils.appendByteArray(toHashIFD, rndIFD)
     toHashIFD = Utils.appendByteArray(toHashIFD, dhpubKey)
     toHashIFD = Utils.appendByteArray(toHashIFD, dhG)
