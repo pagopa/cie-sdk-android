@@ -1,8 +1,9 @@
 package it.pagopa.cie
 
+import it.pagopa.cie.cie.ApduManager
 import it.pagopa.cie.cie.ApduResponse
-import it.pagopa.cie.cie.commands.CieCommands
-import it.pagopa.cie.cie.NisAuthenticated
+import it.pagopa.cie.cie.NfcError
+import it.pagopa.cie.cie.NfcEvent
 import it.pagopa.cie.cie.OnTransmit
 import it.pagopa.cie.cie.ReadCie
 import it.pagopa.cie.nfc.BaseNfcImpl
@@ -12,26 +13,24 @@ import org.junit.Test
 
 class CieCommandsTest {
     private val onTransmitGetRespTest = object : OnTransmit {
-        override fun sendCommand(apdu: ByteArray, message: String): ApduResponse {
+        override fun sendCommand(apdu: ByteArray, nfcEvents: NfcEvent): ApduResponse {
             return ApduResponse(Utils.hexStringToByteArray(""), Utils.hexStringToByteArray("9000"))
         }
 
-        override fun error(why: String) {
-            assert(why == "exception occurred: 0 > -2")
+        override fun error(error: NfcError) {
         }
     }
     private val onTransmitForException = object : OnTransmit {
-        override fun sendCommand(apdu: ByteArray, message: String): ApduResponse {
+        override fun sendCommand(apdu: ByteArray, nfcEvents: NfcEvent): ApduResponse {
             return ApduResponse(Utils.hexStringToByteArray(""))
         }
 
-        override fun error(why: String) {
-            assert(why == "exception occurred: 0 > -2")
+        override fun error(error: NfcError) {
         }
     }
     private val onTransmitApduTest = object : OnTransmit {
-        override fun sendCommand(apdu: ByteArray, message: String): ApduResponse {
-            return if (message == "test")
+        override fun sendCommand(apdu: ByteArray,nfcEvents: NfcEvent): ApduResponse {
+            return if (nfcEvents == NfcEvent.INTERNAL_AUTHENTICATION)
                 ApduResponse(
                     Utils.hexStringToByteArray("back_from_test"),
                     Utils.hexStringToByteArray("9000")
@@ -40,12 +39,12 @@ class CieCommandsTest {
                 ApduResponse(Utils.hexStringToByteArray(""), Utils.hexStringToByteArray("2456"))
         }
 
-        override fun error(why: String) {
+        override fun error(error: NfcError) {
         }
     }
 
     private val onTransmit = object : OnTransmit {
-        override fun sendCommand(apdu: ByteArray, message: String): ApduResponse {
+        override fun sendCommand(apdu: ByteArray, nfcEvents: NfcEvent): ApduResponse {
             return when (Utils.bytesToString(apdu)) {
                 "00A4040C0DA0000000308000000009816001", "00A4040C06A00000000039" -> ApduResponse(
                     Utils.hexStringToByteArray(""),
@@ -146,35 +145,29 @@ class CieCommandsTest {
             }
         }
 
-        override fun error(why: String) {
+
+        override fun error(error: NfcError) {
         }
     }
 
     @Test
     fun open_cie_test() {
         MyNfcImpl(object : NfcReading {
-            override fun onTransmit(message: String) {
+            override fun error(error: NfcError) {
+            }
+            override fun onTransmit(message: NfcEvent) {
             }
 
             override fun <T> read(element: T) {
-                assert(element is NisAuthenticated)
-                val back = element as NisAuthenticated
-                assert(back.toString() == "NisAuthenticated:\n nis: ${back.nis};\n sod: ${back.sod}")
-                assert(back.nis.length == 12)
-                assert(back.sod.length == 5728)
-                assert(back.challengeSigned.length == 8)
-                assert(back.kpubIntServ.length == 540)
-                assert(back.haskKpubIntServ.length == 64)
             }
+        }, onTransmit).transmit(10000, "ch"){
 
-            override fun error(why: String) {
-            }
-        }, onTransmit).transmit(10000, "ch")
+        }
     }
 
     @Test
     fun sendApduTest() {
-        val commands = CieCommands(onTransmitApduTest)
+        val commands = ApduManager(onTransmitApduTest)
         val list = ArrayList<Byte>()
         for (i in 0 until 256)
             list.add(if (i % 2 == 0) 0x00 else 0x02)
@@ -182,7 +175,7 @@ class CieCommandsTest {
             byteArrayOf(0x00),
             list.toByteArray(),
             null,
-            "test"
+            NfcEvent.INTERNAL_AUTHENTICATION
         )
         assert(Utils.bytesToString(response.response) == "BABFFFEFEFFEEF")
         assert(Utils.bytesToString(response.swByte) == "9000")
@@ -190,15 +183,15 @@ class CieCommandsTest {
 
     @Test
     fun sendApduDataEmptyTest() {
-        val commands = CieCommands(onTransmitApduTest)
+        val commands = ApduManager(onTransmitApduTest)
         val response =
-            commands.sendApdu(byteArrayOf(0x00), byteArrayOf(), null, "test")
+            commands.sendApdu(byteArrayOf(0x00), byteArrayOf(), null, NfcEvent.INTERNAL_AUTHENTICATION)
         assert(Utils.bytesToString(response.swByte) == "9000")
     }
 
     @Test
     fun sendApduExceptionTest() {
-        val commands = CieCommands(onTransmitApduTest)
+        val commands = ApduManager(onTransmitApduTest)
         val list = ArrayList<Byte>()
         for (i in 0 until 256)
             list.add(if (i % 2 == 0) 0x00 else 0x02)
@@ -207,7 +200,7 @@ class CieCommandsTest {
                 byteArrayOf(0x00),
                 list.toByteArray(),
                 null,
-                "testException"
+                NfcEvent.READ_FILE_SERVICE_ID_RESPONSE
             )
         } catch (e: Exception) {
             assert(e.message == "Errore apdu")
@@ -217,17 +210,15 @@ class CieCommandsTest {
     @Test
     fun testException() {
         ReadCie(onTransmitForException, object : NfcReading {
-            override fun onTransmit(message: String) {
+            override fun onTransmit(message: NfcEvent) {
             }
 
             override fun <T> read(element: T) {
             }
 
-            override fun error(why: String) {
+            override fun error(error: NfcError) {
             }
-        }).read("ch") {
-
-        }
+        }).read("ch")
     }
 
     @Test
@@ -239,32 +230,34 @@ class CieCommandsTest {
     @Test
     fun test_base_class() {
         MyNfcImpl(object : NfcReading {
-            override fun onTransmit(message: String) {
+            override fun onTransmit(message: NfcEvent) {
             }
 
             override fun <T> read(element: T) {
             }
 
-            override fun error(why: String) {
+            override fun error(error: NfcError) {
             }
-        }, onTransmitForException).transmit(1000, "ch")
+        }, onTransmitForException).transmit(1000, "ch"){
+
+        }
     }
 
     @Test
     fun get_resp_test() {
-        val response = CieCommands(onTransmitGetRespTest).getResp(
+        val response = ApduManager(onTransmitGetRespTest).getResp(
             ApduResponse(Utils.hexStringToByteArray("test"), byteArrayOf(97.toByte(), 1.toByte())),
-            "myTest"
+            NfcEvent.INTERNAL_AUTHENTICATION
         )
         assert(response.swHex == "9000")
-        val response2 = CieCommands(onTransmitGetRespTest).getResp(
+        val response2 = ApduManager(onTransmitGetRespTest).getResp(
             ApduResponse(Utils.hexStringToByteArray("test"), byteArrayOf(97.toByte(), 0.toByte())),
-            "myTest"
+            NfcEvent.INTERNAL_AUTHENTICATION
         )
         assert(response2.swHex == "9000")
     }
 
-    class MyNfcImpl() : BaseNfcImpl() {
+    internal class MyNfcImpl() : BaseNfcImpl() {
 
         private lateinit var onTransmit: OnTransmit
 
@@ -273,7 +266,11 @@ class CieCommandsTest {
             this.onTransmit = onTransmit
         }
 
-        override fun connect(isoDepTimeout: Int, actionDone: () -> Unit) {
+        override fun connect(
+            isoDepTimeout: Int,
+            onTagDiscovered: () -> Unit,
+            actionDone: () -> Unit
+        ) {
             actionDone.invoke()
         }
 

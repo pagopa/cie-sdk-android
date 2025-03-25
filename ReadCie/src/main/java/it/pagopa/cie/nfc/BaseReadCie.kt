@@ -1,6 +1,8 @@
 package it.pagopa.cie.nfc
 
 import it.pagopa.cie.CieLogger
+import it.pagopa.cie.cie.NfcError
+import it.pagopa.cie.cie.NfcEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -12,54 +14,95 @@ abstract class BaseReadCie(
      * @property backResource return an interface which returns success or fail events*/
     interface ReadingCieInterface {
         fun onTransmit(value: Boolean)
-        fun backResource(action: FunInterfaceResource<ByteArray>)
+        fun <T> backResource(action: FunInterfaceResource<T>)
     }
 
     fun read(
         scope: CoroutineScope,
         isoDepTimeout: Int,
-        nfcListener: NfcReading,
+        nfcListener: NfcEvents,
         readingInterface: ReadingCieInterface
     ) {
         scope.launch {
             workNfc(isoDepTimeout, pin.orEmpty(), object : NfcReading {
-                override fun onTransmit(message: String) {
-                    CieLogger.i("message from CIE", message)
-                    nfcListener.onTransmit(message)
-                    if (message == "connected")
+                override fun onTransmit(message: NfcEvent) {
+                    CieLogger.i("message from CIE", message.name)
+                    nfcListener.event(message)
+                    if (message == NfcEvent.CONNECTED)
                         readingInterface.onTransmit(true)
                 }
 
                 override fun <T> read(element: T) {
-                    nfcListener.read(element)
                     readingInterface.backResource(FunInterfaceResource.success(element as ByteArray))
                 }
 
-                override fun error(why: String) {
-                    nfcListener.error(why)
-                    readingInterface.backResource(FunInterfaceResource.error(why))
+                override fun error(error: NfcError) {
+                    nfcListener.error(error)
+                    if (error == NfcError.NOT_A_CIE)
+                        nfcListener.event(NfcEvent.ON_TAG_DISCOVERED_NOT_CIE)
+                    readingInterface.backResource<Any>(FunInterfaceResource.error(error))
                 }
-            })
+            }) {
+                nfcListener.event(NfcEvent.ON_TAG_DISCOVERED)
+            }
         }
     }
 
-    abstract suspend fun workNfc(
+    fun readCieAtr(
+        scope: CoroutineScope,
         isoDepTimeout: Int,
-        challenge: String,
-        readingInterface: NfcReading
+        nfcListener: NfcEvents,
+        readingInterface: ReadingCieInterface
+    ) {
+        scope.launch {
+            workNfcForCieAtr(isoDepTimeout, object : NfcReading {
+                override fun onTransmit(message: NfcEvent) {
+                    CieLogger.i("message from CIE", message.name)
+                    nfcListener.event(message)
+                    if (message == NfcEvent.CONNECTED)
+                        readingInterface.onTransmit(true)
+                }
+
+                override fun <T> read(element: T) {
+                    readingInterface.backResource(FunInterfaceResource.success(element as ByteArray))
+                }
+
+                override fun error(error: NfcError) {
+                    nfcListener.error(error)
+                    if (error == NfcError.NOT_A_CIE)
+                        nfcListener.event(NfcEvent.ON_TAG_DISCOVERED_NOT_CIE)
+                    readingInterface.backResource<Any>(FunInterfaceResource.error(error))
+                }
+            }) {
+                nfcListener.event(NfcEvent.ON_TAG_DISCOVERED)
+            }
+        }
+    }
+
+    internal abstract suspend fun workNfc(
+        isoDepTimeout: Int,
+        pin: String,
+        readingInterface: NfcReading,
+        onTagDiscovered: () -> Unit
+    )
+
+    internal abstract suspend fun workNfcForCieAtr(
+        isoDepTimeout: Int,
+        readingInterface: NfcReading,
+        onTagDiscovered: () -> Unit
     )
 
     data class FunInterfaceResource<out T>(
         val status: FunInterfaceStatus,
         val data: T?,
-        val msg: String = ""
+        val nfcError: NfcError? = null
     ) {
         companion object {
             fun <T> success(data: T): FunInterfaceResource<T> =
                 FunInterfaceResource(FunInterfaceStatus.SUCCESS, data)
 
-            fun <T> error(msg: String): FunInterfaceResource<T> =
-                FunInterfaceResource(FunInterfaceStatus.ERROR, null, msg)
+            fun <T> error(error: NfcError): FunInterfaceResource<T> =
+                FunInterfaceResource(FunInterfaceStatus.ERROR, null, error)
         }
     }
 

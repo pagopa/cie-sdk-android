@@ -1,5 +1,6 @@
 package it.pagopa.cie.cie
 
+import android.util.Base64
 import it.pagopa.cie.nfc.Utils
 
 class ApduResponse private constructor() {
@@ -20,6 +21,7 @@ class ApduResponse private constructor() {
     val swInt: Int get() = Utils.toUint(swByte)
 
     override fun toString(): String {
-        return "ApduResponse: swHex:$swHex, swInt:$swInt"
+        return "ApduResponse: swHex:$swHex, swInt:$swInt, response: ${Base64.encodeToString(response,
+            Base64.DEFAULT)}"
     }
 }

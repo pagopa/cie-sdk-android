@@ -4,21 +4,22 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.ViewModel
 import it.pagopa.cie.CieLogger
 import it.pagopa.cie.CieSDK
-import it.pagopa.cie.network.Event
+import it.pagopa.cie.cie.CieSdkException
+import it.pagopa.cie.cie.NfcError
+import it.pagopa.cie.cie.NfcEvent
 import it.pagopa.cie.network.NetworkCallback
-import it.pagopa.cie.nfc.NfcReading
+import it.pagopa.cie.network.NetworkError
+import it.pagopa.cie.nfc.NfcEvents
 
 class ReadCieViewModel(
     private val cieSdk: CieSDK
-) : ViewModel() {
+) : BaseViewModelWithNfcDialog(cieSdk) {
+    var webViewUrl =
+        mutableStateOf("https://app-backend.io.italia.it/login?entityID=xx_servizicie&authLevel=SpidL3")
+    var webViewLoader = mutableStateOf(true)
     var pin = mutableStateOf("")
-    var showDialog = mutableStateOf(false)
-    var dialogMessage = mutableStateOf("")
-    var errorMessage = mutableStateOf("")
-    var successMessage = mutableStateOf("")
     var shouldShowUI = mutableStateOf(false)
 
     inner class WebViewClientWithRedirect : WebViewClient() {
@@ -37,57 +38,47 @@ class ReadCieViewModel(
         }
     }
 
-    fun readCie(
+    private fun readCie(
         pin: String
     ) {
-        cieSdk.setPin(pin)
         try {
-            cieSdk.startReading(10000, object : NfcReading {
-                override fun <T> read(element: T) {}
-                override fun onTransmit(message: String) {
-                    dialogMessage.value = message
+            cieSdk.setPin(pin)
+            cieSdk.startReading(10000, object : NfcEvents {
+                override fun error(error: NfcError) {
+                    this@ReadCieViewModel.onError(error)
                 }
 
-                override fun error(why: String) {
-                    errorMessage.value = why
+                override fun event(event: NfcEvent) {
+                    dialogMessage.value = event.name
+                    progressValue.floatValue =
+                        (event.numerator.toFloat() / NfcEvent.totalNumeratorEvent.toFloat()).toFloat()
                 }
             }, object : NetworkCallback {
                 override fun onSuccess(url: String) {
                     dialogMessage.value = "ALL OK!!"
                     errorMessage.value = ""
+                    progressValue.floatValue = 1f
                     successMessage.value = url
                     stopNfc()
+                    showDialog.value = false
+                    shouldShowUI.value = false
+                    webViewUrl.value = url
+                    webViewLoader.value = false
                 }
 
-                override fun onEvent(event: Event) {
-                    dialogMessage.value = event.event.toString()
-                }
-
-                override fun onError(error: Throwable) {
-                    errorMessage.value = error.message.orEmpty()
-                    stopNfc()
+                override fun onError(error: NetworkError) {
+                    this@ReadCieViewModel.onError(error)
                 }
             })
         } catch (e: Exception) {
-            errorMessage.value = e.message.orEmpty()
+            if (e is CieSdkException)
+                errorMessage.value = e.getError().msg ?: e.getError().name
+            else
+                errorMessage.value = e.message.orEmpty()
         }
     }
 
-    fun stopNfc() {
-        cieSdk.stopNFCListening()
-    }
-
-    fun clearMessages() {
-        errorMessage.value = ""
-        successMessage.value = ""
-        dialogMessage.value = ""
-    }
-
-    fun clear() {
-        pin.value = ""
-        showDialog.value = false
-        errorMessage.value = ""
-        successMessage.value = ""
-        dialogMessage.value = ""
+    override fun readCie() {
+        this.readCie(this.pin.value)
     }
 }

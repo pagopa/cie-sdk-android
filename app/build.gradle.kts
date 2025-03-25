@@ -9,6 +9,22 @@ android {
     namespace = "it.pagopa.cie_sdk"
     compileSdk = 35
 
+    signingConfigs {
+        create("app-debug") {
+            keyAlias = "key0"
+            keyPassword = "d1g1touch"
+            storeFile = file("../certificate.keystore")
+            storePassword = "d1g1touch"
+        }
+
+        create("app-release") {
+            keyAlias = "key0"
+            keyPassword = "d1g1touch"
+            storeFile = file("../certificate.keystore")
+            storePassword = "d1g1touch"
+        }
+    }
+
     defaultConfig {
         applicationId = "it.pagopa.cie_sdk"
         minSdk = 24
@@ -17,6 +33,11 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField(
+            "String",
+            "BASE_URL_IDP",
+            "\"https://idserver.servizicie.interno.gov.it/idp/\""
+        )
     }
 
     buildTypes {

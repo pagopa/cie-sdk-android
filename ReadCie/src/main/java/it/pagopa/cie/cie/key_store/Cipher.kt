@@ -1,5 +1,6 @@
 package it.pagopa.cie.cie.key_store
 
+import it.pagopa.cie.cie.NfcEvent
 import it.pagopa.cie.cie.ReadCie
 import java.security.AlgorithmParameters
 import java.security.Key
@@ -36,7 +37,7 @@ internal class Cipher : CipherSpi() {
 
     override fun engineDoFinal(input: ByteArray?, inputOffset: Int, inputLen: Int): ByteArray? {
         if (input == null) return byteArrayOf()
-        return ReadCie.cieCommands?.sign(input)
+        return ReadCie.cieCommands?.sign(input, NfcEvent.SIGN_WITH_CIPHER)
     }
 
     override fun engineDoFinal(

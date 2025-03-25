@@ -43,12 +43,14 @@ fun AppDialog(
     @StringRes descriptionId: Int,
     @StringRes buttonText: Int,
     btnAction: (() -> Unit)? = null,
+    onDismiss: (() -> Unit)? = null,
     contentIn: @Composable ColumnScope.() -> Unit
 ) {
     if (shouldShowDialog?.value == true) {
         BasicAlertDialog(
             onDismissRequest = {
                 shouldShowDialog.value = false
+                onDismiss?.invoke()
             },
             properties = DialogProperties(),
             content = {

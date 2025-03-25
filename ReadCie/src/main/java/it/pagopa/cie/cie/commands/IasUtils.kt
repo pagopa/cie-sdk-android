@@ -1,11 +1,42 @@
 package it.pagopa.cie.cie.commands
 
 import it.pagopa.cie.CieLogger
+import it.pagopa.cie.cie.ApduManager
+import it.pagopa.cie.cie.ApduResponse
+import it.pagopa.cie.cie.ApduSecureMessageManager
 import it.pagopa.cie.cie.Asn1Tag
+import it.pagopa.cie.cie.CieSdkException
+import it.pagopa.cie.cie.NfcError
+import it.pagopa.cie.cie.NfcEvent
+import it.pagopa.cie.cie.ReadFileManager
 import it.pagopa.cie.nfc.Utils
 
+internal fun CieCommands.readAtr() = ReadFileManager(onTransmit).readFile(0x2f01)
+internal fun CieCommands.selectRoot(): ApduResponse {
+    val selectMF = byteArrayOf(0x00, 0xa4.toByte(), 0x00, 0x00, 0x02, 0x3f, 0x00)
+    return ApduManager(onTransmit)
+        .sendApdu(
+            selectMF,
+            byteArrayOf(),
+            null,
+            NfcEvent.SELECT_ROOT
+        )
+}
+
+@Throws(CieSdkException::class)
+internal fun CieCommands.readCieAtr(): ByteArray {
+    this.selectIAS()
+    this.selectCie()
+    val selectRoot = this.selectRoot()
+    if (selectRoot.swHex != "9000") {
+        CieLogger.i("SELECT ROOT", selectRoot.swHex)
+        throw CieSdkException(NfcError.SELECT_ROOT_EXCEPTION)
+    }
+    return this.readAtr()
+}
+
 /**
- * recupera i parametri delle chiavi per external authentication
+ * it retrieves external authentication keys parameters
  * @throws Exception
  */
 @Throws(Exception::class)
@@ -25,271 +56,74 @@ internal fun CieCommands.initExtAuthKeyParam() {
         0x49,
         0x80.toByte()
     )
-    val response = sendApdu(getKeyDoup, getKeyDuopData, null, "getKeyDuopData")
+    val response = ApduManager(onTransmit)
+        .sendApdu(getKeyDoup, getKeyDuopData, null, NfcEvent.INIT_EXTERNAL_AUTHENTICATION)
     val asn1 = Asn1Tag.Companion.parse(response.response, true)
     caModule = asn1!!.child(0).child(0).childWithTagID(byteArrayOf(0x81.toByte()))!!.data
-    caPubExp = asn1.child(0).child(0).childWithTagID(byteArrayOf(0x82.toByte()))!!.data
-    baExtAuthPrivExp = byteArrayOf(
-        0x18,
-        0x6B,
-        0x31,
-        0x48,
-        0x8C.toByte(),
-        0x25,
-        0xDC.toByte(),
-        0xF8.toByte(),
-        0x5D,
-        0x95.toByte(),
-        0x3D,
-        0x36,
-        0x30,
-        0xC0.toByte(),
-        0xD0.toByte(),
-        0x73,
-        0xBA.toByte(),
-        0x1C,
-        0x6A,
-        0xA2.toByte(),
-        0x45,
-        0x81.toByte(),
-        0xAD.toByte(),
-        0x25,
-        0x4F,
-        0x3B,
-        0x67,
-        0x19,
-        0xC5.toByte(),
-        0xD7.toByte(),
-        0x2C,
-        0xCA.toByte(),
-        0x3E,
-        0x5C,
-        0xDC.toByte(),
-        0x5A,
-        0x1E,
-        0x53,
-        0x16,
-        0x57,
-        0x8D.toByte(),
-        0x75,
-        0x95.toByte(),
-        0x4F,
-        0xF7.toByte(),
-        0x3B,
-        0x23,
-        0x7B,
-        0x53,
-        0x2C,
-        0x9F.toByte(),
-        0x8D.toByte(),
-        0xE4.toByte(),
-        0xA2.toByte(),
-        0xC4.toByte(),
-        0xC9.toByte(),
-        0x11,
-        0x38,
-        0x5A,
-        0x23,
-        0xE6.toByte(),
-        0x3E,
-        0x33,
-        0xE4.toByte(),
-        0x7E,
-        0xE4.toByte(),
-        0x5E,
-        0x66,
-        0xEF.toByte(),
-        0xD4.toByte(),
-        0x9B.toByte(),
-        0x18,
-        0xE0.toByte(),
-        0x2C,
-        0xFF.toByte(),
-        0x87.toByte(),
-        0x59,
-        0x8C.toByte(),
-        0x39,
-        0x10,
-        0x9E.toByte(),
-        0x8F.toByte(),
-        0x86.toByte(),
-        0xA6.toByte(),
-        0x6B,
-        0xC3.toByte(),
-        0x30,
-        0x24,
-        0x9C.toByte(),
-        0xE3.toByte(),
-        0xFC.toByte(),
-        0xAD.toByte(),
-        0x65,
-        0x5D,
-        0xCD.toByte(),
-        0xBF.toByte(),
-        0x98.toByte(),
-        0xC9.toByte(),
-        0xC5.toByte(),
-        0xE4.toByte(),
-        0x79,
-        0x32,
-        0x1A,
-        0xF5.toByte(),
-        0x3B,
-        0x51,
-        0x7D,
-        0x04,
-        0x10,
-        0x61,
-        0x88.toByte(),
-        0x0A,
-        0x64,
-        0x7B,
-        0xBE.toByte(),
-        0x0F,
-        0xF8.toByte(),
-        0x13,
-        0x68,
-        0x34,
-        0x70,
-        0xE6.toByte(),
-        0xC5.toByte(),
-        0x00,
-        0x94.toByte(),
-        0xCE.toByte(),
-        0x81.toByte(),
-        0xD0.toByte(),
-        0x64,
-        0xE2.toByte(),
-        0x04,
-        0xE3.toByte(),
-        0x51,
-        0xBD.toByte(),
-        0x3A,
-        0xE0.toByte(),
-        0xA7.toByte(),
-        0x94.toByte(),
-        0x7D,
-        0x8E.toByte(),
-        0x91.toByte(),
-        0xC3.toByte(),
-        0xFD.toByte(),
-        0x5C,
-        0x0A,
-        0x15,
-        0x23,
-        0x3C,
-        0x34,
-        0x9A.toByte(),
-        0x52,
-        0x15,
-        0xA4.toByte(),
-        0xE6.toByte(),
-        0x6E,
-        0x21,
-        0xC5.toByte(),
-        0xD3.toByte(),
-        0x34,
-        0x98.toByte(),
-        0xE7.toByte(),
-        0x19,
-        0x91.toByte(),
-        0xEA.toByte(),
-        0x24,
-        0x47,
-        0x3B,
-        0x29,
-        0xF1.toByte(),
-        0x47,
-        0x5F,
-        0x6F,
-        0xD9.toByte(),
-        0xBE.toByte(),
-        0x39,
-        0x96.toByte(),
-        0xE1.toByte(),
-        0x9B.toByte(),
-        0xD4.toByte(),
-        0x74,
-        0xFA.toByte(),
-        0xD1.toByte(),
-        0xB4.toByte(),
-        0x1E,
-        0xA0.toByte(),
-        0xDC.toByte(),
-        0xD2.toByte(),
-        0xFC.toByte(),
-        0x16,
-        0xC9.toByte(),
-        0xBF.toByte(),
-        0xFA.toByte(),
-        0x07,
-        0x1B,
-        0xFE.toByte(),
-        0xC1.toByte(),
-        0xB2.toByte(),
-        0x24,
-        0x15,
-        0x18,
-        0x48,
-        0x11,
-        0xC1.toByte(),
-        0x98.toByte(),
-        0x5F,
-        0xBF.toByte(),
-        0xE3.toByte(),
-        0xE7.toByte(),
-        0xB4.toByte(),
-        0xF4.toByte(),
-        0x4A,
-        0x4B,
-        0x3C,
-        0x8D.toByte(),
-        0xFA.toByte(),
-        0xB4.toByte(),
-        0xD9.toByte(),
-        0x0C,
-        0xEC.toByte(),
-        0xFC.toByte(),
-        0x5E,
-        0x60,
-        0x8D.toByte(),
-        0x67,
-        0x3E,
-        0x67,
-        0x62,
-        0xC6.toByte(),
-        0x2C,
-        0xB7.toByte(),
-        0x98.toByte(),
-        0x34,
-        0x12,
-        0x71,
-        0x14,
-        0x9B.toByte(),
-        0xA6.toByte(),
-        0x88.toByte(),
-        0x16,
-        0x2E,
-        0xC7.toByte(),
-        0xD0.toByte(),
-        0xE3.toByte(),
-        0x46,
-        0x8F.toByte(),
-        0x65,
-        0xA9.toByte(),
-        0x4A,
-        0xB4.toByte(),
-        0xAD.toByte(),
-        0x1A,
-        0xB6.toByte(),
-        0x7E,
-        0x37,
-        0xBF.toByte(),
-        0xC1.toByte()
-    )
-    caPrivExp = baExtAuthPrivExp
+    //caPubExp = asn1.child(0).child(0).childWithTagID(byteArrayOf(0x82.toByte()))!!.data
     val caCha = asn1.child(0).child(0).childWithTagID(byteArrayOf(0x5f, 0x4c))!!.data
     val caChr = asn1.child(0).child(0).childWithTagID(byteArrayOf(0x5f, 0x20))!!.data
     caCar = Utils.getSub(caChr, 4)
     caAid = Utils.getLeft(caCha, 6)
+}
+
+/**
+ * It retrieves the internal authentication key
+ * @throws Exception
+ */
+@Throws(Exception::class)
+internal fun CieCommands.readDappPubKey() {
+    CieLogger.i("Command", "readDappPubKey()")
+    val readFileManager = ReadFileManager(onTransmit)
+    val dappKey: ByteArray = readFileManager.readFile(0x1004)
+    dappModule = byteArrayOf()
+    val asn1 = Asn1Tag.parse(dappKey, false)
+    dappModule = asn1!!.child(0).data
+    if (dappModule.isNotEmpty())
+        CieLogger.i("dappModule", "${dappModule[0].toInt() == 0}")
+    else
+        CieLogger.i("dappModule", "is empty")
+    while (dappModule[0].toInt() == 0)
+        dappModule = Utils.getSub(dappModule, 1, dappModule.size - 1)
+    dappPubKey = asn1.child(1).data
+    if (dappPubKey.isNotEmpty())
+        CieLogger.i("dappPubKey", "${dappPubKey[0].toInt() == 0}")
+    else
+        CieLogger.i("dappPubKey", "is empty")
+    while (dappPubKey[0].toInt() == 0)
+        dappPubKey = Utils.getSub(dappPubKey, 1, dappPubKey.size - 1)
+}
+
+/**
+ *
+ * @param pin it verifies user PIN
+ * @return the number of attempts left
+ * @throws CieSdkException if pin regex is not valid
+ */
+@Throws(Exception::class)
+internal fun CieCommands.verifyPin(pin: String): Int {
+    CieLogger.i("COMMANDS", "verifyPin()")
+    if (!ciePinRegex.matches(pin)) {
+        throw CieSdkException(NfcError.PIN_REGEX_NOT_VALID)
+    }
+    val verifyPIN = byteArrayOf(0x00, 0x20, 0x00, 0x81.toByte())
+    val secureMessageManager = ApduSecureMessageManager(onTransmit)
+    val pairBack = secureMessageManager.sendApduSM(
+        seq,
+        sessionEncryption,
+        sessMac,
+        verifyPIN,
+        pin.toByteArray(),
+        null,
+        NfcEvent.VERIFY_PIN
+    )
+    seq = pairBack.first
+    val response = pairBack.second
+    val nt = Utils.bytesToHex(response.swByte)
+    return when {
+        nt.equals("9000", ignoreCase = true) -> 3
+        nt.equals("ffc2", ignoreCase = true) -> 2
+        nt.equals("ffc1", ignoreCase = true) -> 1
+        else -> 0
+    }
 }

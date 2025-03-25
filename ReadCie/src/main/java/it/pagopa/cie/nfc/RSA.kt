@@ -9,7 +9,6 @@ import java.security.spec.RSAPrivateKeySpec
 
 internal class RSA @Throws(Exception::class)
 constructor(mod: ByteArray, exp: ByteArray) {
-
     private var key: RSAPrivateKey? = null
     private var cipher: Cipher? = null
 
@@ -18,13 +17,13 @@ constructor(mod: ByteArray, exp: ByteArray) {
     }
 
     @Throws(Exception::class)
-    fun createPrivateKey(modulo: ByteArray, esponente: ByteArray) {
-        val modulus = BigInteger(modulo.toHex(), 16)
-        val privateExp = BigInteger(esponente.toHex(), 16)
-        val keyFactory: KeyFactory? = KeyFactory.getInstance("RSA")
+    fun createPrivateKey(module: ByteArray, exp: ByteArray) {
+        val modulus = BigInteger(module.toHex(), 16)
+        val privateExp = BigInteger(exp.toHex(), 16)
+        val keyFactory: KeyFactory = KeyFactory.getInstance("RSA")
         val pubKeySpec = RSAPrivateKeySpec(modulus, privateExp)
         cipher = Cipher.getInstance("RSA/ECB/NoPadding")
-        this.key = keyFactory!!.generatePrivate(pubKeySpec) as RSAPrivateKey
+        this.key = keyFactory.generatePrivate(pubKeySpec) as RSAPrivateKey
     }
 
     @Throws(Exception::class)

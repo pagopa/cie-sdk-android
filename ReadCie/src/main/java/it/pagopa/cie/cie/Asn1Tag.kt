@@ -46,15 +46,12 @@ constructor(objects: Array<Any>) {
     }
 
     companion object {
-
-
         private var iterazione: Int = 0
 
         @Throws(Exception::class)
         fun unsignedToBytes32(x: Int): Long {
             return if (x > 0) x.toLong() else Math.pow(2.0, 32.0).toLong() + x
         }
-
 
         @Throws(Exception::class)
         fun parse(
@@ -91,7 +88,7 @@ constructor(objects: Array<Any>) {
             if (len > unsignedToBytes(0x80.toByte())) {
                 val lenlen = unsignedToBytes((len - 0x80).toByte())
                 len = 0
-                for (i in 0 until lenlen) {
+                (0 until lenlen).asSequence().forEach {
                     if (readPos.toLong() == length)
                         throw Asn1TagParseException("Lunghezza non corretta")
                     val bTmp = unsignedToBytes(asn.read().toByte())
@@ -149,7 +146,6 @@ constructor(objects: Array<Any>) {
                 newTag.constructed = len
             }
             return newTag
-
         }
 
         @Throws(Exception::class)
@@ -183,8 +179,5 @@ constructor(objects: Array<Any>) {
             val input = ByteArrayInputStream(efCom)
             return parse(input, 0, efCom.size.toLong(), reparse)
         }
-
     }
-
-
 }

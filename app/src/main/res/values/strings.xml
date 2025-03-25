@@ -15,4 +15,5 @@
     <string name="read_cie_dialog_title">Leggiamo la CIE</string>
     <string name="read_cie_dialog_description">Avvicina la CIE al telefono</string>
     <string name="ok">OK</string>
+    <string name="read_cie_type">Leggiamo il tipo di cie</string>
 </resources>
