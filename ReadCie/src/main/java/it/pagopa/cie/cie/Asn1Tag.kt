@@ -1,10 +1,9 @@
 package it.pagopa.cie.cie
 
 import java.io.ByteArrayInputStream
-import java.lang.IllegalStateException
-import java.util.*
+import kotlin.math.pow
 
-internal class Asn1TagParseException(message: String) : IllegalStateException(message)
+internal class Asn1TagParseException(nfcError: NfcError) : CieSdkException(nfcError)
 
 internal class Asn1Tag @Throws(Exception::class)
 constructor(objects: Array<Any>) {
@@ -46,11 +45,11 @@ constructor(objects: Array<Any>) {
     }
 
     companion object {
-        private var iterazione: Int = 0
+        private var iterator: Int = 0
 
         @Throws(Exception::class)
         fun unsignedToBytes32(x: Int): Long {
-            return if (x > 0) x.toLong() else Math.pow(2.0, 32.0).toLong() + x
+            return if (x > 0) x.toLong() else 2.0.pow(32.0).toLong() + x
         }
 
         @Throws(Exception::class)
@@ -60,18 +59,18 @@ constructor(objects: Array<Any>) {
             length: Long,
             reparse: Boolean
         ): Asn1Tag? {
-            iterazione++
+            iterator++
             var readPos = 0
-            var tag = unsignedToBytes(asn.read().toByte())//96
-            if (readPos.toLong() == length)
-                throw Asn1TagParseException("Lunghezza non corretta")
+            var tag = unsignedToBytes(asn.read().toByte())
+            if (length == 0L)
+                throw Asn1TagParseException(NfcError.ASN_1_NOT_RIGHT_LENGTH)
             val tagVal = ArrayList<Byte>()
             readPos++
             tagVal.add(tag.toByte())
             if (tag and 0x1f == 0x1f) {
                 while (true) {
                     if (readPos.toLong() == length)
-                        throw Asn1TagParseException("Lunghezza non corretta")
+                        throw Asn1TagParseException(NfcError.ASN_1_NOT_RIGHT_LENGTH)
                     tag = asn.read()
                     readPos++
                     tagVal.add(tag.toByte())
@@ -80,9 +79,9 @@ constructor(objects: Array<Any>) {
                     }
                 }
             }
-            // leggo la lunghezza
+            // reading length
             if (readPos.toLong() == length)
-                throw Asn1TagParseException("Lunghezza non corretta")
+                throw Asn1TagParseException(NfcError.ASN_1_NOT_RIGHT_LENGTH)
             var len = unsignedToBytes(asn.read().toByte()).toLong()
             readPos++
             if (len > unsignedToBytes(0x80.toByte())) {
@@ -90,7 +89,7 @@ constructor(objects: Array<Any>) {
                 len = 0
                 (0 until lenlen).asSequence().forEach {
                     if (readPos.toLong() == length)
-                        throw Asn1TagParseException("Lunghezza non corretta")
+                        throw Asn1TagParseException(NfcError.ASN_1_NOT_RIGHT_LENGTH)
                     val bTmp = unsignedToBytes(asn.read().toByte())
                     len = unsignedToBytes32((len shl 8 or bTmp.toLong()).toInt())
                     readPos++
@@ -98,7 +97,7 @@ constructor(objects: Array<Any>) {
             }
             val size = readPos + len
             if (size > length)
-                throw Asn1TagParseException("ASN1 non valido")
+                throw Asn1TagParseException(NfcError.ASN_1_NOT_VALID)
             if (tagVal.size == 1 && tagVal[0].toInt() == 0 && len == 0L) {
                 return null
             }

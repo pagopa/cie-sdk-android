@@ -55,7 +55,9 @@ enum class NfcError(var numberOfAttempts: Int? = null, var msg: String? = null) 
     TAG_LOST,
     STOP_NFC_ERROR,
     SELECT_ROOT_EXCEPTION,
-    GENERAL_EXCEPTION
+    GENERAL_EXCEPTION,
+    ASN_1_NOT_RIGHT_LENGTH,
+    ASN_1_NOT_VALID
 }
 ```
 msg will advise the sdk user with a string message about the error. </br>

@@ -16,10 +16,12 @@ enum class NfcError(var numberOfAttempts: Int? = null, var msg: String? = null) 
     TAG_LOST,
     STOP_NFC_ERROR,
     SELECT_ROOT_EXCEPTION,
-    GENERAL_EXCEPTION
+    GENERAL_EXCEPTION,
+    ASN_1_NOT_RIGHT_LENGTH,
+    ASN_1_NOT_VALID
 }
 
-class CieSdkException(private val nfcError: NfcError) : Exception() {
+open class CieSdkException(private val nfcError: NfcError) : Exception() {
     fun getError() = nfcError
 }
 

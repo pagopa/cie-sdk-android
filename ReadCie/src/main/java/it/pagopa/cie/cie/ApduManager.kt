@@ -6,6 +6,7 @@ import it.pagopa.cie.nfc.Utils
 import kotlin.experimental.or
 import kotlin.math.min
 
+/**8 PROTOCOL MANAGEMENT*/
 internal class ApduManager(private val onTransmit: OnTransmit) {
     @Throws(Exception::class)
     fun sendApdu(
@@ -15,13 +16,15 @@ internal class ApduManager(private val onTransmit: OnTransmit) {
         event: NfcEvent
     ): ApduResponse {
         var apdu = byteArrayOf()
-        if (data.size > 255) {
+        if (data.size > STANDARD_APDU_SIZE) {
             var i = 0
             val cla = head[0]
+            //8.5 Sending more than 255 bytes to the ICC : command chaining and 9.2 CLASS byte coding
             while (true) {
                 apdu = byteArrayOf()
-                val s: ByteArray = Utils.getSub(data, i, min(data.size - i, 255))
+                val s: ByteArray = Utils.getSub(data, i, min(data.size - i, STANDARD_APDU_SIZE))
                 i += s.size
+                //If the command, is a part of the chain, the bit 5 of the CLA byte shall be set to 1
                 if (i != data.size) head[0] = (cla or 0x10) else head[0] = cla
                 apdu = Utils.appendByteArray(apdu, head)
                 apdu = Utils.appendByte(apdu, s.size.toByte())
@@ -36,7 +39,7 @@ internal class ApduManager(private val onTransmit: OnTransmit) {
                     return getResp(apduResponse, event)
             }
         } else {
-            CieLogger.i("SEND_APDU", "data.size <= 255")
+            CieLogger.i("SEND_APDU", "data.size <= STANDARD_APDU_SIZE(255)")
             if (data.isNotEmpty()) {
                 apdu = Utils.appendByteArray(apdu, head)
                 apdu = Utils.appendByte(apdu, data.size.toByte())
@@ -50,6 +53,9 @@ internal class ApduManager(private val onTransmit: OnTransmit) {
         }
     }
 
+    private val apduHeadGetResp = byteArrayOf(0x00.toByte(), 0xc0.toByte(), 0x00, 0x00)
+
+    /**8.6.5 GET RESPONSE of IAS ECC Rev 1.0.1*/
     @VisibleForTesting
     fun getResp(responseTmp: ApduResponse, event: NfcEvent): ApduResponse {
         var responseTmpHere: ApduResponse = responseTmp
@@ -58,11 +64,14 @@ internal class ApduManager(private val onTransmit: OnTransmit) {
         var sw: Int = responseTmp.swInt
         var elaborateResp: ByteArray = byteArrayOf()
         if (resp.isNotEmpty()) elaborateResp = Utils.appendByteArray(elaborateResp, resp)
-        val apduGetRsp: ByteArray = byteArrayOf(0x00.toByte(), 0xc0.toByte(), 0x00, 0x00)
+        val apduGetRsp: ByteArray = apduHeadGetResp
+        //8.6.4 Command returning more than 256 bytes
         while (true) {
+            // if bytes are still available
             if (Utils.byteCompare((sw shr 8), 0x61) == 0) {
                 val ln: Byte = (sw and 0xff).toByte()
                 if (ln.toInt() != 0) {
+                    //we've ended to read
                     val apdu: ByteArray = Utils.appendByte(apduGetRsp, ln)
                     response = onTransmit.sendCommand(apdu, event)
                     elaborateResp = Utils.appendByteArray(elaborateResp, response.response)
@@ -73,6 +82,7 @@ internal class ApduManager(private val onTransmit: OnTransmit) {
                         )
                     )
                 } else {
+                    //still bytes to read
                     val apdu: ByteArray = Utils.appendByte(apduGetRsp, 0x00.toByte())
                     response = onTransmit.sendCommand(apdu, event)
                     sw = response.swInt
@@ -83,5 +93,9 @@ internal class ApduManager(private val onTransmit: OnTransmit) {
                 return responseTmpHere
             }
         }
+    }
+
+    companion object {
+        const val STANDARD_APDU_SIZE = 255
     }
 }

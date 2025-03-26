@@ -4,6 +4,7 @@ import it.pagopa.cie.nfc.Algorithms
 import it.pagopa.cie.nfc.Utils
 import kotlin.experimental.or
 
+/**7.1 The Secure Messaging layer of IAS ECC*/
 internal class ApduSecureMessageManager(private val onTransmit: OnTransmit) {
     /**It Sends a secure message APDU
      * @return [Pair] of the manipulated sequence and the [ApduResponse]*/
@@ -20,6 +21,7 @@ internal class ApduSecureMessageManager(private val onTransmit: OnTransmit) {
         var seq = sequence
         var apduSm: ByteArray
         val ds = data.size
+        //READ BINARY command (EVEN and ODD) is limited to ‘E7’ = 231 bytes (included), so that the data protected in integrity & confidentiality with the secure messaging does not exceed 256 bytes.
         if (ds < unsignedToBytes(0xe7)) {
             apduSm = byteArrayOf()
             apduSm = Utils.appendByteArray(apduSm, head)
@@ -37,8 +39,10 @@ internal class ApduSecureMessageManager(private val onTransmit: OnTransmit) {
             val cla = head[0]
             while (true) {
                 apduSm = byteArrayOf()
+                //splitting data into max bytes segments(231) until data is end
                 val s = Utils.getSub(data, i, (data.size - i).coerceAtMost(0xE7))
                 i += s.size
+                //If the command, is a part of the chain, the bit 5 of the CLA byte shall be set to 1
                 if (i != data.size)
                     head[0] = (cla or 0x10)
                 else
@@ -68,6 +72,7 @@ internal class ApduSecureMessageManager(private val onTransmit: OnTransmit) {
         }
     }
 
+    /**7.1.8 Commands and Responses under SM - Commands*/
     @Throws(Exception::class)
     private fun sm(
         sequence: ByteArray,
@@ -77,6 +82,7 @@ internal class ApduSecureMessageManager(private val onTransmit: OnTransmit) {
     ): Pair<ByteArray, ByteArray> {
         Utils.increment(sequence)
         val smHead = Utils.getLeft(apdu, 4)
+        //Bits b4 and b3 of the CLA byte shall be set to '1' (i.e. CLA ≡ 'xC'). It means the command header is integrated into the CC calculation.
         smHead[0] = smHead[0] or 0x0C
         var calcMac = Utils.getIsoPad(Utils.appendByteArray(sequence, smHead))
         val smMac: ByteArray
@@ -84,7 +90,7 @@ internal class ApduSecureMessageManager(private val onTransmit: OnTransmit) {
         var doob: ByteArray
 
         if (apdu[4].toInt() != 0 && apdu.size > 5) {
-            //encript la parte di dati
+            //encrypting partial data
             val d1 = Utils.getIsoPad(Utils.getSub(apdu, 5, apdu[4].toInt()))
             val enc = Algorithms.desEnc(keyEnc, d1)
             doob = if (apdu[1].toInt() and 1 == 0) {
@@ -93,9 +99,8 @@ internal class ApduSecureMessageManager(private val onTransmit: OnTransmit) {
             calcMac = Utils.appendByteArray(calcMac, doob)
             dataField = Utils.appendByteArray(dataField, doob)
         }
-        if (apdu.size == 5 || apdu.size == apdu[4] + 6)
-        //--
-        { // ' se c'è un le
+        //if le exists
+        if (apdu.size == 5 || apdu.size == apdu[4] + 6) {
             doob = Utils.asn1Tag(byteArrayOf(apdu[apdu.size - 1]), 0x97.toByte().toInt())
             calcMac = Utils.appendByteArray(calcMac, doob)
             dataField = Utils.appendByteArray(dataField, doob)
@@ -113,6 +118,7 @@ internal class ApduSecureMessageManager(private val onTransmit: OnTransmit) {
         )
     }
 
+    /**7.1.8 Commands and Responses under SM - Responses*/
     @Throws(Exception::class)
     private fun respSM(
         sequence: ByteArray,
@@ -121,7 +127,7 @@ internal class ApduSecureMessageManager(private val onTransmit: OnTransmit) {
         resp: ByteArray
     ): Pair<ByteArray, ApduResponse> {
         Utils.increment(sequence)
-        // cerco il tag 87
+        //looking for 87 tag
         var index = setIndex(0)
         var encData: ByteArray = byteArrayOf()
         var encObj = byteArrayOf()
@@ -170,7 +176,7 @@ internal class ApduSecureMessageManager(private val onTransmit: OnTransmit) {
                         resp,
                         index + llen + 3,
                         lgn - 1
-                    ) // ' levo il padding indicator
+                    ) // removing padding indicator
                     index = setIndex(index, llen, lgn, 2)//index += llen + lgn + 2;
                 } else {
                     encObj = Utils.getSub(resp, index, resp[index + 1] + 2)
@@ -178,7 +184,7 @@ internal class ApduSecureMessageManager(private val onTransmit: OnTransmit) {
                         resp,
                         index + 3,
                         resp[index + 1] - 1
-                    ) // ' levo il padding indicator
+                    ) // removing padding indicator
                     index =
                         setIndex(index, resp[index + 1].toInt(), 2) //index += resp[index + 1] + 2;
                 }
@@ -188,7 +194,7 @@ internal class ApduSecureMessageManager(private val onTransmit: OnTransmit) {
                     val llen = resp[index + 1] - 0x80
                     encObj = Utils.getSub(resp, index, llen + 2)
                     encData =
-                        Utils.getSub(resp, index + llen + 2, 0) // ' levo il padding indicator
+                        Utils.getSub(resp, index + llen + 2, 0) //removing padding indicator
                     index = setIndex(index, llen, 0, 2)//index += llen + lgn + 2;
                 } else {
                     encObj = Utils.getSub(resp, index, resp[index + 1] + 2)
@@ -211,6 +217,7 @@ internal class ApduSecureMessageManager(private val onTransmit: OnTransmit) {
         return sequence to ApduResponse(Utils.intToByteArray(sw))
     }
 
+    /**7.1.8 Commands and Responses under SM - Responses*/
     @Throws(Exception::class)
     private fun getRespSM(
         sequence: ByteArray,
@@ -265,15 +272,15 @@ internal class ApduSecureMessageManager(private val onTransmit: OnTransmit) {
     }
 
     @Throws(Exception::class)
-    private fun setIndex(vararg argomenti: Int): Int {
+    private fun setIndex(vararg arguments: Int): Int {
         var tmpIndex = 0
         var tmpSign: Int
-        for (i in argomenti.indices) {
-            if (kotlin.math.sign(argomenti[i].toFloat()) < 0) {
-                tmpSign = argomenti[i] and 0xFF
+        for (i in arguments.indices) {
+            if (kotlin.math.sign(arguments[i].toFloat()) < 0) {
+                tmpSign = arguments[i] and 0xFF
                 tmpIndex += tmpSign
             } else
-                tmpIndex += argomenti[i]
+                tmpIndex += arguments[i]
         }
         return tmpIndex
     }
