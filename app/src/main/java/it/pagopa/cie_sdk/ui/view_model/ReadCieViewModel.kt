@@ -4,14 +4,14 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.runtime.mutableStateOf
-import it.pagopa.cie.CieLogger
-import it.pagopa.cie.CieSDK
-import it.pagopa.cie.cie.CieSdkException
-import it.pagopa.cie.cie.NfcError
-import it.pagopa.cie.cie.NfcEvent
-import it.pagopa.cie.network.NetworkCallback
-import it.pagopa.cie.network.NetworkError
-import it.pagopa.cie.nfc.NfcEvents
+import it.pagopa.io.app.cie.CieLogger
+import it.pagopa.io.app.cie.CieSDK
+import it.pagopa.io.app.cie.cie.CieSdkException
+import it.pagopa.io.app.cie.cie.NfcError
+import it.pagopa.io.app.cie.cie.NfcEvent
+import it.pagopa.io.app.cie.network.NetworkCallback
+import it.pagopa.io.app.cie.network.NetworkError
+import it.pagopa.io.app.cie.nfc.NfcEvents
 
 class ReadCieViewModel(
     private val cieSdk: CieSDK

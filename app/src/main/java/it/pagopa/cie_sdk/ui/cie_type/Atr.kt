@@ -1,6 +1,6 @@
 package it.pagopa.cie_sdk.ui.cie_type
 
-import it.pagopa.cie.CieLogger
+import it.pagopa.io.app.cie.CieLogger
 
 class Atr(private val atr: ByteArray) {
     fun getCieType(): CieType {

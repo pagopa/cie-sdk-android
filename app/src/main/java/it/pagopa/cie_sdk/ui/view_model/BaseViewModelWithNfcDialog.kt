@@ -3,9 +3,9 @@ package it.pagopa.cie_sdk.ui.view_model
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import it.pagopa.cie.CieSDK
-import it.pagopa.cie.cie.NfcError
-import it.pagopa.cie.network.NetworkError
+import it.pagopa.io.app.cie.CieSDK
+import it.pagopa.io.app.cie.cie.NfcError
+import it.pagopa.io.app.cie.network.NetworkError
 
 abstract class BaseViewModelWithNfcDialog(private val cieSdk: CieSDK) : ViewModel() {
     var showDialog = mutableStateOf(false)

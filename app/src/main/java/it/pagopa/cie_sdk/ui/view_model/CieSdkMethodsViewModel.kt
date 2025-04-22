@@ -2,11 +2,11 @@ package it.pagopa.cie_sdk.ui.view_model
 
 import android.util.Base64
 import androidx.compose.runtime.mutableStateOf
-import it.pagopa.cie.CieSDK
-import it.pagopa.cie.cie.CieAtrCallback
-import it.pagopa.cie.cie.NfcError
-import it.pagopa.cie.cie.NfcEvent
-import it.pagopa.cie.nfc.NfcEvents
+import it.pagopa.io.app.cie.CieSDK
+import it.pagopa.io.app.cie.cie.CieAtrCallback
+import it.pagopa.io.app.cie.cie.NfcError
+import it.pagopa.io.app.cie.cie.NfcEvent
+import it.pagopa.io.app.cie.nfc.NfcEvents
 import it.pagopa.cie_sdk.R
 import it.pagopa.cie_sdk.ui.cie_type.Atr
 import it.pagopa.cie_sdk.ui.model.LazyButtonModel

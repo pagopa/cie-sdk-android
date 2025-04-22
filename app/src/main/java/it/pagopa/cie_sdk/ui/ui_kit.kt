@@ -44,7 +44,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import it.pagopa.cie.CieSDK
+import it.pagopa.io.app.cie.CieSDK
 import it.pagopa.cie_sdk.R
 import it.pagopa.cie_sdk.theme.CieSDKPocTheme
 import it.pagopa.cie_sdk.ui.model.LazyButtonModel

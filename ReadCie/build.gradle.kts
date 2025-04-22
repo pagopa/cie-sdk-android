@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "it.pagopa.cie"
+    namespace = "it.pagopa.io.app.cie"
     compileSdk = 35
 
     defaultConfig {

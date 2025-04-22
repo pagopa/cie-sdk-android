@@ -11,7 +11,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import it.pagopa.cie_sdk.BuildConfig
-import it.pagopa.cie.CieSDK
+import it.pagopa.io.app.cie.CieSDK
 import it.pagopa.cie_sdk.MainActivity
 import it.pagopa.cie_sdk.ui.UserInteraction
 import it.pagopa.cie_sdk.ui.header.BackArrowIcon
