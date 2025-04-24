@@ -4,7 +4,7 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <application
-        android:name="it.pagopa.cie_sdk.Application"
+        android:name="it.pagopa.io.app.cie_example.Application"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -15,11 +15,11 @@
         android:theme="@style/Theme.CieSDK"
         tools:targetApi="31">
         <activity
-            android:name="it.pagopa.cie_sdk.MainActivity"
-            android:exported="true"
-            android:windowSoftInputMode="adjustPan|adjustResize"
+            android:name="it.pagopa.io.app.cie_example.MainActivity"
             android:configChanges="keyboardHidden|orientation|screenSize|smallestScreenSize|screenLayout|uiMode"
-            android:launchMode="singleTop">
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:windowSoftInputMode="adjustPan|adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

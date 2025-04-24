@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "it.pagopa.cie_sdk"
+    namespace = "it.pagopa.io.app.cie_example"
     compileSdk = 35
 
     signingConfigs {
@@ -26,7 +26,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "it.pagopa.cie_sdk"
+        applicationId = "it.pagopa.io.app.cie_example"
         minSdk = 24
         targetSdk = 35
         versionCode = 1
