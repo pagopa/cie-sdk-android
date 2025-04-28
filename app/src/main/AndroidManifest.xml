@@ -15,7 +15,7 @@
         android:theme="@style/Theme.CieSDK"
         tools:targetApi="31">
         <activity
-            android:name="it.pagopa.io.app.cie_example.MainActivity"
+            android:name=".MainActivity"
             android:configChanges="keyboardHidden|orientation|screenSize|smallestScreenSize|screenLayout|uiMode"
             android:exported="true"
             android:launchMode="singleTop"
