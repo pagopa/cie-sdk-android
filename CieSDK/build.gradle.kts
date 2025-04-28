@@ -49,8 +49,8 @@ mavenPublishing {
     signAllPublications()
 
     pom {
-        name.set("IOApp EIC SDK Library")
-        description.set("A native implementation SDK to read the italian EIC")
+        name.set("IOApp CIE SDK Library")
+        description.set("A native SDK for reading the Italian Electronic Identity Card (CIE).")
         url.set("https://github.com/pagopa/cie-sdk-android")
 
         licenses {
