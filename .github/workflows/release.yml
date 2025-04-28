@@ -1,0 +1,43 @@
+name: Publish Libraries to Maven Central
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*" # Example: v1.0.0
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: prod
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+
+      - name: Set up JDK
+        uses: actions/setup-java@0ab4596768b603586c0de567f2430c30f5b0d2b0 # v3
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Configure GPG
+        env:
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+        run: |
+          echo "$SIGNING_KEY" | base64 --decode > ${HOME}/secring.gpg
+
+      - name: Add Gradle Properties
+        env:
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          SIGNING_KEY_ID: ${{ secrets.SIGNING_KEY_ID }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+        run: |
+          echo -e "mavenCentralUsername=${MAVEN_CENTRAL_USERNAME}" >> gradle.properties
+          echo -e "mavenCentralPassword=${MAVEN_CENTRAL_PASSWORD}" >> gradle.properties
+          echo -e "signing.keyId=${SIGNING_KEY_ID}" >> gradle.properties
+          echo -e "signing.password=${SIGNING_KEY_PASSWORD}" >> gradle.properties
+          echo -e "signing.secretKeyRingFile=${HOME}/secring.gpg" >> gradle.properties
+
+      - name: Publish library
+        run: ./gradlew publishAllPublicationsToMavenCentralRepository
