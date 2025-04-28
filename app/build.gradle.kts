@@ -71,7 +71,7 @@ composeCompiler {
  }
 
 dependencies {
-    implementation(project(":ReadCie"))
+    implementation(project(":CieSDK"))
     coreLibraryDesugaring(libs.desugar.jdk.libs)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
