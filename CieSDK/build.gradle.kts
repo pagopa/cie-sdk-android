@@ -1,6 +1,9 @@
+import com.vanniktech.maven.publish.SonatypeHost
+
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
+    id("com.vanniktech.maven.publish") version "0.30.0"
 }
 
 android {
@@ -36,6 +39,40 @@ android {
     }
     buildFeatures {
         buildConfig = true
+    }
+}
+
+mavenPublishing {
+    coordinates("it.pagopa.io.app.cie", "cie", "0.1.0")
+
+    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+    signAllPublications()
+
+    pom {
+        name.set("IOApp CIE SDK Library")
+        description.set("A native SDK for reading the Italian Electronic Identity Card (CIE).")
+        url.set("https://github.com/pagopa/cie-sdk-android")
+
+        licenses {
+            license {
+                name.set("MIT License")
+                url.set("https://github.com/pagopa/cie-sdk-android/blob/main/LICENSE")
+            }
+        }
+
+        developers {
+            developer {
+                id.set("ioapptech")
+                name.set("PagoPA S.p.A.")
+                email.set("ioapptech@pagopa.it")
+            }
+        }
+
+        scm {
+            connection.set("scm:git:git://github.com/pagopa/cie-sdk-android.git")
+            developerConnection.set("scm:git:ssh://github.com/pagopa/cie-sdk-android.git")
+            url.set("https://github.com/pagopa/cie-sdk-android")
+        }
     }
 }
 
