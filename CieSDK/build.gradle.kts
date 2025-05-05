@@ -43,7 +43,7 @@ android {
 }
 
 mavenPublishing {
-    coordinates("it.pagopa.io.app.cie", "cie", "0.1.0")
+    coordinates("it.pagopa.io.app.cie", "cie", "0.1.1")
 
     publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
     signAllPublications()
