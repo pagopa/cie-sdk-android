@@ -74,7 +74,6 @@ internal class IdpNetworkCall private constructor() {
                     }
 
                     is SSLProtocolException -> {
-
                         CieLogger.e(callTag, "SSLProtocolException")
                         e.message?.let {
                             when {
@@ -92,7 +91,6 @@ internal class IdpNetworkCall private constructor() {
                             }
                             this@IdpNetworkCall.cancelAllJobs()
                         }
-
                     }
 
                     else -> {
