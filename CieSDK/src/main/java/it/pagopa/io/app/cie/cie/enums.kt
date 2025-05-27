@@ -18,8 +18,7 @@ enum class NfcError(var numberOfAttempts: Int? = null, var msg: String? = null) 
     SELECT_ROOT_EXCEPTION,
     GENERAL_EXCEPTION,
     ASN_1_NOT_RIGHT_LENGTH,
-    ASN_1_NOT_VALID,
-    CIE_CERTIFICATE_NOT_VALID
+    ASN_1_NOT_VALID
 }
 
 open class CieSdkException(private val nfcError: NfcError) : Exception() {
