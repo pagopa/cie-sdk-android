@@ -18,7 +18,13 @@ internal class ReadCIE(
     ) {
         withContext(Dispatchers.Default) {
             implementation = NfcImpl(context, readingInterface)
-            implementation!!.transmit(isoDepTimeout, pin, onTagDiscovered)
+            try {
+                implementation!!.transmit(isoDepTimeout, pin, onTagDiscovered)
+            } catch (e: Exception) {
+                readingInterface.error(NfcError.GENERAL_EXCEPTION.apply {
+                    this.msg = e.message.orEmpty()
+                })
+            }
         }
     }
 

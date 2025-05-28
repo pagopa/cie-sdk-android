@@ -28,7 +28,8 @@ abstract class BaseViewModelWithNfcDialog(private val cieSdk: CieSDK) : ViewMode
             showProgress.value = false
         } else if (error is NfcError) {
             errorMessage.value = error.msg ?: error.name
-            stopNfc()
+            if(error != NfcError.STOP_NFC_ERROR)
+                stopNfc()
             showProgress.value = false
         }
     }
