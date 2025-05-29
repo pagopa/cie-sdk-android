@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.nfc.NfcAdapter
 import android.provider.Settings
+import android.util.Base64
 import androidx.core.net.toUri
 import it.pagopa.io.app.cie.cie.CieAtrCallback
 import it.pagopa.io.app.cie.cie.CieSdkException
@@ -80,8 +81,11 @@ class CieSDK private constructor() {
             override fun onTransmit(value: Boolean) {}
             override fun <T> backResource(action: BaseReadCie.FunInterfaceResource<T>) {
                 if (action.status == FunInterfaceStatus.SUCCESS) {
-                    CieLogger.i(tag, "CALLING REPOSITORY with ${action.data}")
-                    idpNetworkCall.withCallback(callback) callWith action.data!! as ByteArray
+                    if (CieLogger.enabled) {
+                        val b64 = Base64.encodeToString(action.data as ByteArray, Base64.DEFAULT)
+                        CieLogger.i(tag, "CALLING REPOSITORY with $b64")
+                    }
+                    idpNetworkCall.withCallback(callback) callWith action.data as ByteArray
                 } else {
                     CieLogger.e(
                         tag,
@@ -116,14 +120,14 @@ class CieSDK private constructor() {
                 override fun onTransmit(value: Boolean) {}
                 override fun <T> backResource(action: BaseReadCie.FunInterfaceResource<T>) {
                     if (action.status == FunInterfaceStatus.SUCCESS) {
-                        CieLogger.i(tag, "Cie Type found ${action.data}")
-                        callback.onSuccess(action.data!! as ByteArray)
-                    } else {
+                        val cieCertificate = action.data as ByteArray
+                        callback.onSuccess(cieCertificate)
+                    } else
                         callback.onError(action.nfcError ?: NfcError.GENERAL_EXCEPTION)
-                    }
                     job.cancel()
                 }
-            })
+            }
+        )
     }
 
     /**It stops NFC*/

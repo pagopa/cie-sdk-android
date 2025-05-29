@@ -1,5 +1,6 @@
 package it.pagopa.io.app.cie.cie
 
+import android.nfc.TagLostException
 import it.pagopa.io.app.cie.cie.commands.CieCommands
 import it.pagopa.io.app.cie.cie.commands.readCieAtr
 import it.pagopa.io.app.cie.nfc.NfcReading
@@ -16,10 +17,10 @@ internal class ReadCie(
             val certificate = cieCommands!!.readCertCie()
             readingInterface.read<ByteArray>(certificate)
         } catch (e: Exception) {
-            if (e is CieSdkException) {
-                onTransmit.error(e.getError())
-            } else {
-                onTransmit.error(NfcError.GENERAL_EXCEPTION.apply {
+            when (e) {
+                is CieSdkException -> onTransmit.error(e.getError())
+                is TagLostException -> onTransmit.error(NfcError.TAG_LOST)
+                else -> onTransmit.error(NfcError.GENERAL_EXCEPTION.apply {
                     this.msg = e.message.orEmpty()
                 })
             }
@@ -33,10 +34,10 @@ internal class ReadCie(
             val cieType = commands.readCieAtr()
             readingInterface.read<ByteArray>(cieType)
         } catch (e: Exception) {
-            if (e is CieSdkException) {
-                onTransmit.error(e.getError())
-            } else {
-                onTransmit.error(NfcError.GENERAL_EXCEPTION.apply {
+            when (e) {
+                is CieSdkException -> onTransmit.error(e.getError())
+                is TagLostException -> onTransmit.error(NfcError.TAG_LOST)
+                else -> onTransmit.error(NfcError.GENERAL_EXCEPTION.apply {
                     this.msg = e.message.orEmpty()
                 })
             }
