@@ -55,8 +55,10 @@ enum class NfcEvent(
     GIVE_RANDOM(numerator = 22),
     VERIFY_PIN(numerator = 23),
     READ_FILE_SM(numerator = 24),
-    SIGN(numerator = 25),
-    SIGN_WITH_CIPHER(numerator = 26),
+    READ_FILE_SM_1(numerator = 25),
+    READ_FILE_SM_2(numerator = 26),
+    SIGN(numerator = 27),
+    SIGN_WITH_CIPHER(numerator = 28),
     SELECT_ROOT(numeratorForKindOf = 4);
 
     companion object {

@@ -33,7 +33,7 @@ internal class ApduSecureMessageManager(private val onTransmit: OnTransmit) {
             val pair = sm(seq, sessionEncryption, sessMac, apduSm)
             seq = pair.first
             apduSm = pair.second
-            var apduResponse = onTransmit.sendCommand(apduSm, event)
+            val apduResponse = onTransmit.sendCommand(apduSm, event)
             return getRespSM(seq, apduResponse, sessionEncryption, sessMac, event)
         } else {
             var i = 0
@@ -81,11 +81,12 @@ internal class ApduSecureMessageManager(private val onTransmit: OnTransmit) {
         keyMac: ByteArray,
         apdu: ByteArray
     ): Pair<ByteArray, ByteArray> {
-        Utils.increment(sequence)
+        var seq = sequence
+        Utils.increment(seq)
         val smHead = Utils.getLeft(apdu, 4)
         //Bits b4 and b3 of the CLA byte shall be set to '1' (i.e. CLA ≡ 'xC'). It means the command header is integrated into the CC calculation.
         smHead[0] = smHead[0] or 0x0C
-        var calcMac = Utils.getIsoPad(Utils.appendByteArray(sequence, smHead))
+        var calcMac = Utils.getIsoPad(Utils.appendByteArray(seq, smHead))
         val smMac: ByteArray
         var dataField = byteArrayOf()
         var doob: ByteArray
@@ -110,7 +111,7 @@ internal class ApduSecureMessageManager(private val onTransmit: OnTransmit) {
         smMac = Algorithms.macEnc(keyMac, d1)
         val tmp = Utils.asn1Tag(smMac, 0x8e)
         dataField = Utils.appendByteArray(dataField, tmp)
-        return sequence to Utils.appendByte(
+        return seq to Utils.appendByte(
             Utils.appendByteArray(
                 Utils.appendByteArray(
                     smHead, byteArrayOf(dataField.size.toByte())
@@ -127,7 +128,8 @@ internal class ApduSecureMessageManager(private val onTransmit: OnTransmit) {
         keySig: ByteArray,
         resp: ByteArray
     ): Pair<ByteArray, ApduResponse> {
-        Utils.increment(sequence)
+        var seq = sequence
+        Utils.increment(seq)
         //looking for 87 tag
         var index = setIndex(0)
         var encData: ByteArray = byteArrayOf()
@@ -149,7 +151,7 @@ internal class ApduSecureMessageManager(private val onTransmit: OnTransmit) {
                     keySig,
                     Utils.getIsoPad(
                         Utils.appendByteArray(
-                            Utils.appendByteArray(sequence, encObj),
+                            Utils.appendByteArray(seq, encObj),
                             dataObj
                         )
                     )
@@ -213,9 +215,9 @@ internal class ApduSecureMessageManager(private val onTransmit: OnTransmit) {
         if (encData.isNotEmpty()) {
             var resp = Algorithms.desDec(keyEnc, encData)
             resp = Utils.isoRemove(resp)
-            return sequence to ApduResponse(resp, Utils.intToByteArray(sw))
+            return seq to ApduResponse(resp, Utils.intToByteArray(sw))
         }
-        return sequence to ApduResponse(Utils.intToByteArray(sw))
+        return seq to ApduResponse(Utils.intToByteArray(sw))
     }
 
     /**7.1.8 Commands and Responses under SM - Responses*/
@@ -252,7 +254,7 @@ internal class ApduSecureMessageManager(private val onTransmit: OnTransmit) {
                     )
                     elaboraResp = Utils.appendByteArray(elaboraResp, responseTmp.response)
                 }
-            } else return if (Utils.byteArrayCompare(
+            } else if (Utils.byteArrayCompare(
                     responseTmp.swByte,
                     byteArrayOf(0x90.toByte(), 0x00.toByte())
                 ) ||

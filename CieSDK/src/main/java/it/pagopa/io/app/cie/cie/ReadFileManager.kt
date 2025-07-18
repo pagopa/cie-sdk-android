@@ -90,7 +90,7 @@ internal class ReadFileManager(private val onTransmit: OnTransmit) {
                 readFile,
                 byteArrayOf(),
                 byteArrayOf(maxPacketSize.toByte()),
-                NfcEvent.READ_FILE_SM
+                NfcEvent.READ_FILE_SM_1
             )
             seq = pairBack.first
             val response = pairBack.second
@@ -104,7 +104,7 @@ internal class ReadFileManager(private val onTransmit: OnTransmit) {
                     readFile,
                     byteArrayOf(),
                     byteArrayOf(le),
-                    NfcEvent.READ_FILE_SM
+                    NfcEvent.READ_FILE_SM_2
                 )
                 seq = pairBack.first
                 val respApdu = pairBack.second
