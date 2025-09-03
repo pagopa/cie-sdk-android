@@ -9,8 +9,13 @@
     <string name="ready_for_cie_auth">Siamo pronti per l\'autenticazione con la CIE?</string>
     <string name="open_nfc_settings">Apri le impostazioni NFC</string>
     <string name="start_cie_auth">Iniziamo l\'autenticazione!!</string>
+    <string name="start_nis_auth">Iniziamo la lettura del NIS</string>
     <string name="auth_with_cie">Autenticazione con CIE</string>
+    <string name="reading_nis">Lettura del NIS</string>
+    <string name="reading_pace">Autenticazione con PACE</string>
     <string name="insert_pin">Inserisci il pin</string>
+    <string name="insert_challenge">Inserisci la challenge</string>
+    <string name="insert_can">Inserisci il CAN</string>
     <string name="start">Inizia</string>
     <string name="read_cie_dialog_title">Leggiamo la CIE</string>
     <string name="read_cie_dialog_description">Avvicina la CIE al telefono</string>

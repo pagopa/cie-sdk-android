@@ -101,6 +101,39 @@ fun PasswordTextField(
     )
 }
 
+@Composable
+fun AppTextField(
+    password: MutableState<String>?,
+    label: String
+) {
+    TextField(
+        value = password?.value.orEmpty(),
+        onValueChange = { password?.value = it },
+        label = {
+            Text(label)
+        },
+        singleLine = true,
+        placeholder = { Text(label) }
+    )
+}
+
+@Composable
+fun AppNumberTextField(
+    password: MutableState<String>?,
+    label: String
+) {
+    TextField(
+        value = password?.value.orEmpty(),
+        onValueChange = { password?.value = it },
+        label = {
+            Text(label)
+        },
+        singleLine = true,
+        placeholder = { Text(label) },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+    )
+}
+
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun WebView(

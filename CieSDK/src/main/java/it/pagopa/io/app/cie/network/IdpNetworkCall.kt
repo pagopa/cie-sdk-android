@@ -38,21 +38,31 @@ internal class IdpNetworkCall private constructor() {
                         if (response.isSuccessful) {
                             CieLogger.i(callTag, "SUCCESS")
                             val responseBody = response.body()
-                            CieLogger.i(callTag, "$responseBody")
                             if (responseBody != null) {
                                 val responseString = responseBody.string()
+                                CieLogger.i(
+                                    callTag,
+                                    "response string: $responseString"
+                                )
                                 val responseParts = responseString
                                     .split(":".toRegex())
                                     .dropLastWhile { it.isEmpty() }
                                     .toTypedArray()
+                                CieLogger.i(
+                                    callTag,
+                                    "response parts: " + responseParts.contentToString()
+                                )
                                 if (responseParts.size >= 2) {
                                     val serverCode = responseParts[1]
-                                    if (!Regex("^[0-9]{16}$").matches(serverCode))
+                                    if (!Regex("^[0-9]{16}$").matches(serverCode)) {
                                         callback.onError(NetworkError.NOT_VALID_SERVER_CODE)
-                                    val url =
-                                        "${deepLinkInfo.nextUrl}?${deepLinkInfo.name}=${deepLinkInfo.value}&login=1&codice=$serverCode"
-                                    callback.onSuccess(url)
-                                    this@IdpNetworkCall.cancelAllJobs()
+                                        this@IdpNetworkCall.cancelAllJobs()
+                                    } else {
+                                        val url =
+                                            "${deepLinkInfo.nextUrl}?${deepLinkInfo.name}=${deepLinkInfo.value}&login=1&codice=$serverCode"
+                                        callback.onSuccess(url)
+                                        this@IdpNetworkCall.cancelAllJobs()
+                                    }
                                 } else {
                                     CieLogger.e(callTag, "Missing server code")
                                     callback.onError(NetworkError.NO_SERVER_CODE)
@@ -120,7 +130,7 @@ internal class IdpNetworkCall private constructor() {
         this.readCieJob = job
     }
 
-    fun cancelAllJobs(){
+    fun cancelAllJobs() {
         this.readCieJob?.cancel()
         this.job.cancel()
     }

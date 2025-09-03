@@ -11,4 +11,10 @@ sealed interface Routes {
 
     @Serializable
     data object ReadCIE : Routes
+
+    @Serializable
+    data object ReadNIS : Routes
+
+    @Serializable
+    data object PaceAuth : Routes
 }

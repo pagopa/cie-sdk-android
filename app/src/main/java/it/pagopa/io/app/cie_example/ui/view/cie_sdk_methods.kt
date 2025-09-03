@@ -20,15 +20,21 @@ import it.pagopa.io.app.cie_example.ui.view_model.CieSdkMethodsViewModel
 @Composable
 fun CieSdkMethods(
     viewModel: CieSdkMethodsViewModel,
-    onNavigate: UserInteraction
+    onNavigate: UserInteraction,
+    onNavigateToNisAuth: UserInteraction,
+    onNavigateToPaceAuth: UserInteraction
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        items(viewModel.provideLazyButtons {
+        items(viewModel.provideLazyButtons({
             onNavigate.action()
+        },{
+            onNavigateToNisAuth.action()
+        }) {
+            onNavigateToPaceAuth.action()
         }) {
             PrimaryButton(model = it)
             when (it.ctrlOk) {

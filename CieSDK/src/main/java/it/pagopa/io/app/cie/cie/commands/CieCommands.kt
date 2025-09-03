@@ -1,12 +1,16 @@
 package it.pagopa.io.app.cie.cie.commands
 
+import android.util.Base64
 import it.pagopa.io.app.cie.CieLogger
+import it.pagopa.io.app.cie.cie.ApduManager
 import it.pagopa.io.app.cie.cie.ApduSecureMessageManager
 import it.pagopa.io.app.cie.cie.CieSdkException
 import it.pagopa.io.app.cie.cie.NfcError
 import it.pagopa.io.app.cie.cie.NfcEvent
 import it.pagopa.io.app.cie.cie.OnTransmit
 import it.pagopa.io.app.cie.cie.ReadFileManager
+import it.pagopa.io.app.cie.cie.highByte
+import it.pagopa.io.app.cie.cie.lowByte
 import it.pagopa.io.app.cie.hexStringToByteArray
 import it.pagopa.io.app.cie.nfc.Utils
 
@@ -130,5 +134,104 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
         seq = pairBack.first
         val response = pairBack.second
         return response.response
+    }
+    /*******************************************************************************
+     * NIS READING
+     *******************************************************************************/
+    /**Reads the NIS value from the card and returns it
+     *@return: The NIS value in form of [ByteArray]*/
+    fun readNis(): ByteArray {
+        this.selectIAS()
+        this.selectCie()
+        return onTransmit.sendCommand(
+            Utils.hexStringToByteArray("00B081000C"),
+            NfcEvent.READ_NIS
+        ).response
+    }
+
+    fun readPublicKey(): ByteArray {
+        val first = onTransmit.sendCommand(
+            Utils.hexStringToByteArray("00B0850000"),
+            NfcEvent.READ_PUBLIC_KEY
+        ).response
+        val second = onTransmit.sendCommand(
+            Utils.hexStringToByteArray("00B085E700"),
+            NfcEvent.READ_PUBLIC_KEY
+        ).response
+        return Utils.appendByteArray(first, second)
+    }
+
+    fun readSodFileCompleted(): ByteArray {
+        //Read SOD data record
+        var idx = 0
+        val size = 0xe4
+        var sodIASData = ByteArray(0)
+        var sodLoaded = false
+        val apdu = byteArrayOf(0x00, 0xB1.toByte(), 0x00, 0x06)
+        while (!sodLoaded) {
+            //byte[] dataInput = { 0x54, (byte)0x02, Byte.parseByte(hexS.substring(0, 2), 16), Byte.parseByte(hexS.substring(2, 4), 16) };
+            val dataInput = byteArrayOf(0x54, 0x02.toByte(), highByte(idx), lowByte(idx))
+            val respApdu = ApduManager(onTransmit)
+                .sendApdu(apdu, dataInput, byteArrayOf(0xe7.toByte()), NfcEvent.READ_SOD)
+            val chn: ByteArray = respApdu.response
+            var offset = 2
+            if (chn[1] > 0x80) offset = 2 + (chn[1] - 0x80)
+            val buf = chn.copyOfRange(offset, chn.size)
+            val combined = ByteArray(sodIASData.size + buf.size)
+            sodIASData.copyInto(combined, 0, 0, sodIASData.size)
+            buf.copyInto(combined, sodIASData.size, 0, buf.size)
+            sodIASData = combined
+            //idx += size;
+            if (respApdu.swHex != "9000") {
+                sodLoaded = true
+            } else idx += size
+        }
+        return sodIASData
+    }
+
+    /**Internal Authentication*/
+    fun intAuth(challenge: String): ByteArray? {
+        val challengeByte: ByteArray = Base64.decode(challenge, Base64.DEFAULT)
+        return signIntAuth(challengeByte, onTransmit)
+    }
+
+    private fun signIntAuth(dataToSign: ByteArray, onTransmit: OnTransmit): ByteArray? {
+        onTransmit.sendCommand(
+            byteArrayOf(
+                0x00,
+                0x22,
+                0x41,
+                0xA4.toByte(),
+                0x06,
+                0x80.toByte(),
+                0x01,
+                0x02,
+                0x84.toByte(),
+                0x01,
+                0x83.toByte()
+            ),
+            NfcEvent.SETTING_NIS_AUTH
+        )
+        val intAuthArray = byteArrayOf(0x00, 0x88.toByte(), 0x00, 0x00, dataToSign.size.toByte())
+        val command = onTransmit.sendCommand(
+            Utils.appendByteArray(
+                intAuthArray,
+                Utils.appendByteArray(dataToSign, byteArrayOf(0x00))
+            ), NfcEvent.NIS_AUTHENTICATION
+        )
+        return when (command.swHex) {
+            "9000" -> command.response
+            "6100" -> onTransmit.sendCommand(
+                byteArrayOf(
+                    0x00,
+                    0xC0.toByte(),
+                    0x00,
+                    0x00.toByte(),
+                    0x00
+                ), NfcEvent.NIS_AUTHENTICATION_RESPONSE
+            ).response
+
+            else -> null
+        }
     }
 }

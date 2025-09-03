@@ -19,7 +19,11 @@ class CieSdkMethodsViewModel(
     var hasNfcCtrlOk = mutableStateOf<Boolean?>(null)
     var hasNfcEnabledCtrlOk = mutableStateOf<Boolean?>(null)
     var readyForCieAuthCtrlOk = mutableStateOf<Boolean?>(null)
-    private fun initLazyButtons(onInitCieAuth: () -> Unit) = listOf<LazyButtonModel>(
+    private fun initLazyButtons(
+        onInitCieAuth: () -> Unit,
+        onInitNisAuth: () -> Unit,
+        onInitPaceProtocol: () -> Unit
+    ) = listOf<LazyButtonModel>(
         LazyButtonModel(
             R.string.has_nfc,
             ctrlOk = hasNfcCtrlOk.value,
@@ -59,10 +63,24 @@ class CieSdkMethodsViewModel(
             R.string.start_cie_auth,
             isVisible = startCieAuth.value,
             onClick = onInitCieAuth
+        ),
+        LazyButtonModel(
+            R.string.start_nis_auth,
+            isVisible = startCieAuth.value,
+            onClick = onInitNisAuth
+        ),
+        LazyButtonModel(
+            R.string.reading_pace,
+            isVisible = startCieAuth.value,
+            onClick = onInitPaceProtocol
         )
     )
 
-    fun provideLazyButtons(onInitCieAuth: () -> Unit) = initLazyButtons(onInitCieAuth).filter {
+    fun provideLazyButtons(
+        onInitCieAuth: () -> Unit,
+        onInitNisAuth: () -> Unit,
+        onInitPaceProtocol: () -> Unit
+    ) = initLazyButtons(onInitCieAuth, onInitNisAuth, onInitPaceProtocol).filter {
         it.isVisible
     }
 

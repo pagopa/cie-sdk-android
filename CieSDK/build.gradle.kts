@@ -82,7 +82,8 @@ dependencies {
     implementation(libs.logging.interceptor)
     implementation(libs.converter.scalars)
     implementation(libs.retrofit)
-
+    implementation(libs.bouncy.castle.pkix)
+    implementation(libs.bouncy.castle.prov)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)

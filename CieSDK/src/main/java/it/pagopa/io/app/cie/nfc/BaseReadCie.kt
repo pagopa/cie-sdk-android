@@ -3,6 +3,8 @@ package it.pagopa.io.app.cie.nfc
 import it.pagopa.io.app.cie.CieLogger
 import it.pagopa.io.app.cie.cie.NfcError
 import it.pagopa.io.app.cie.cie.NfcEvent
+import it.pagopa.io.app.cie.nis.NisAuthenticated
+import it.pagopa.io.app.cie.pace.PaceRead
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -79,6 +81,74 @@ abstract class BaseReadCie(
         }
     }
 
+    fun readNis(
+        challenge: String,
+        scope: CoroutineScope,
+        isoDepTimeout: Int,
+        nfcListener: NfcEvents,
+        readingInterface: ReadingCieInterface
+    ) {
+        scope.launch {
+            workNfcForNis(
+                challenge,
+                isoDepTimeout,
+                object : NfcReading {
+                    override fun onTransmit(message: NfcEvent) {
+                        CieLogger.i("message from CIE", message.name)
+                        nfcListener.event(message)
+                        if (message == NfcEvent.CONNECTED)
+                            readingInterface.onTransmit(true)
+                    }
+
+                    override fun <T> read(element: T) {
+                        readingInterface.backResource(FunInterfaceResource.success(element as NisAuthenticated))
+                    }
+
+                    override fun error(error: NfcError) {
+                        nfcListener.error(error)
+                        readingInterface.backResource<Any>(FunInterfaceResource.error(error))
+                    }
+                }
+            ) {
+                nfcListener.event(NfcEvent.ON_TAG_DISCOVERED)
+            }
+        }
+    }
+
+    fun doPace(
+        can: String,
+        scope: CoroutineScope,
+        isoDepTimeout: Int,
+        nfcListener: NfcEvents,
+        readingInterface: ReadingCieInterface
+    ) {
+        scope.launch {
+            workNfcForPace(
+                can,
+                isoDepTimeout,
+                object : NfcReading {
+                    override fun onTransmit(message: NfcEvent) {
+                        CieLogger.i("message from CIE", message.name)
+                        nfcListener.event(message)
+                        if (message == NfcEvent.CONNECTED)
+                            readingInterface.onTransmit(true)
+                    }
+
+                    override fun <T> read(element: T) {
+                        readingInterface.backResource(FunInterfaceResource.success(element as PaceRead))
+                    }
+
+                    override fun error(error: NfcError) {
+                        nfcListener.error(error)
+                        readingInterface.backResource<Any>(FunInterfaceResource.error(error))
+                    }
+                }
+            ) {
+                nfcListener.event(NfcEvent.ON_TAG_DISCOVERED)
+            }
+        }
+    }
+
     internal abstract suspend fun workNfc(
         isoDepTimeout: Int,
         pin: String,
@@ -87,6 +157,20 @@ abstract class BaseReadCie(
     )
 
     internal abstract suspend fun workNfcForCieAtr(
+        isoDepTimeout: Int,
+        readingInterface: NfcReading,
+        onTagDiscovered: () -> Unit
+    )
+
+    internal abstract suspend fun workNfcForNis(
+        challenge: String,
+        isoDepTimeout: Int,
+        readingInterface: NfcReading,
+        onTagDiscovered: () -> Unit
+    )
+
+    internal abstract suspend fun workNfcForPace(
+        can: String,
         isoDepTimeout: Int,
         readingInterface: NfcReading,
         onTagDiscovered: () -> Unit

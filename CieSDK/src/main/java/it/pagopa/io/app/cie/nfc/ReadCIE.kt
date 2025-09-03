@@ -45,6 +45,42 @@ internal class ReadCIE(
         }
     }
 
+    override suspend fun workNfcForNis(
+        challenge: String,
+        isoDepTimeout: Int,
+        readingInterface: NfcReading,
+        onTagDiscovered: () -> Unit
+    ) {
+        withContext(Dispatchers.Default) {
+            implementation = NfcImpl(context, readingInterface)
+            try {
+                implementation!!.readNis(challenge, isoDepTimeout, onTagDiscovered)
+            } catch (e: Exception) {
+                readingInterface.error(NfcError.GENERAL_EXCEPTION.apply {
+                    this.msg = e.message.orEmpty()
+                })
+            }
+        }
+    }
+
+    override suspend fun workNfcForPace(
+        can: String,
+        isoDepTimeout: Int,
+        readingInterface: NfcReading,
+        onTagDiscovered: () -> Unit
+    ) {
+        withContext(Dispatchers.Default) {
+            implementation = NfcImpl(context, readingInterface)
+            try {
+                implementation!!.doPace(can, isoDepTimeout, onTagDiscovered)
+            } catch (e: Exception) {
+                readingInterface.error(NfcError.GENERAL_EXCEPTION.apply {
+                    this.msg = e.message.orEmpty()
+                })
+            }
+        }
+    }
+
     override fun disconnect() {
         implementation?.disconnect()
     }

@@ -8,6 +8,7 @@ internal class ReadFileManager(private val onTransmit: OnTransmit) {
     private fun hiByte(b: Int) = (b shr 8 and 0xFF).toByte()
     private fun loByte(b: Int) = b.toByte()
     private val selectFile = byteArrayOf(0x00, 0xa4.toByte(), 0x02, 0x04)
+    private val selectApplication = byteArrayOf(0x00, 0xa4.toByte(), 0x02, 0x0C)
     private fun apduReadBinary(hiByte: Byte, loByte: Byte): ByteArray {
         return byteArrayOf(0x00, 0xb0.toByte(), hiByte, loByte)
     }
@@ -15,11 +16,21 @@ internal class ReadFileManager(private val onTransmit: OnTransmit) {
     private val maxPacketSize = 256
 
     @Throws(Exception::class)
-    fun readFile(id: Int): ByteArray {
+    fun readFile(id: Int, isSelectApplication: Boolean = false): ByteArray {
         var content = byteArrayOf()
         val fileId = byteArrayOf(hiByte(id), loByte(id))
         val apduManager = ApduManager(onTransmit)
-        apduManager.sendApdu(selectFile, fileId, null, NfcEvent.SELECT_FOR_READ_FILE)
+        val resp = apduManager.sendApdu(
+            if (!isSelectApplication) selectFile else selectApplication,
+            fileId,
+            null,
+            NfcEvent.SELECT_FOR_READ_FILE
+        )
+        if (resp.swHex != "9000") {
+            CieLogger.e(this.javaClass.name, "SELECT FILE FAILED: ${resp.swHex}")
+            throw CieSdkException(NfcError.SELECT_FILE_EXCEPTION)
+        }
+
         var cnt = 0
         //9.7.2 READ BINARY
         while (true) {
