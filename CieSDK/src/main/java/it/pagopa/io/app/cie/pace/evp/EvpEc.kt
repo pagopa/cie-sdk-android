@@ -1,5 +1,6 @@
 package it.pagopa.io.app.cie.pace.evp
 
+import it.pagopa.io.app.cie.CieLogger
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.math.ec.ECCurve
 import java.math.BigInteger
@@ -67,21 +68,54 @@ internal class EvpEc(
      */
     override fun doMappingAgreement(ciePublicKeyData: ByteArray, nonce: BigInteger): EvpEc {
         val pub = (keyPair?.public ?: publicKey) as ECPublicKey
+        val priv = keyPair?.private as ECPrivateKey
         val ecParams = pub.params
 
-        // PACE Generic Mapping: G' = nonce * G
-        val gPrime = multiplyECPoint(ecParams.generator, nonce, ecParams.curve)
+        CieLogger.i("PACE-MAP-EC", "Curve: ${ecParams.curve}")
+        CieLogger.i(
+            "PACE-MAP-EC",
+            "Generator G: (${ecParams.generator.affineX}, ${ecParams.generator.affineY})"
+        )
+        CieLogger.i("PACE-MAP-EC", "nonce: ${nonce.toString(16)}")
+        CieLogger.i("PACE-MAP-EC", "priv.s: ${priv.s.toString(16)}")
+
+        val sharedSecretPoint = computeECDHMappingKeyPoint(priv, ciePublicKeyData, ecParams)
+        CieLogger.i(
+            "PACE-MAP-EC",
+            "SharedSecretPoint: (${
+                sharedSecretPoint.affineXCoord.toBigInteger().toString(16)
+            }, ${sharedSecretPoint.affineYCoord.toBigInteger().toString(16)})"
+        )
+
+        val bcCurve = ECCurve.Fp(
+            (ecParams.curve.field as ECFieldFp).p,
+            ecParams.curve.a,
+            ecParams.curve.b
+        )
+        val g = bcCurve.createPoint(ecParams.generator.affineX, ecParams.generator.affineY)
+        val gPrime = g.multiply(nonce).add(sharedSecretPoint.multiply(BigInteger.ONE)).normalize()
+        CieLogger.i(
+            "PACE-MAP-EC",
+            "gPrime: (${
+                gPrime.affineXCoord.toBigInteger().toString(16)
+            }, ${gPrime.affineYCoord.toBigInteger().toString(16)})"
+        )
 
         val newParams = ECParameterSpec(
             ecParams.curve,
-            gPrime,
+            ECPoint(gPrime.affineXCoord.toBigInteger(), gPrime.affineYCoord.toBigInteger()),
             ecParams.order,
             ecParams.cofactor
         )
-
         val keyGen = KeyPairGenerator.getInstance("EC", BouncyCastleProvider.PROVIDER_NAME)
         keyGen.initialize(newParams)
         val newKeyPair = keyGen.generateKeyPair()
+
+        val ephPub = newKeyPair.public as ECPublicKey
+        CieLogger.i(
+            "PACE-MAP-EC",
+            "My Ephemeral PubKey: (${ephPub.w.affineX.toString(16)}, ${ephPub.w.affineY.toString(16)})"
+        )
 
         return EvpEc(newKeyPair, null)
     }

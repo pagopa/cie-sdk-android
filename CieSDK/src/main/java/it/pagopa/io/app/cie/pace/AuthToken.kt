@@ -21,22 +21,35 @@ internal class AuthToken {
         oid: String,
         cipherAlg: PACECipherAlgorithms
     ): ByteArray {
-        // 1. Public Key in ASN.1 DER with OID
-        var encodedPublicKeyData = encodePublicKey(oid, publicKey)
-        CieLogger.i("ASN1_ENCODED_PUBKEY", Utils.bytesToString(encodedPublicKeyData))
+        // 1️⃣ Costruzione ASN.1 DER corretta
+        val encodedPublicKeyData = encodePublicKey(oid, publicKey)
+        CieLogger.i("ASN1_ENCODED_FOR_MAC", Utils.bytesToString(encodedPublicKeyData))
 
-        val maccedPublicKeyDataObject: ByteArray = when (cipherAlg) {
+        // 2️⃣ Preparazione input per MAC
+        val macInput: ByteArray = when (cipherAlg) {
             PACECipherAlgorithms.DESede -> {
-                encodedPublicKeyData = pkcs7Pad(encodedPublicKeyData)
-                desMac(macKey, encodedPublicKeyData)
+                val padded = pkcs7Pad(encodedPublicKeyData)
+                CieLogger.i("PADDED_DATA_FOR_MAC", Utils.bytesToString(padded))
+                padded
             }
 
             PACECipherAlgorithms.AES -> {
-                aesMac(macKey, encodedPublicKeyData)
+                CieLogger.i("DATA_FOR_MAC", Utils.bytesToString(encodedPublicKeyData))
+                encodedPublicKeyData
             }
         }
-        // 2. First MAC 8 bytes
-        return maccedPublicKeyDataObject.copyOfRange(0, 8)
+
+        // 3️⃣ Calcolo MAC
+        val macced: ByteArray = when (cipherAlg) {
+            PACECipherAlgorithms.DESede -> desMac(macKey, macInput)
+            PACECipherAlgorithms.AES -> aesMac(macKey, macInput)
+        }
+        CieLogger.i("FULL_MAC", Utils.bytesToString(macced))
+
+        // 4️⃣ Restituisci primi 8 byte come token
+        val token = macced.copyOfRange(0, 8)
+        CieLogger.i("FINAL_TOKEN", Utils.bytesToString(token))
+        return token
     }
 
     /**

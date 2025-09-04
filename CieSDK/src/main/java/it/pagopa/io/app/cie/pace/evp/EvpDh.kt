@@ -1,5 +1,7 @@
 package it.pagopa.io.app.cie.pace.evp
 
+import it.pagopa.io.app.cie.CieLogger
+import it.pagopa.io.app.cie.nfc.Utils
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import java.math.BigInteger
 import java.security.KeyFactory
@@ -44,11 +46,22 @@ internal class EvpDh(
 
     override fun computeSharedSecret(peerPublicKey: EvpKeyPair): ByteArray? {
         val priv = keyPair?.private as? DHPrivateKey ?: return null
-        val peerPub = (peerPublicKey.keyPair?.public ?: peerPublicKey.publicKey) as? DHPublicKey ?: return null
+        val peerPub = (peerPublicKey.keyPair?.public ?: peerPublicKey.publicKey) as? DHPublicKey
+            ?: return null
         val ka = KeyAgreement.getInstance("DH", BouncyCastleProvider.PROVIDER_NAME)
         ka.init(priv)
+        CieLogger.i(
+            "PACE-SHARED",
+            "My ephemeral private key x: ${(keyPair?.private as DHPrivateKey).x.toString(16)}"
+        )
+        CieLogger.i("PACE-SHARED", "Peer ephemeral public key y: ${peerPub.y.toString(16)}")
         ka.doPhase(peerPub, true)
-        return ka.generateSecret()
+        val secret = ka.generateSecret()
+        CieLogger.i(
+            "PACE-SHARED",
+            "Shared Secret (${secret.size} bytes): ${Utils.bytesToString(secret)}"
+        )
+        return secret
     }
 
     /**
@@ -57,16 +70,36 @@ internal class EvpDh(
      * dove h = ciePublicKey^privKey mod p
      */
     override fun doMappingAgreement(ciePublicKeyData: ByteArray, nonce: BigInteger): EvpDh {
+        val priv = keyPair?.private as DHPrivateKey
         val pub = keyPair?.public as DHPublicKey
         val params = pub.params
         val p = params.p
         val g = params.g
-        // PACE Generic Mapping: g' = g^nonce mod p
-        val gPrime = g.modPow(nonce, p)
+
+        CieLogger.i("PACE-MAP-DH", "p (${p.bitLength()} bits): ${p.toString(16)}")
+        CieLogger.i("PACE-MAP-DH", "g: ${g.toString(16)}")
+        CieLogger.i("PACE-MAP-DH", "nonce: ${nonce.toString(16)}")
+        CieLogger.i("PACE-MAP-DH", "priv.x: ${priv.x.toString(16)}")
+
+        val ciePubY = BigInteger(1, ciePublicKeyData)
+        CieLogger.i("PACE-MAP-DH", "CIE Mapping Public Key Y: ${ciePubY.toString(16)}")
+
+        // h = ciePubY^priv.x mod p
+        val h = ciePubY.modPow(priv.x, p)
+        CieLogger.i("PACE-MAP-DH", "h: ${h.toString(16)}")
+
+        // g' = (g^nonce mod p) * h mod p
+        val gPrime = g.modPow(nonce, p).multiply(h).mod(p)
+        CieLogger.i("PACE-MAP-DH", "gPrime: ${gPrime.toString(16)}")
+
         val newParams = DHParameterSpec(p, gPrime, params.l)
         val keyGen = KeyPairGenerator.getInstance("DH", BouncyCastleProvider.PROVIDER_NAME)
         keyGen.initialize(newParams)
         val newKeyPair = keyGen.generateKeyPair()
+
+        val ephPub = newKeyPair.public as DHPublicKey
+        CieLogger.i("PACE-MAP-DH", "My Ephemeral PubKey: ${ephPub.y.toString(16)}")
+
         return EvpDh(newKeyPair, null)
     }
 }

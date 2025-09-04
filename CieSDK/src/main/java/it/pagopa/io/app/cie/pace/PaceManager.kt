@@ -119,14 +119,6 @@ internal class PaceManager(private val onTransmit: OnTransmit) {
         return publicKeyTLv
     }
 
-    private fun normalizeDhPublicKey(pubKey: ByteArray, pLengthBytes: Int): ByteArray {
-        return when {
-            pubKey.size == pLengthBytes -> pubKey
-            pubKey.size < pLengthBytes -> ByteArray(pLengthBytes - pubKey.size) + pubKey
-            else -> pubKey.copyOfRange(pubKey.size - pLengthBytes, pubKey.size)
-        }
-    }
-
     private fun CieCommands.gaPhaseOne(rawPublicKeyVal: ByteArray): Tlv {
         // Send GENERAL AUTHENTICATE (phase 1) with mapping public key
         val resp = this.generalAuthenticateStep1(rawPublicKeyVal)
@@ -154,33 +146,20 @@ internal class PaceManager(private val onTransmit: OnTransmit) {
         CieLogger.i("PACE-DEBUG", "=== START doPACE ===")
         CieLogger.i("PACE-DEBUG", "CAN: $can")
 
-        // Select PACE application
+        // 1. Select PACE application
         commands.selectPace()
 
-        // Get PACE OID and parameters from EF.CardAccess
+        // 2. Retrieve PACE OID and parameters
         val paceInfo = commands.getOidForPace()
-        if (paceInfo == null || paceInfo.parameterId == null)
-            throw CieSdkException(NfcError.GENERAL_EXCEPTION.apply {
-                this.msg = "PACE OID not found"
-            })
+            ?: throw CieSdkException(NfcError.GENERAL_EXCEPTION.apply { msg = "PACE OID not found" })
 
-        CieLogger.i("PACE-DEBUG", "PACE parameterId: ${paceInfo.parameterId}")
-        CieLogger.i("PACE-DEBUG", "PACE OID raw: ${Utils.bytesToString(paceInfo.paceRawValue)}")
-
-        // Set MSE:AT command for PACE with CAN
-        var resp = commands.setMsePaceCan(paceInfo.paceRawValue)
-        resp.parseResponse(NfcEvent.SET_MSE)
+        // 3. Set MSE:AT for PACE with CAN
+        commands.setMsePaceCan(paceInfo.paceRawValue).parseResponse(NfcEvent.SET_MSE)
 
         val paceOid = paceInfo.objIdentifier()!!
-        CieLogger.i("PACE-DEBUG", "PACE OID name: ${paceOid.name}")
-        CieLogger.i("PACE-DEBUG", "PACE OID identifier: ${paceOid.objIdentifier}")
-
-        // Retrieve cipher and digest algorithms from OID
         val (cipherAlgName, digestAlgo) = paceOid.kindOfObjId()!!
-        CieLogger.i("PACE-DEBUG", "CipherAlgName: ${cipherAlgName.name}")
-        CieLogger.i("PACE-DEBUG", "DigestAlgo: ${digestAlgo.name}")
 
-        // Derive paceKey from CAN
+        // 4. Derive paceKey from CAN
         val paceKey = deriveKey(
             keySeed = can.toByteArray(Charsets.UTF_8),
             cipherAlgName = cipherAlgName,
@@ -189,42 +168,27 @@ internal class PaceManager(private val onTransmit: OnTransmit) {
             nonce = null,
             mode = SecureMessagingMode.PACE_MODE
         )
-        CieLogger.i("PACE-DEBUG", "PACE Key: ${Utils.bytesToString(paceKey)}")
 
-        // Step 1: Get and decrypt nonce from CIE
+        // 5. Step 1: Get and decrypt nonce
         val decryptedNonce = commands.stepOne(cipherAlgName, paceKey)
-        CieLogger.i("PACE-DEBUG", "Decrypted Nonce: ${Utils.bytesToString(decryptedNonce)}")
 
-        // Step 2: GA Phase 1 - Mapping key agreement
+        // 6. Step 2: Mapping key agreement
         val kindOfAlgorithm = paceOid.keyAgreementAlgorithm()!!
         val mappingKey = MappingKey()
         val keyPair = mappingKey.createMappingKey(
             kindOfAlgorithm,
-            PACEDomainParam.fromId(paceInfo.parameterId)!!
+            PACEDomainParam.fromId(paceInfo.parameterId!!)!!
         )
 
-        val publicKey = when (kindOfAlgorithm) {
-            KeyAgreementAlgorithm.DH -> keyPair.public as DHPublicKey
-            KeyAgreementAlgorithm.ECDH -> keyPair.public as ECPublicKey
-        }
-        val rawPublicKeyVal = mappingKey.toRawData(publicKey)
-        if (rawPublicKeyVal == null)
-            throw CieSdkException(NfcError.GENERAL_EXCEPTION.apply {
-                this.msg = "Public Key not found"
-            })
+        // My mapping public key (GA Phase 1)
+        val rawPublicKeyVal = mappingKey.toRawData(
+            when (kindOfAlgorithm) {
+                KeyAgreementAlgorithm.DH -> keyPair.public as DHPublicKey
+                KeyAgreementAlgorithm.ECDH -> keyPair.public as ECPublicKey
+            }
+        ) ?: throw CieSdkException(NfcError.GENERAL_EXCEPTION.apply { msg = "Public Key not found" })
 
-        CieLogger.i(
-            "PACE-DEBUG",
-            "My Mapping Public Key RAW: ${Utils.bytesToString(rawPublicKeyVal)} (${rawPublicKeyVal.size} bytes)"
-        )
-
-        // Send mapping public key to CIE and receive CIE mapping public key
-        val publicKeyTLv = commands.gaPhaseOne(rawPublicKeyVal)
-        val ciePublicKey = publicKeyTLv.value
-        CieLogger.i(
-            "PACE-DEBUG",
-            "CIE Mapping Public Key RAW: ${Utils.bytesToString(ciePublicKey)} (${ciePublicKey.size} bytes)"
-        )
+        val cieMappingPublicKey = commands.gaPhaseOne(rawPublicKeyVal).value
 
         // Create EvpKeyPair from mapping key pair
         val evpKeyPair = when (kindOfAlgorithm) {
@@ -234,24 +198,17 @@ internal class PaceManager(private val onTransmit: OnTransmit) {
 
         // Perform mapping agreement to obtain ephemeral key pair
         val ephemeralKey = evpKeyPair.doMappingAgreement(
-            ciePublicKey,
-            BigInteger(1, decryptedNonce)// forcing unsigend
+            cieMappingPublicKey,
+            BigInteger(1, decryptedNonce)
         )
 
-        // Extract my ephemeral public key and send to CIE (GA Phase 2)
+        // My ephemeral public key (GA Phase 2)
         val publicKeyBytes = ephemeralKey.getPublicKeyData()!!
-        CieLogger.i(
-            "PACE-DEBUG",
-            "My Ephemeral Public Key RAW: ${Utils.bytesToString(publicKeyBytes)} (${publicKeyBytes.size} bytes)"
-        )
 
+        // Receive CIE ephemeral public key
         val cieEphemeralPublicKey = commands.gaPhaseTwo(publicKeyBytes)
-        CieLogger.i(
-            "PACE-DEBUG",
-            "CIE Ephemeral Public Key RAW: ${Utils.bytesToString(cieEphemeralPublicKey.value)} (${cieEphemeralPublicKey.value.size} bytes)"
-        )
 
-        // Create EvpKeyPair from CIE ephemeral public key
+        // Build CIE ephemeral key pair object
         val cieEphemeralKeyPair = EvpKeyPair.from(
             pubKeyData = cieEphemeralPublicKey.value,
             params = ephemeralKey.keyPair!!.public.let {
@@ -263,100 +220,53 @@ internal class PaceManager(private val onTransmit: OnTransmit) {
             keyType = ephemeralKey.keyType
         )
 
-        // Compute shared secret using my ephemeral private key and CIE's ephemeral public key
-        CieLogger.i("PACE-DEBUG", "Computing Shared Secret...")
+        // 7. Compute shared secret
         val sharedSecret = ephemeralKey.computeSharedSecret(cieEphemeralKeyPair)
-            ?: throw CieSdkException(NfcError.GENERAL_EXCEPTION.apply {
-                this.msg = "Shared secret not computed"
-            })
-        CieLogger.i(
-            "PACE-DEBUG",
-            "Shared Secret: ${Utils.bytesToString(sharedSecret)} (${sharedSecret.size} bytes)"
-        )
-        CieLogger.i("My Ephemeral Public Key len", "${publicKeyBytes.size}")
-        CieLogger.i("cieEphemeralPublicKey len", "${cieEphemeralPublicKey.value.size}")
-        // Derive ENC and MAC keys from shared secret
-        val keyLength = paceOid.keyLength()
-        val encKey = deriveKey(
-            keySeed = sharedSecret,
-            cipherAlgName = cipherAlgName,
-            digestAlgo = digestAlgo,
-            keyLength = keyLength!!,
-            nonce = null,
-            mode = SecureMessagingMode.ENC_MODE
-        )
-        val macKey = deriveKey(
-            keySeed = sharedSecret,
-            cipherAlgName = cipherAlgName,
-            digestAlgo = digestAlgo,
-            keyLength = keyLength,
-            nonce = null,
-            mode = SecureMessagingMode.MAC_MODE
-        )
-        CieLogger.i("PACE-DEBUG", "ENC Key: ${Utils.bytesToString(encKey)} (${encKey.size} bytes)")
-        CieLogger.i("PACE-DEBUG", "MAC Key: ${Utils.bytesToString(macKey)} (${macKey.size} bytes)")
+            ?: throw CieSdkException(NfcError.GENERAL_EXCEPTION.apply { msg = "Shared secret not computed" })
 
-        // Generate authentication token for PCD using CIE's ephemeral public key
+        // 8. Derive ENC and MAC keys
+        val keyLength = paceOid.keyLength()!!
+        val encKey = deriveKey(sharedSecret, cipherAlgName, digestAlgo, keyLength, null, SecureMessagingMode.ENC_MODE)
+        val macKey = deriveKey(sharedSecret, cipherAlgName, digestAlgo, keyLength, null, SecureMessagingMode.MAC_MODE)
+
+        // --- Mutual authentication ---
         val authToken = AuthToken()
-        val oid = PACEDomainParam.fromId(paceInfo.parameterId)!!.toCurveOid()
-        var pcdToken: ByteArray
-        CieLogger.i("cieEphemeralPublicKey.value", Utils.bytesToString(cieEphemeralPublicKey.value))
-        val ciePubKeyNormalized = MappingKey().toRawData(cieEphemeralKeyPair.publicKey!!)
-            ?: throw CieSdkException(NfcError.GENERAL_EXCEPTION.apply {
-                msg = "Unable to normalize CIE public key"
-            })
-        CieLogger.i("CIE PubKey Normalized", Utils.bytesToString(ciePubKeyNormalized))
-        try {
-            pcdToken = authToken.generateAuthenticationToken(
-                publicKey = ciePubKeyNormalized,
-                macKey = macKey,
-                oid = oid,
-                cipherAlg = cipherAlgName
-            )
-            CieLogger.i(
-                "PACE-DEBUG",
-                "PCD Token: ${Utils.bytesToString(pcdToken)} (${pcdToken.size} bytes)"
-            )
-        } catch (_: Exception) {
-            throw CieSdkException(NfcError.GENERAL_EXCEPTION.apply {
-                this.msg = "Unable to generate authentication token using public key"
-            })
-        }
+        val oidForToken = PACEDomainParam.fromId(paceInfo.parameterId)!!.toCurveOid()
 
-        // Send PCD token to CIE (GA Phase 3)
-        CieLogger.i("PACE-DEBUG", "Sending PCD Token to CIE...")
+        // 📌 According to BSI TR-03110:
+        // Step A: PCD sends MAC over **its own** ephemeral public key (publicKeyBytes)
+        CieLogger.i("PACE-DEBUG", "Generating PCD Token using MY ephemeral public key...")
+        val pcdToken = authToken.generateAuthenticationToken(
+            publicKey = cieEphemeralPublicKey.value,
+            macKey = macKey,
+            oid = oidForToken,
+            cipherAlg = cipherAlgName
+        )
+        CieLogger.i("PACE-DEBUG", "PCD Token: ${Utils.bytesToString(pcdToken)}")
+
+        // Send PCD token to CIE (GA Step 3)
         val respAuth = commands.sendGeneralAuthenticateToken(pcdToken)
-        CieLogger.i("PACE-DEBUG", "GA Step 3 SW: ${respAuth.swHex}")
         respAuth.parseResponse(NfcEvent.GENERAL_AUTHENTICATE_STEP3)
 
-        // Extract CIE token (tag 0x86) from response
+        // Step B: CIE responds with MAC over **its own** ephemeral public key
         val cieTokenTlv = TlvReader(respAuth.response).readAll().firstOrNull { it.tag == 0x86 }
-            ?: throw CieSdkException(NfcError.GENERAL_EXCEPTION.apply {
-                msg = "CIE authentication token not found"
-            })
-        CieLogger.i(
-            "PACE-DEBUG",
-            "CIE Token Received: ${Utils.bytesToString(cieTokenTlv.value)} (${cieTokenTlv.value.size} bytes)"
-        )
+            ?: throw CieSdkException(NfcError.GENERAL_EXCEPTION.apply { msg = "CIE authentication token not found" })
+        CieLogger.i("PACE-DEBUG", "CIE Token Received: ${Utils.bytesToString(cieTokenTlv.value)}")
 
-        // Generate expected CIE token using my ephemeral public key
+        // Step C: Locally compute expected CIE token
+        CieLogger.i("PACE-DEBUG", "Generating expected CIE Token using CIE ephemeral public key...")
         val expectedCieToken = authToken.generateAuthenticationToken(
             publicKey = publicKeyBytes,
             macKey = macKey,
-            oid = oid,
+            oid = oidForToken,
             cipherAlg = cipherAlgName
         )
-        CieLogger.i(
-            "PACE-DEBUG",
-            "Expected CIE Token: ${Utils.bytesToString(expectedCieToken)} (${expectedCieToken.size} bytes)"
-        )
+        CieLogger.i("PACE-DEBUG", "Expected CIE Token: ${Utils.bytesToString(expectedCieToken)}")
 
-        // Compare received CIE token with expected one
+        // Step D: Compare received vs expected CIE token
         if (!cieTokenTlv.value.contentEquals(expectedCieToken)) {
             CieLogger.e("PACE-DEBUG", "CIE authentication token mismatch!")
-            throw CieSdkException(NfcError.GENERAL_EXCEPTION.apply {
-                msg = "CIE authentication token mismatch"
-            })
+            throw CieSdkException(NfcError.GENERAL_EXCEPTION.apply { msg = "CIE authentication token mismatch" })
         }
 
         CieLogger.i("PACE-DEBUG", "Mutual authentication OK - PACE completed successfully!")
