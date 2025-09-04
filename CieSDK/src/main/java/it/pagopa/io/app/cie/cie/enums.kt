@@ -79,6 +79,7 @@ enum class NfcEvent(
     GENERAL_AUTHENTICATE_STEP0(numeratorForPace = 4),
     GENERAL_AUTHENTICATE_STEP1(numeratorForPace = 5),
     GENERAL_AUTHENTICATE_STEP2(numeratorForPace = 6),
+    GENERAL_AUTHENTICATE_STEP3(numeratorForPace = 7),
     SELECT_LDS(numeratorForPace = 10001),
     SELECT_PACE(numeratorForPace = 1),
     GET_NONCE(numeratorForPace = 5);

@@ -57,14 +57,12 @@ internal class EvpDh(
      * dove h = ciePublicKey^privKey mod p
      */
     override fun doMappingAgreement(ciePublicKeyData: ByteArray, nonce: BigInteger): EvpDh {
-        val priv = keyPair?.private as DHPrivateKey
         val pub = keyPair?.public as DHPublicKey
         val params = pub.params
         val p = params.p
         val g = params.g
-        val ciePubY = BigInteger(1, ciePublicKeyData)
-        val h = ciePubY.modPow(priv.x, p)
-        val gPrime = g.modPow(nonce, p).multiply(h).mod(p)
+        // PACE Generic Mapping: g' = g^nonce mod p
+        val gPrime = g.modPow(nonce, p)
         val newParams = DHParameterSpec(p, gPrime, params.l)
         val keyGen = KeyPairGenerator.getInstance("DH", BouncyCastleProvider.PROVIDER_NAME)
         keyGen.initialize(newParams)

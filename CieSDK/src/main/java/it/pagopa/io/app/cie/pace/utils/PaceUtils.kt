@@ -83,17 +83,29 @@ internal fun CieCommands.generalAuthenticateStep1(ephemeralPublicKey: ByteArray)
     val tlv7c = tlv(0x7C, tlv81)
     CieLogger.i("PACE_STEP1", "tlv7c: ${Utils.bytesToString(tlv7c)}\n${tlv7c.size}")
     val head = byteArrayOf(0x10, 0x86.toByte(), 0x00, 0x00)
-    return ApduManager(onTransmit = onTransmit).sendApduExtended(
-        head = head,
-        data = tlv7c,
-        le = null,
-        event = NfcEvent.GENERAL_AUTHENTICATE_STEP1
-    )
+    return if (tlv7c.size > ApduManager.STANDARD_APDU_SIZE) {
+        ApduManager(onTransmit).sendApduExtended(
+            head = head,
+            data = tlv7c,
+            le = null,
+            event = NfcEvent.GENERAL_AUTHENTICATE_STEP1
+        )
+    } else {
+        ApduManager(onTransmit).sendApdu(
+            head = head,
+            data = tlv7c,
+            le = null,
+            event = NfcEvent.GENERAL_AUTHENTICATE_STEP1
+        )
+    }
 }
 
 internal fun CieCommands.generalAuthenticateStep2(mappedPublicKey: ByteArray): ApduResponse {
-    CieLogger.i("MAPPED PUB KEY HEX", "Size: ${mappedPublicKey.size}\n${Utils.bytesToString(mappedPublicKey)}")
-    val tlv82 = tlv(0x82, mappedPublicKey) // ASN.1 DER
+    CieLogger.i(
+        "MAPPED PUB KEY HEX",
+        "Size: ${mappedPublicKey.size}\n${Utils.bytesToString(mappedPublicKey)}"
+    )
+    val tlv82 = tlv(0x83, mappedPublicKey)
     val tlv7c = tlv(0x7C, tlv82)
     CieLogger.i("PACE_STEP2 tlv7c", "${Utils.bytesToString(tlv7c)} (${tlv7c.size} bytes)")
     val head = byteArrayOf(0x10, 0x86.toByte(), 0x00, 0x00)
@@ -137,16 +149,6 @@ internal fun CieCommands.selectEfCardAccess(): ApduResponse {
     )
 }
 
-/*
-* internal fun CieCommands.readEfCardAccess(): ByteArray {
-    val resp = ApduManager(onTransmit).sendApdu(
-        head = byteArrayOf(0x00, 0xB0.toByte(), 0x00, 0x00),
-        data = byteArrayOf(),
-        le = byteArrayOf(0xFF.toByte()),
-        event = NfcEvent.READ_BINARY
-    )
-    return resp.response
-}*/
 // READ BINARY completo (gestione chunk manuale se file > 255 byte)
 internal fun CieCommands.readEfCardAccess(): ByteArray {
     val buffer = mutableListOf<Byte>()
@@ -214,14 +216,24 @@ internal fun listAllOidsFromCardAccess(efBytes: ByteArray) {
     }
 }
 
+internal fun CieCommands.sendGeneralAuthenticateToken(token: ByteArray): ApduResponse {
+    val tlv85 = tlv(0x85, token)       // token in TLV 85
+    val tlv7c = tlv(0x7C, tlv85)       // wrapper 7C
+    val head = byteArrayOf(0x00, 0x86.toByte(), 0x00, 0x00) // GENERAL AUTHENTICATE
 
-// GA Phase 1
-internal fun CieCommands.gaPhase1(): ApduResponse {
-    val ga1 = byteArrayOf(0x7C, 0x02, 0x80.toByte(), 0x00)
-    return ApduManager(onTransmit = onTransmit).sendApdu(
-        head = byteArrayOf(0x10, 0x86.toByte(), 0x00, 0x00), // solo 4 byte
-        data = ga1,
-        le = null,
-        event = NfcEvent.GA_PHASE_1
-    )
+    return if (tlv7c.size > ApduManager.STANDARD_APDU_SIZE) {
+        ApduManager(onTransmit).sendApduExtended(
+            head = head,
+            data = tlv7c,
+            le = null,
+            event = NfcEvent.GENERAL_AUTHENTICATE_STEP3
+        )
+    } else {
+        ApduManager(onTransmit).sendApdu(
+            head = head,
+            data = tlv7c,
+            le = null,
+            event = NfcEvent.GENERAL_AUTHENTICATE_STEP3
+        )
+    }
 }

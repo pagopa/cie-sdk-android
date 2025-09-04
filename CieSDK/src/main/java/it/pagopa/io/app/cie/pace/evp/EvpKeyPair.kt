@@ -1,5 +1,6 @@
 package it.pagopa.io.app.cie.pace.evp
 
+import it.pagopa.io.app.cie.pace.MappingKey
 import it.pagopa.io.app.cie.pace.utils.toFixedLengthUnsigned
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.math.ec.ECCurve
@@ -81,26 +82,7 @@ internal open class EvpKeyPair(
     }
 
     open fun getPublicKeyData(): ByteArray? {
-        return when (keyType) {
-            KeyType.DH -> {
-                val pub =
-                    if (keyPair != null) keyPair!!.public as DHPublicKey else publicKey as DHPublicKey
-                val pLen = (pub.params.p.bitLength() + 7) / 8
-                val yBytes = pub.y.toByteArray()
-                if (yBytes.size == pLen) yBytes
-                else if (yBytes.size < pLen) ByteArray(pLen - yBytes.size) + yBytes
-                else yBytes.copyOfRange(yBytes.size - pLen, yBytes.size)
-            }
-
-            KeyType.EC -> {
-                val pub =
-                    if (keyPair != null) keyPair!!.public as ECPublicKey else publicKey as ECPublicKey
-                val fieldSize = (pub.params.curve.field.fieldSize + 7) / 8
-                val xBytes = toFixedLengthUnsigned(pub.w.affineX.toByteArray(), fieldSize)
-                val yBytes = toFixedLengthUnsigned(pub.w.affineY.toByteArray(), fieldSize)
-                byteArrayOf(0x04) + xBytes + yBytes
-            }
-        }
+        return MappingKey().toRawData(keyPair!!.public)
     }
 
     open fun computeSharedSecret(peerPublicKey: EvpKeyPair): ByteArray? {
@@ -142,7 +124,7 @@ internal open class EvpKeyPair(
         publicKey = null
     }
 
-    private fun multiplyECPoint(base: ECPoint, scalar: BigInteger, curve: EllipticCurve): ECPoint {
+    protected fun multiplyECPoint(base: ECPoint, scalar: BigInteger, curve: EllipticCurve): ECPoint {
         val fieldSize = (curve.field.fieldSize + 7) / 8
         val xBytes = toFixedLengthUnsigned(base.affineX.toByteArray(), fieldSize)
         val yBytes = toFixedLengthUnsigned(base.affineY.toByteArray(), fieldSize)

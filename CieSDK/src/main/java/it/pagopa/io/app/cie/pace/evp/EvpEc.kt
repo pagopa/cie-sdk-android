@@ -68,27 +68,21 @@ internal class EvpEc(
     override fun doMappingAgreement(ciePublicKeyData: ByteArray, nonce: BigInteger): EvpEc {
         val pub = (keyPair?.public ?: publicKey) as ECPublicKey
         val ecParams = pub.params
-        val sharedSecretPoint = computeECDHMappingKeyPoint(
-            keyPair?.private as ECPrivateKey,
-            ciePublicKeyData,
-            ecParams
-        )
-        val bcCurve = ECCurve.Fp(
-            (ecParams.curve.field as ECFieldFp).p,
-            ecParams.curve.a,
-            ecParams.curve.b
-        )
-        val g = bcCurve.createPoint(ecParams.generator.affineX, ecParams.generator.affineY)
-        val gPrime = g.multiply(nonce).add(sharedSecretPoint.multiply(BigInteger.ONE)).normalize()
+
+        // PACE Generic Mapping: G' = nonce * G
+        val gPrime = multiplyECPoint(ecParams.generator, nonce, ecParams.curve)
+
         val newParams = ECParameterSpec(
             ecParams.curve,
-            ECPoint(gPrime.affineXCoord.toBigInteger(), gPrime.affineYCoord.toBigInteger()),
+            gPrime,
             ecParams.order,
             ecParams.cofactor
         )
+
         val keyGen = KeyPairGenerator.getInstance("EC", BouncyCastleProvider.PROVIDER_NAME)
         keyGen.initialize(newParams)
         val newKeyPair = keyGen.generateKeyPair()
+
         return EvpEc(newKeyPair, null)
     }
 

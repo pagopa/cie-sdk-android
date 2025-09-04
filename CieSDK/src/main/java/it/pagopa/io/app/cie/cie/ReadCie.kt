@@ -103,6 +103,8 @@ internal class ReadCie(
                 sessionEnc,
                 sessionMac
             )
+            //dg11: 0x010B
+            //sod: 0x011B
             val (_, dg2Bytes) = readFileManager.readFileSM(
                 0x0102,
                 seq,
@@ -113,6 +115,7 @@ internal class ReadCie(
             val photoBytes = dgParser.parseDG2(dg2Bytes)
             //val photoFile = File(filesDir, "foto.jp2")
             //photoFile.writeBytes(photoBytes)
+            // dg1, dg11, sod
             readingInterface.read(
                 PaceRead(mrz, photoBytes)
             )

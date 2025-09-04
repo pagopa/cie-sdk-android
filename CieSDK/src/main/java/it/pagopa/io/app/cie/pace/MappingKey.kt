@@ -25,7 +25,7 @@ internal class MappingKey {
                 byteArrayOf(0x04) + xBytes + yBytes
             }
 
-            is DHPublicKey -> return dhPublicKeyRaw(pubKey)
+            is DHPublicKey -> dhPublicKeyRaw(pubKey)
             else -> null
         }
     }
@@ -33,6 +33,7 @@ internal class MappingKey {
     fun dhPublicKeyRaw(dhKey: DHPublicKey): ByteArray {
         CieLogger.i("PUB KEY", "PARSING DH: bit length: ${dhKey.params.p.bitLength()}")
         val pLen = (dhKey.params.p.bitLength() + 7) / 8 // per 2048 bit = 256
+        CieLogger.i("Expected p length", "$pLen bytes")
         val yBytes = dhKey.y.toByteArray()
 
         val unsigned = if (yBytes.isNotEmpty() && yBytes[0] == 0.toByte()) {
@@ -41,13 +42,15 @@ internal class MappingKey {
             yBytes
         }
 
-        return if (unsigned.size < pLen) {
+        val back = if (unsigned.size < pLen) {
             ByteArray(pLen - unsigned.size) + unsigned // pad a sinistra
         } else if (unsigned.size > pLen) {
             unsigned.copyOfRange(unsigned.size - pLen, unsigned.size) // tronco se eccede
         } else {
             unsigned
         }
+        CieLogger.i("Actual cie key length", "${back.size} bytes")
+        return back
     }
 
 
