@@ -1,15 +1,10 @@
 package it.pagopa.io.app.cie.pace
 
 import it.pagopa.io.app.cie.CieLogger
+import it.pagopa.io.app.cie.nfc.Algorithms
 import it.pagopa.io.app.cie.nfc.Utils
-import org.bouncycastle.asn1.ASN1Encodable
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
-import org.bouncycastle.asn1.DERBitString
-import org.bouncycastle.asn1.DERNull
-import org.bouncycastle.asn1.DERSequence
 import org.bouncycastle.crypto.engines.AESEngine
-import org.bouncycastle.crypto.engines.DESedeEngine
-import org.bouncycastle.crypto.macs.CBCBlockCipherMac
 import org.bouncycastle.crypto.macs.CMac
 import org.bouncycastle.crypto.params.KeyParameter
 
@@ -18,12 +13,17 @@ internal class AuthToken {
     fun generateAuthenticationToken(
         publicKey: ByteArray,
         macKey: ByteArray,
-        oid: String,
+        oid: PaceOID,
         cipherAlg: PACECipherAlgorithms
     ): ByteArray {
         // 1️⃣ Costruzione ASN.1 DER corretta
-        val encodedPublicKeyData = encodePublicKey(oid, publicKey)
+        val encodedPublicKeyData = encodePublicKey(
+            oid.objIdentifier,
+            publicKey,
+            oid.keyAgreementAlgorithm() == KeyAgreementAlgorithm.DH
+        )
         CieLogger.i("ASN1_ENCODED_FOR_MAC", Utils.bytesToString(encodedPublicKeyData))
+        CieLogger.i("OID_FOR_AUTH_TOKEN", oid.objIdentifier)
 
         // 2️⃣ Preparazione input per MAC
         val macInput: ByteArray = when (cipherAlg) {
@@ -41,7 +41,7 @@ internal class AuthToken {
 
         // 3️⃣ Calcolo MAC
         val macced: ByteArray = when (cipherAlg) {
-            PACECipherAlgorithms.DESede -> desMac(macKey, macInput)
+            PACECipherAlgorithms.DESede -> Algorithms.macEnc(macKey, macInput)
             PACECipherAlgorithms.AES -> aesMac(macKey, macInput)
         }
         CieLogger.i("FULL_MAC", Utils.bytesToString(macced))
@@ -52,38 +52,62 @@ internal class AuthToken {
         return token
     }
 
+    fun encodePublicKey(oid: String, pubKeyRaw: ByteArray, isDh: Boolean): ByteArray {
+        // 1. OID in DER form
+        val oidEncoded = ASN1ObjectIdentifier(oid).encoded // contiene già tag+len+value
+
+        // 2. Scegli il tag per la chiave pubblica
+        val pubKeyTag = if (isDh) 0x84 else 0x86
+
+        // 3. Crea TLV per OID e chiave pubblica
+        val encOid = oidEncoded // già TLV completo
+        val encPub = tlv(pubKeyTag, pubKeyRaw)
+
+        // 4. Contenitore 0x7F49 con dentro OID e chiave pubblica
+        val inner = encOid + encPub
+        val record = tlv(0x7F49, inner)
+
+        return record
+    }
+
     /**
-     * Encode Public Key con OID custom (ASN.1 DER)
+     * Codifica un TLV con tag e valore dati
      */
-    private fun encodePublicKey(oid: String, rawKeyBytes: ByteArray): ByteArray {
-        val oidObj = ASN1ObjectIdentifier(oid)
-        val bitString = DERBitString(rawKeyBytes)
-        val seq = DERSequence(
-            arrayOf<ASN1Encodable>(
-                DERSequence(arrayOf<ASN1Encodable>(oidObj, DERNull.INSTANCE)),
-                bitString
-            )
-        )
-        return seq.encoded
+    private fun tlv(tag: Int, value: ByteArray): ByteArray {
+        val tagBytes = tagToBytes(tag)
+        val lengthBytes = lengthToBytes(value.size)
+        return tagBytes + lengthBytes + value
+    }
+
+    private fun tagToBytes(tag: Int): ByteArray {
+        return if (tag <= 0xFF) {
+            byteArrayOf(tag.toByte())
+        } else {
+            byteArrayOf((tag shr 8).toByte(), (tag and 0xFF).toByte())
+        }
+    }
+
+    private fun lengthToBytes(length: Int): ByteArray {
+        return when {
+            length < 0x80 -> byteArrayOf(length.toByte())
+            else -> {
+                val lenBytes =
+                    length.toBigInteger().toByteArray().dropWhile { it == 0.toByte() }.toByteArray()
+                byteArrayOf((0x80 or lenBytes.size).toByte()) + lenBytes
+            }
+        }
     }
 
     /**
      * Padding PKCS#7
      */
-    private fun pkcs7Pad(data: ByteArray): ByteArray {
-        val blockSize = 8
-        val paddingLen = blockSize - (data.size % blockSize)
-        return data + ByteArray(paddingLen) { paddingLen.toByte() }
-    }
-
-    /**
-     * DESede CBC-MAC (64-bit MAC)
-     */
-    private fun desMac(key: ByteArray, msg: ByteArray): ByteArray {
-        val mac = CBCBlockCipherMac(DESedeEngine(), 64)
-        mac.init(KeyParameter(key))
-        mac.update(msg, 0, msg.size)
-        return ByteArray(mac.macSize).also { mac.doFinal(it, 0) }
+    private fun pkcs7Pad(data: ByteArray, blockSize: Int = 8): ByteArray {
+        val ret = data.toMutableList()
+        ret.add(0x80.toByte())
+        while (ret.size % blockSize != 0) {
+            ret.add(0x00)
+        }
+        return ret.toByteArray()
     }
 
     /**

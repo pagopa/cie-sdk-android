@@ -1,5 +1,6 @@
 package it.pagopa.io.app.cie.pace.evp
 
+import it.pagopa.io.app.cie.nfc.Utils
 import it.pagopa.io.app.cie.pace.MappingKey
 import it.pagopa.io.app.cie.pace.utils.toFixedLengthUnsigned
 import org.bouncycastle.jce.provider.BouncyCastleProvider
@@ -20,6 +21,7 @@ import java.security.spec.EllipticCurve
 import javax.crypto.KeyAgreement
 import javax.crypto.interfaces.DHPublicKey
 import javax.crypto.spec.DHParameterSpec
+import javax.crypto.spec.DHPrivateKeySpec
 import javax.crypto.spec.DHPublicKeySpec
 
 internal open class EvpKeyPair(
@@ -47,12 +49,11 @@ internal open class EvpKeyPair(
             return EvpKeyPair(keyPair, null, keyType)
         }
 
-        @Throws(Exception::class)
-        fun from(
+        private fun publicKeyFromBytes(
             pubKeyData: ByteArray,
             params: AlgorithmParameterSpec,
             keyType: KeyType
-        ): EvpKeyPair {
+        ): PublicKey {
             val keyFactory = when (keyType) {
                 KeyType.DH -> KeyFactory.getInstance("DH", BouncyCastleProvider.PROVIDER_NAME)
                 KeyType.EC -> KeyFactory.getInstance("EC", BouncyCastleProvider.PROVIDER_NAME)
@@ -68,7 +69,16 @@ internal open class EvpKeyPair(
                     params
                 )
             }
-            val pubKey = keyFactory.generatePublic(pubKeySpec)
+            return keyFactory.generatePublic(pubKeySpec)
+        }
+
+        @Throws(Exception::class)
+        fun from(
+            pubKeyData: ByteArray,
+            params: AlgorithmParameterSpec,
+            keyType: KeyType
+        ): EvpKeyPair {
+            val pubKey = publicKeyFromBytes(pubKeyData, params, keyType)
             return EvpKeyPair(null, pubKey, keyType)
         }
 
@@ -124,7 +134,11 @@ internal open class EvpKeyPair(
         publicKey = null
     }
 
-    protected fun multiplyECPoint(base: ECPoint, scalar: BigInteger, curve: EllipticCurve): ECPoint {
+    protected fun multiplyECPoint(
+        base: ECPoint,
+        scalar: BigInteger,
+        curve: EllipticCurve
+    ): ECPoint {
         val fieldSize = (curve.field.fieldSize + 7) / 8
         val xBytes = toFixedLengthUnsigned(base.affineX.toByteArray(), fieldSize)
         val yBytes = toFixedLengthUnsigned(base.affineY.toByteArray(), fieldSize)

@@ -1,8 +1,12 @@
 package it.pagopa.io.app.cie.pace
 
+import it.pagopa.io.app.cie.CieLogger
 import it.pagopa.io.app.cie.cie.CieSdkException
 import it.pagopa.io.app.cie.cie.NfcError
-import java.security.MessageDigest
+import it.pagopa.io.app.cie.nfc.Utils
+import org.bouncycastle.crypto.digests.GeneralDigest
+import org.bouncycastle.crypto.digests.SHA1Digest
+import org.bouncycastle.crypto.digests.SHA256Digest
 
 internal enum class PACECipherAlgorithms {
     AES,
@@ -14,16 +18,14 @@ internal enum class PACEDigestAlgorithms {
     SHA256;
 
     fun computeHash(dataElements: List<ByteArray>): ByteArray {
-        val digest: MessageDigest = when (this) {
-            SHA1 -> MessageDigest.getInstance("SHA-1")
-            SHA256 -> MessageDigest.getInstance("SHA-256")
+        val digest: GeneralDigest = when (this) {
+            SHA1 -> SHA1Digest()
+            SHA256 -> SHA256Digest()
         }
-
-        for (data in dataElements) {
-            digest.update(data)
-        }
-
-        return digest.digest()
+        dataElements.forEach { digest.update(it, 0, it.size) }
+        val out = ByteArray(digest.digestSize)
+        digest.doFinal(out, 0)
+        return out
     }
 }
 
@@ -32,7 +34,6 @@ internal enum class SecureMessagingMode(val value: Byte) {
     MAC_MODE(0x2),
     PACE_MODE(0x3)
 }
-
 
 @OptIn(ExperimentalUnsignedTypes::class)
 internal fun deriveKey(
@@ -43,6 +44,7 @@ internal fun deriveKey(
     nonce: ByteArray?,
     mode: SecureMessagingMode
 ): ByteArray {
+    CieLogger.i("CAN IN BYTES", Utils.bytesToString(keySeed))
     // Array con i byte della modalità (0x00, 0x00, 0x00, mode.value)
     val modeArr = byteArrayOf(0x00, 0x00, 0x00, mode.value)
 
@@ -83,10 +85,6 @@ internal fun deriveKey(
                 })
             }
         }
-
-        else -> throw CieSdkException(NfcError.GENERAL_EXCEPTION.apply {
-            this.msg = "Unsupported cipher algorithm used"
-        })
     }
 
     return keyBytes

@@ -9,6 +9,7 @@ import it.pagopa.io.app.cie.cie.NfcEvent
 import it.pagopa.io.app.cie.cie.commands.CieCommands
 import it.pagopa.io.app.cie.nfc.Utils
 import org.bouncycastle.jce.provider.BouncyCastleProvider
+import java.math.BigInteger
 import java.security.Security
 
 @Throws(CieSdkException::class)
@@ -236,4 +237,18 @@ internal fun CieCommands.sendGeneralAuthenticateToken(token: ByteArray): ApduRes
             event = NfcEvent.GENERAL_AUTHENTICATE_STEP3
         )
     }
+}
+
+internal fun ByteArray.offsetToBigInt(): BigInteger {
+    return os2i(0, this.size)
+}
+
+private fun ByteArray.os2i(offset: Int, length: Int): BigInteger {
+    var result = BigInteger.ZERO
+    val base = BigInteger.valueOf(256)
+    for (i in offset until offset + length) {
+        result = result.multiply(base)
+        result = result.add(BigInteger.valueOf((this[i].toInt() and 0xFF).toLong()))
+    }
+    return result
 }

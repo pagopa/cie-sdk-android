@@ -2,6 +2,7 @@ package it.pagopa.io.app.cie.cie
 
 import android.nfc.TagLostException
 import android.util.Base64
+import it.pagopa.io.app.cie.CieLogger
 import it.pagopa.io.app.cie.cie.commands.CieCommands
 import it.pagopa.io.app.cie.cie.commands.readCieAtr
 import it.pagopa.io.app.cie.nfc.NfcReading
@@ -14,8 +15,7 @@ import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 
 internal class ReadCie(
-    private val onTransmit: OnTransmit,
-    private val readingInterface: NfcReading
+    private val onTransmit: OnTransmit, private val readingInterface: NfcReading
 ) {
     fun read(pin: String) {
         try {
@@ -68,8 +68,7 @@ internal class ReadCie(
                     MessageDigest.getInstance("SHA-256")
                         .digest(Utils.getLeft(bytes, asn1Tag.endPos.toInt()))
                 )
-            } else
-                ""
+            } else ""
             val sod = commands.readSodFileCompleted()
             val challengeSigned = commands.intAuth(challenge)
             if (challengeSigned == null || challengeSigned.isEmpty()) {
@@ -77,7 +76,8 @@ internal class ReadCie(
             } else {
                 readingInterface.read(
                     NisAuthenticated(
-                        nis, Base64.encodeToString(bytes, Base64.DEFAULT),
+                        nis,
+                        Base64.encodeToString(bytes, Base64.DEFAULT),
                         a5noHash,
                         Base64.encodeToString(sod, Base64.DEFAULT),
                         Base64.encodeToString(challengeSigned, Base64.DEFAULT)
@@ -94,22 +94,31 @@ internal class ReadCie(
     fun doPace(can: String) {
         try {
             val paceManager = PaceManager(onTransmit)
-            val (seq, sessionEnc, sessionMac) = paceManager.doPACE(can)
-            val readFileManager = ReadFileManager(onTransmit)
-            val dgParser = DgParser()
-            val (_, dg1Bytes) = readFileManager.readFileSM(
-                0x0101,
+            val (sessionEnc, sessionMac) = paceManager.doPACE(can)
+            val seq = byteArrayOf(0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00)
+            val aid = byteArrayOf(
+                0xA0.toByte(), 0x00, 0x00, 0x02, 0x47, 0x10, 0x01
+            )
+            val head = byteArrayOf(0x00, 0xA4.toByte(), 0x04, 0x0C)
+            val (sequence, response) = ApduSecureMessageManager(onTransmit).sendApduSM(
                 seq,
                 sessionEnc,
-                sessionMac
+                sessionMac,
+                head,
+                aid,
+                null,
+                NfcEvent.SELECT_PACE_SM
+            )
+            CieLogger.i("PACE-DEBUG", "SELECT_PACE_SM_RESPONSE:${response.swInt}")
+            val readFileManager = ReadFileManager(onTransmit)
+            val dgParser = DgParser()
+            val (newSequence, dg1Bytes) = readFileManager.readFileSM(
+                0x0101, sequence, sessionEnc, sessionMac, true
             )
             //dg11: 0x010B
             //sod: 0x011B
             val (_, dg2Bytes) = readFileManager.readFileSM(
-                0x0102,
-                seq,
-                sessionEnc,
-                sessionMac
+                0x0102, newSequence, sessionEnc, sessionMac, true
             )
             val mrz = dgParser.parseDG1(dg1Bytes)
             val photoBytes = dgParser.parseDG2(dg2Bytes)

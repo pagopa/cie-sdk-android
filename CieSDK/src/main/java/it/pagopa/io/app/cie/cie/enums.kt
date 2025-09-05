@@ -82,7 +82,8 @@ enum class NfcEvent(
     GENERAL_AUTHENTICATE_STEP3(numeratorForPace = 7),
     SELECT_LDS(numeratorForPace = 10001),
     SELECT_PACE(numeratorForPace = 1),
-    GET_NONCE(numeratorForPace = 5);
+    GET_NONCE(numeratorForPace = 5),
+    SELECT_PACE_SM(numeratorForPace = 9);
 
     companion object {
         /**It's plus one because of we have to wait for Network call which will be real 100%*/

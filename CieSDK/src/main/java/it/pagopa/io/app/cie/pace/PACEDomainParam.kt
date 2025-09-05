@@ -43,30 +43,6 @@ enum class PACEDomainParam(val id: Int) {
         }
     }
 
-    fun toCurveOid(): String {
-        return when (this) {
-            // DH parameters - RFC 5114 OIDs
-            PARAM_ID_GFP_1024_160 -> "1.2.840.10046.3.1.2" // dhpublicnumber
-            PARAM_ID_GFP_2048_224 -> "1.2.840.10046.3.1.2"
-            PARAM_ID_GFP_2048_256 -> "1.2.840.10046.3.1.2"
-
-            // NIST EC curves
-            PARAM_ID_ECP_NIST_P192_R1 -> "1.2.840.10045.3.1.1"
-            PARAM_ID_ECP_NIST_P224_R1 -> "1.3.132.0.33"
-            PARAM_ID_ECP_NIST_P256_R1 -> "1.2.840.10045.3.1.7"
-            PARAM_ID_ECP_NIST_P384_R1 -> "1.3.132.0.34"
-            PARAM_ID_ECP_NIST_P521_R1 -> "1.3.132.0.35"
-
-            // Brainpool EC curves
-            PARAM_ID_ECP_BRAINPOOL_P192_R1 -> "1.3.36.3.3.2.8.1.1.3"
-            PARAM_ID_ECP_BRAINPOOL_P224_R1 -> "1.3.36.3.3.2.8.1.1.5"
-            PARAM_ID_ECP_BRAINPOOL_P256_R1 -> "1.3.36.3.3.2.8.1.1.7"
-            PARAM_ID_ECP_BRAINPOOL_P320_R1 -> "1.3.36.3.3.2.8.1.1.9"
-            PARAM_ID_ECP_BRAINPOOL_P384_R1 -> "1.3.36.3.3.2.8.1.1.11"
-            PARAM_ID_ECP_BRAINPOOL_P512_R1 -> "1.3.36.3.3.2.8.1.1.13"
-        }
-    }
-
     companion object {
         fun fromId(id: Int): PACEDomainParam? = entries.find { it.id == id }
     }

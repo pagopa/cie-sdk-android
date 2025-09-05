@@ -76,6 +76,7 @@ internal class ReadFileManager(private val onTransmit: OnTransmit) {
         sequence: ByteArray,
         sessionEncryption: ByteArray,
         sessMac: ByteArray,
+        isSelectApplication: Boolean = false
     ): Pair<ByteArray, ByteArray> {
         var seq = sequence
         CieLogger.i("ON COMMAND", "readfileSM()")
@@ -86,7 +87,7 @@ internal class ReadFileManager(private val onTransmit: OnTransmit) {
             seq,
             sessionEncryption,
             sessMac,
-            selectFile,
+            if (!isSelectApplication) selectFile else selectApplication,
             fileId,
             null,
             NfcEvent.READ_FILE_SM
