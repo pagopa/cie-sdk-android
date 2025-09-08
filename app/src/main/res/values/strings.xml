@@ -13,6 +13,7 @@
     <string name="auth_with_cie">Autenticazione con CIE</string>
     <string name="reading_nis">Lettura del NIS</string>
     <string name="reading_pace">Autenticazione con PACE</string>
+    <string name="reading_nis_and_pace">Nis e PACE</string>
     <string name="insert_pin">Inserisci il pin</string>
     <string name="insert_challenge">Inserisci la challenge</string>
     <string name="insert_can">Inserisci il CAN</string>

@@ -10,6 +10,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.toRoute
 import it.pagopa.io.app.cie.CieSDK
 import it.pagopa.io.app.cie_example.BuildConfig
 import it.pagopa.io.app.cie_example.MainActivity
@@ -18,16 +19,25 @@ import it.pagopa.io.app.cie_example.ui.header.BackArrowIcon
 import it.pagopa.io.app.cie_example.ui.header.HeaderImage
 import it.pagopa.io.app.cie_example.ui.header.HomeIcon
 import it.pagopa.io.app.cie_example.ui.header.hideAll
+import it.pagopa.io.app.cie_example.ui.model.NisAndPaceReadDto
+import it.pagopa.io.app.cie_example.ui.model.PaceReadDto
 import it.pagopa.io.app.cie_example.ui.view.CieSdkMethods
 import it.pagopa.io.app.cie_example.ui.view.HomeView
+import it.pagopa.io.app.cie_example.ui.view.NisAndPaceReadView
+import it.pagopa.io.app.cie_example.ui.view.NisAndPaceView
 import it.pagopa.io.app.cie_example.ui.view.PaceProtocol
+import it.pagopa.io.app.cie_example.ui.view.PaceReadView
 import it.pagopa.io.app.cie_example.ui.view.ReadCie
 import it.pagopa.io.app.cie_example.ui.view.ReadNis
 import it.pagopa.io.app.cie_example.ui.view_model.CieSdkMethodsViewModel
+import it.pagopa.io.app.cie_example.ui.view_model.NisAndPaceReadViewModel
+import it.pagopa.io.app.cie_example.ui.view_model.NisAndPaceViewModel
+import it.pagopa.io.app.cie_example.ui.view_model.PaceReadViewModel
 import it.pagopa.io.app.cie_example.ui.view_model.PaceViewModel
 import it.pagopa.io.app.cie_example.ui.view_model.ReadCieViewModel
 import it.pagopa.io.app.cie_example.ui.view_model.ReadNisViewModel
 import it.pagopa.io.app.cie_example.ui.view_model.dependenciesInjectedViewModel
+import kotlin.reflect.typeOf
 
 @Composable
 fun MainActivity?.CieSdkNavHost(
@@ -60,8 +70,10 @@ fun MainActivity?.CieSdkNavHost(
                 navController.navigate(Routes.ReadCIE)
             }, onNavigateToNisAuth = {
                 navController.navigate(Routes.ReadNIS)
-            },onNavigateToPaceAuth = {
+            }, onNavigateToPaceAuth = {
                 navController.navigate(Routes.PaceAuth)
+            }, onInitNisAndPace = {
+                navController.navigate(Routes.NisAndPaceAuth)
             })
         }
         composable<Routes.ReadCIE> {
@@ -88,7 +100,47 @@ fun MainActivity?.CieSdkNavHost(
             titleResId.intValue = R.string.reading_pace
             val cieSdk = CieSDK.withContext(LocalContext.current)
             val vm = dependenciesInjectedViewModel<PaceViewModel>(cieSdk)
-            PaceProtocol(vm)
+            PaceProtocol(
+                vm,
+                onNavigateToPaceRead = {
+                    navController.navigate(Routes.PaceRead(it))
+                }
+            )
+        }
+        composable<Routes.NisAndPaceAuth> {
+            headerLeft.BackArrowIcon(navController)
+            headerRight.HomeIcon(navController)
+            titleResId.intValue = R.string.reading_nis_and_pace
+            val cieSdk = CieSDK.withContext(LocalContext.current)
+            val vm = dependenciesInjectedViewModel<NisAndPaceViewModel>(cieSdk)
+            NisAndPaceView(
+                viewModel = vm,
+                onNavigateToNisAndPaceRead = {
+                    navController.navigate(Routes.NisAndPaceRead(it))
+                }
+            )
+        }
+        composable<Routes.PaceRead>(
+            typeMap = mapOf(typeOf<PaceReadDto>() to CustomNavType.paceReadType)
+        ) {
+            val arguments = it.toRoute<Routes.PaceRead>()
+            headerLeft.BackArrowIcon(navController)
+            headerRight.HomeIcon(navController)
+            titleResId.intValue = R.string.reading_pace
+            val vm = dependenciesInjectedViewModel<PaceReadViewModel>(arguments.paceReadDto)
+            PaceReadView(vm)
+        }
+        composable<Routes.NisAndPaceRead>(
+            typeMap = mapOf(typeOf<NisAndPaceReadDto>() to CustomNavType.nisAndPaceReadType)
+        ) {
+            val arguments = it.toRoute<Routes.NisAndPaceRead>()
+            headerLeft.BackArrowIcon(navController)
+            headerRight.HomeIcon(navController)
+            titleResId.intValue = R.string.reading_pace
+            val vm = dependenciesInjectedViewModel<NisAndPaceReadViewModel>(
+                arguments.nisAndPaceReadDto
+            )
+            NisAndPaceReadView(vm)
         }
     }
 }

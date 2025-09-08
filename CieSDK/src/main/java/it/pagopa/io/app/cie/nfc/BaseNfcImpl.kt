@@ -55,4 +55,16 @@ internal abstract class BaseNfcImpl {
             readCie.doPace(can)
         }
     }
+
+    fun doNisAndPace(
+        challenge: String,
+        can: String,
+        isoDepTimeout: Int,
+        onTagDiscovered: () -> Unit
+    ) {
+        connect(isoDepTimeout, onTagDiscovered) {
+            readingInterface.onTransmit(NfcEvent.CONNECTED)
+            readCie.nisAndPace(challenge, can)
+        }
+    }
 }

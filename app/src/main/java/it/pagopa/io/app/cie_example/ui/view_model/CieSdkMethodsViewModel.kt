@@ -22,7 +22,8 @@ class CieSdkMethodsViewModel(
     private fun initLazyButtons(
         onInitCieAuth: () -> Unit,
         onInitNisAuth: () -> Unit,
-        onInitPaceProtocol: () -> Unit
+        onInitPaceProtocol: () -> Unit,
+        onInitNisAndPace: () -> Unit
     ) = listOf<LazyButtonModel>(
         LazyButtonModel(
             R.string.has_nfc,
@@ -73,14 +74,20 @@ class CieSdkMethodsViewModel(
             R.string.reading_pace,
             isVisible = startCieAuth.value,
             onClick = onInitPaceProtocol
+        ),
+        LazyButtonModel(
+            R.string.reading_nis_and_pace,
+            isVisible = startCieAuth.value,
+            onClick = onInitNisAndPace
         )
     )
 
     fun provideLazyButtons(
         onInitCieAuth: () -> Unit,
         onInitNisAuth: () -> Unit,
-        onInitPaceProtocol: () -> Unit
-    ) = initLazyButtons(onInitCieAuth, onInitNisAuth, onInitPaceProtocol).filter {
+        onInitPaceProtocol: () -> Unit,
+        onInitNisAndPace: () -> Unit
+    ) = initLazyButtons(onInitCieAuth, onInitNisAuth, onInitPaceProtocol, onInitNisAndPace).filter {
         it.isVisible
     }
 
@@ -95,7 +102,7 @@ class CieSdkMethodsViewModel(
                 override fun event(event: NfcEvent) {
                     dialogMessage.value = event.name
                     progressValue.floatValue =
-                        (event.numeratorForKindOf.toFloat() / NfcEvent.totalKindOfNumeratorEvent.toFloat()).toFloat()
+                        (event.numeratorForKindOf.toFloat() / NfcEvent.totalKindOfNumeratorEvent.toFloat())
                 }
             }, object : CieAtrCallback {
                 override fun onSuccess(atr: ByteArray) {

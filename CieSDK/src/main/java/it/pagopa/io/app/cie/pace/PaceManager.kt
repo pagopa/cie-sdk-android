@@ -146,9 +146,6 @@ internal class PaceManager(private val onTransmit: OnTransmit) {
         CieLogger.i("PACE-DEBUG", "=== START doPACE ===")
         CieLogger.i("PACE-DEBUG", "CAN: $can")
 
-        // 1. Select PACE application
-        commands.selectPace()
-
         // 2. Retrieve PACE OID and parameters
         val paceInfo = commands.getOidForPace()
             ?: throw CieSdkException(NfcError.GENERAL_EXCEPTION.apply {

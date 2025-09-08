@@ -23,6 +23,17 @@ internal fun CieCommands.selectRoot(): ApduResponse {
         )
 }
 
+internal fun CieCommands.resetForPACE(): ApduResponse {
+    val selectMF = byteArrayOf(0x00, 0xa4.toByte(), 0x00, 0x00)
+    return ApduManager(onTransmit)
+        .sendApdu(
+            selectMF,
+            byteArrayOf(0x3f, 0x00),
+            null,
+            NfcEvent.SELECT_ROOT
+        )
+}
+
 @Throws(CieSdkException::class)
 internal fun CieCommands.readCieAtr(): ByteArray {
     this.selectIAS()

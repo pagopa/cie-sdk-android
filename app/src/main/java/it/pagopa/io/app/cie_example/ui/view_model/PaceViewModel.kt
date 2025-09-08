@@ -1,6 +1,7 @@
 package it.pagopa.io.app.cie_example.ui.view_model
 
 import androidx.compose.runtime.mutableStateOf
+import it.pagopa.io.app.cie.CieLogger
 import it.pagopa.io.app.cie.CieSDK
 import it.pagopa.io.app.cie.cie.NfcError
 import it.pagopa.io.app.cie.cie.NfcEvent
@@ -11,7 +12,9 @@ import it.pagopa.io.app.cie.pace.PaceRead
 class PaceViewModel(
     private val cieSdk: CieSDK
 ) : BaseViewModelWithNfcDialog(cieSdk) {
-    val can = mutableStateOf("351415")
+    var paceRead = mutableStateOf<PaceRead?>(null)
+    val can = mutableStateOf("")
+
     override fun readCie() {
         this.cieSdk.startDoPace(
             can = can.value,
@@ -24,12 +27,13 @@ class PaceViewModel(
                 override fun event(event: NfcEvent) {
                     dialogMessage.value = event.name
                     progressValue.floatValue =
-                        (event.numeratorForNis.toFloat() / NfcEvent.totalNisOfNumeratorEvent.toFloat())
+                        (event.numeratorForPace.toFloat() / NfcEvent.totalPaceOfNumeratorEvent.toFloat())
                 }
             }, object : PaceCallback {
                 override fun onSuccess(paceRead: PaceRead) {
                     dialogMessage.value = "ALL OK!!"
-                    successMessage.value = "PaceRead is: $paceRead"
+                    this@PaceViewModel.paceRead.value = paceRead
+                    CieLogger.i("PACE READ", paceRead.toTerminalString())
                     stopNfc()
                 }
 
@@ -37,5 +41,10 @@ class PaceViewModel(
                     this@PaceViewModel.onError(error)
                 }
             })
+    }
+
+    fun resetMainUi() {
+        paceRead.value = null
+        showDialog.value = false
     }
 }

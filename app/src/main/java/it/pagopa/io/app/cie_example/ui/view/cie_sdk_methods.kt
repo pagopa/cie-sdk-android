@@ -22,7 +22,8 @@ fun CieSdkMethods(
     viewModel: CieSdkMethodsViewModel,
     onNavigate: UserInteraction,
     onNavigateToNisAuth: UserInteraction,
-    onNavigateToPaceAuth: UserInteraction
+    onNavigateToPaceAuth: UserInteraction,
+    onInitNisAndPace: UserInteraction
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxWidth(),
@@ -31,11 +32,13 @@ fun CieSdkMethods(
     ) {
         items(viewModel.provideLazyButtons({
             onNavigate.action()
-        },{
+        }, {
             onNavigateToNisAuth.action()
-        }) {
+        }, {
             onNavigateToPaceAuth.action()
-        }) {
+        },{
+            onInitNisAndPace.action()
+        })) {
             PrimaryButton(model = it)
             when (it.ctrlOk) {
                 true -> Icon(Icons.Default.Done, "ok", tint = MaterialTheme.colorScheme.primary)

@@ -127,7 +127,7 @@ internal fun CieCommands.generalAuthenticateStep2(mappedPublicKey: ByteArray): A
     }
 }
 
-internal fun CieCommands.selectPace(): ByteArray {
+internal fun CieCommands.selectPace(): ApduResponse {
     val aid = byteArrayOf(
         0xA0.toByte(), 0x00, 0x00, 0x02, 0x47, 0x10, 0x01, 0x02
     )
@@ -136,7 +136,7 @@ internal fun CieCommands.selectPace(): ByteArray {
             0x00, 0xA4.toByte(), 0x04, 0x0C, aid.size.toByte()
         ) + aid,
         NfcEvent.SELECT_PACE
-    ).response
+    )
 }
 
 // SELECT EF.CardAccess (FID 01 1C)

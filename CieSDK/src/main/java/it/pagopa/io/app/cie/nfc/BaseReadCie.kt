@@ -1,6 +1,7 @@
 package it.pagopa.io.app.cie.nfc
 
 import it.pagopa.io.app.cie.CieLogger
+import it.pagopa.io.app.cie.NisAndPace
 import it.pagopa.io.app.cie.cie.NfcError
 import it.pagopa.io.app.cie.cie.NfcEvent
 import it.pagopa.io.app.cie.nis.NisAuthenticated
@@ -149,6 +150,42 @@ abstract class BaseReadCie(
         }
     }
 
+    fun doNisAndPace(
+        challenge: String,
+        can: String,
+        scope: CoroutineScope,
+        isoDepTimeout: Int,
+        nfcListener: NfcEvents,
+        readingInterface: ReadingCieInterface
+    ) {
+        scope.launch {
+            workNfcForNisAndPace(
+                challenge,
+                can,
+                isoDepTimeout,
+                object : NfcReading {
+                    override fun onTransmit(message: NfcEvent) {
+                        CieLogger.i("message from CIE", message.name)
+                        nfcListener.event(message)
+                        if (message == NfcEvent.CONNECTED)
+                            readingInterface.onTransmit(true)
+                    }
+
+                    override fun <T> read(element: T) {
+                        readingInterface.backResource(FunInterfaceResource.success(element as NisAndPace))
+                    }
+
+                    override fun error(error: NfcError) {
+                        nfcListener.error(error)
+                        readingInterface.backResource<Any>(FunInterfaceResource.error(error))
+                    }
+                }
+            ) {
+                nfcListener.event(NfcEvent.ON_TAG_DISCOVERED)
+            }
+        }
+    }
+
     internal abstract suspend fun workNfc(
         isoDepTimeout: Int,
         pin: String,
@@ -170,6 +207,14 @@ abstract class BaseReadCie(
     )
 
     internal abstract suspend fun workNfcForPace(
+        can: String,
+        isoDepTimeout: Int,
+        readingInterface: NfcReading,
+        onTagDiscovered: () -> Unit
+    )
+
+    internal abstract suspend fun workNfcForNisAndPace(
+        challenge: String,
         can: String,
         isoDepTimeout: Int,
         readingInterface: NfcReading,

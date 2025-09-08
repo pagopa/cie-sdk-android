@@ -76,7 +76,8 @@ internal class ReadFileManager(private val onTransmit: OnTransmit) {
         sequence: ByteArray,
         sessionEncryption: ByteArray,
         sessMac: ByteArray,
-        isSelectApplication: Boolean = false
+        isSelectApplication: Boolean = false,
+        event: NfcEvent= NfcEvent.READ_FILE_SM
     ): Pair<ByteArray, ByteArray> {
         var seq = sequence
         CieLogger.i("ON COMMAND", "readfileSM()")
@@ -90,7 +91,7 @@ internal class ReadFileManager(private val onTransmit: OnTransmit) {
             if (!isSelectApplication) selectFile else selectApplication,
             fileId,
             null,
-            NfcEvent.READ_FILE_SM
+            event
         ).first
         var cnt = 0
         while (true) {
@@ -102,7 +103,7 @@ internal class ReadFileManager(private val onTransmit: OnTransmit) {
                 readFile,
                 byteArrayOf(),
                 byteArrayOf(maxPacketSize.toByte()),
-                NfcEvent.READ_FILE_SM
+                event
             )
             seq = pairBack.first
             val response = pairBack.second
@@ -116,7 +117,7 @@ internal class ReadFileManager(private val onTransmit: OnTransmit) {
                     readFile,
                     byteArrayOf(),
                     byteArrayOf(le),
-                    NfcEvent.READ_FILE_SM
+                    event
                 )
                 seq = pairBack.first
                 val respApdu = pairBack.second

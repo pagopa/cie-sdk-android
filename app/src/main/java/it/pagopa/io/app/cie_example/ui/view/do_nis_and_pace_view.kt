@@ -11,17 +11,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.util.toAndroidPair
 import it.pagopa.io.app.cie_example.R
 import it.pagopa.io.app.cie_example.ui.AppNumberTextField
 import it.pagopa.io.app.cie_example.ui.NfcDialog
 import it.pagopa.io.app.cie_example.ui.PrimaryButton
 import it.pagopa.io.app.cie_example.ui.model.LazyButtonModel
+import it.pagopa.io.app.cie_example.ui.model.NisAndPaceReadDto
 import it.pagopa.io.app.cie_example.ui.model.PaceReadDto
+import it.pagopa.io.app.cie_example.ui.model.toNisAndPaceReadDto
 import it.pagopa.io.app.cie_example.ui.model.toPaceReadDto
+import it.pagopa.io.app.cie_example.ui.view_model.NisAndPaceViewModel
 import it.pagopa.io.app.cie_example.ui.view_model.PaceViewModel
 
 @Composable
-fun PaceProtocol(viewModel: PaceViewModel?, onNavigateToPaceRead: (PaceReadDto) -> Unit) {
+fun NisAndPaceView(
+    viewModel: NisAndPaceViewModel?,
+    onNavigateToNisAndPaceRead: (NisAndPaceReadDto) -> Unit
+) {
     LaunchedEffect(key1 = viewModel) {
         viewModel?.resetMainUi()
     }
@@ -35,6 +42,11 @@ fun PaceProtocol(viewModel: PaceViewModel?, onNavigateToPaceRead: (PaceReadDto) 
             viewModel?.can,
             stringResource(R.string.insert_can),
         )
+        Spacer(Modifier.height(16.dp))
+        AppNumberTextField(
+            viewModel?.challenge,
+            stringResource(R.string.insert_challenge),
+        )
         Spacer(modifier = Modifier.weight(1f))
         PrimaryButton(
             modifier = Modifier.padding(bottom = 16.dp), model = LazyButtonModel(
@@ -45,8 +57,9 @@ fun PaceProtocol(viewModel: PaceViewModel?, onNavigateToPaceRead: (PaceReadDto) 
             }
         )
     }
-    viewModel?.paceRead?.value?.let {
+    viewModel?.nisAndPaceRead?.value?.let {
         viewModel.resetMainUi()
-        onNavigateToPaceRead.invoke(it.toPaceReadDto())
+        val nisAndPaceReadDto = (it.nis to it.paceRead).toNisAndPaceReadDto()
+        onNavigateToNisAndPaceRead.invoke(nisAndPaceReadDto)
     }
 }

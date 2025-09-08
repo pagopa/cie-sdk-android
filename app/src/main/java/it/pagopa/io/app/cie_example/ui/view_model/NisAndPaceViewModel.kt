@@ -1,41 +1,52 @@
 package it.pagopa.io.app.cie_example.ui.view_model
 
 import androidx.compose.runtime.mutableStateOf
+import it.pagopa.io.app.cie.CieLogger
 import it.pagopa.io.app.cie.CieSDK
+import it.pagopa.io.app.cie.NisAndPace
+import it.pagopa.io.app.cie.NisAndPaceCallback
 import it.pagopa.io.app.cie.cie.NfcError
 import it.pagopa.io.app.cie.cie.NfcEvent
 import it.pagopa.io.app.cie.nfc.NfcEvents
-import it.pagopa.io.app.cie.nis.NisAuthenticated
-import it.pagopa.io.app.cie.nis.NisCallback
 
-class ReadNisViewModel(
+class NisAndPaceViewModel(
     private val cieSdk: CieSDK
 ) : BaseViewModelWithNfcDialog(cieSdk) {
+    var nisAndPaceRead = mutableStateOf<NisAndPace?>(null)
+    val can = mutableStateOf("")
     val challenge = mutableStateOf("")
+
     override fun readCie() {
-        this.cieSdk.startReadingNis(
+        this.cieSdk.startNisAndPace(
             challenge = challenge.value,
+            can = can.value,
             isoDepTimeout = 10000,
             object : NfcEvents {
                 override fun error(error: NfcError) {
-                    this@ReadNisViewModel.onError(error)
+                    this@NisAndPaceViewModel.onError(error)
                 }
 
                 override fun event(event: NfcEvent) {
                     dialogMessage.value = event.name
                     progressValue.floatValue =
-                        (event.numeratorForNis.toFloat() / NfcEvent.totalNisOfNumeratorEvent.toFloat())
+                        (event.numeratorForNisAndPace.toFloat() / NfcEvent.totalNisAndPaceOfNumeratorEvent.toFloat())
                 }
-            }, object : NisCallback {
-                override fun onSuccess(nisAuth: NisAuthenticated) {
+            }, object : NisAndPaceCallback {
+                override fun onSuccess(nisAndPace: NisAndPace) {
                     dialogMessage.value = "ALL OK!!"
-                    successMessage.value = "Nis is: ${nisAuth.toStringUi()}"
+                    this@NisAndPaceViewModel.nisAndPaceRead.value = nisAndPace
+                    CieLogger.i("Nis and pace read", nisAndPace.toTerminalString())
                     stopNfc()
                 }
 
                 override fun onError(error: NfcError) {
-                    this@ReadNisViewModel.onError(error)
+                    this@NisAndPaceViewModel.onError(error)
                 }
             })
+    }
+
+    fun resetMainUi() {
+        nisAndPaceRead.value = null
+        showDialog.value = false
     }
 }

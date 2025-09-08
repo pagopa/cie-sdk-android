@@ -13,7 +13,6 @@ import java.security.spec.ECGenParameterSpec
 import javax.crypto.interfaces.DHPublicKey
 import javax.crypto.spec.DHParameterSpec
 
-
 internal class MappingKey {
     fun toRawData(pubKey: PublicKey): ByteArray? {
         return when (pubKey) {
