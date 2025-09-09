@@ -5,7 +5,7 @@ import it.pagopa.io.app.cie.CieSDK
 import it.pagopa.io.app.cie.cie.NfcError
 import it.pagopa.io.app.cie.cie.NfcEvent
 import it.pagopa.io.app.cie.nfc.NfcEvents
-import it.pagopa.io.app.cie.nis.NisAuthenticated
+import it.pagopa.io.app.cie.nis.InternalAuthenticationResponse
 import it.pagopa.io.app.cie.nis.NisCallback
 
 class ReadNisViewModel(
@@ -27,7 +27,7 @@ class ReadNisViewModel(
                         (event.numeratorForNis.toFloat() / NfcEvent.totalNisOfNumeratorEvent.toFloat())
                 }
             }, object : NisCallback {
-                override fun onSuccess(nisAuth: NisAuthenticated) {
+                override fun onSuccess(nisAuth: InternalAuthenticationResponse) {
                     dialogMessage.value = "ALL OK!!"
                     successMessage.value = "Nis is: ${nisAuth.toStringUi()}"
                     stopNfc()

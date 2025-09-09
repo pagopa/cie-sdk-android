@@ -17,10 +17,10 @@ import it.pagopa.io.app.cie.nfc.BaseReadCie
 import it.pagopa.io.app.cie.nfc.BaseReadCie.FunInterfaceStatus
 import it.pagopa.io.app.cie.nfc.NfcEvents
 import it.pagopa.io.app.cie.nfc.ReadCIE
-import it.pagopa.io.app.cie.nis.NisAuthenticated
+import it.pagopa.io.app.cie.nis.InternalAuthenticationResponse
 import it.pagopa.io.app.cie.nis.NisCallback
 import it.pagopa.io.app.cie.pace.PaceCallback
-import it.pagopa.io.app.cie.pace.PaceRead
+import it.pagopa.io.app.cie.pace.MRTDResponse
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -134,7 +134,7 @@ class CieSDK private constructor() {
         )
     }
 
-    /**It starts reading CIE to read [NisAuthenticated]
+    /**It starts reading CIE to read [InternalAuthenticationResponse]
      * @param challenge  Challenge to be signed
      * @param isoDepTimeout  Timeout to set on nfc reader
      * @param nfcListener [NfcEvents]
@@ -160,7 +160,7 @@ class CieSDK private constructor() {
                 override fun onTransmit(value: Boolean) {}
                 override fun <T> backResource(action: BaseReadCie.FunInterfaceResource<T>) {
                     if (action.status == FunInterfaceStatus.SUCCESS) {
-                        val nisAuth = action.data as NisAuthenticated
+                        val nisAuth = action.data as InternalAuthenticationResponse
                         CieLogger.i("nis Auth", nisAuth.toString())
                         callback.onSuccess(nisAuth)
                     } else
@@ -170,7 +170,7 @@ class CieSDK private constructor() {
             })
     }
 
-    /**It starts reading CIE to perform Pace flow and giving back [PaceRead]
+    /**It starts reading CIE to perform Pace flow and giving back [MRTDResponse]
      * @param can CIE CAN from user
      * @param isoDepTimeout  Timeout to set on nfc reader
      * @param nfcListener [NfcEvents]
@@ -196,8 +196,8 @@ class CieSDK private constructor() {
                 override fun onTransmit(value: Boolean) {}
                 override fun <T> backResource(action: BaseReadCie.FunInterfaceResource<T>) {
                     if (action.status == FunInterfaceStatus.SUCCESS) {
-                        val paceRead = action.data as PaceRead
-                        callback.onSuccess(paceRead)
+                        val eMRTDResponse = action.data as MRTDResponse
+                        callback.onSuccess(eMRTDResponse)
                     } else
                         callback.onError(action.nfcError ?: NfcError.GENERAL_EXCEPTION)
                     job.cancel()
@@ -205,7 +205,7 @@ class CieSDK private constructor() {
             })
     }
 
-    /**It starts reading CIE to perform Nis and Pace flow and giving back [NisAndPace]
+    /**It starts reading CIE to perform Nis and Pace flow and giving back [IntAuthMRTDResponse]
      * @param challenge Challenge to be signed
      * @param can CIE CAN from user
      * @param isoDepTimeout  Timeout to set on nfc reader
@@ -234,7 +234,7 @@ class CieSDK private constructor() {
                 override fun onTransmit(value: Boolean) {}
                 override fun <T> backResource(action: BaseReadCie.FunInterfaceResource<T>) {
                     if (action.status == FunInterfaceStatus.SUCCESS) {
-                        val paceRead = action.data as NisAndPace
+                        val paceRead = action.data as IntAuthMRTDResponse
                         callback.onSuccess(paceRead)
                     } else
                         callback.onError(action.nfcError ?: NfcError.GENERAL_EXCEPTION)

@@ -6,8 +6,8 @@ import it.pagopa.io.app.cie.cie.NfcError
  * @property [onSuccess]
  * @property [onError]*/
 interface NisCallback {
-    /**@param nisAuth [NisAuthenticated]*/
-    fun onSuccess(nisAuth: NisAuthenticated)
+    /**@param nisAuth [InternalAuthenticationResponse]*/
+    fun onSuccess(nisAuth: InternalAuthenticationResponse)
 
     /**@param error [NfcError]*/
     fun onError(error: NfcError)

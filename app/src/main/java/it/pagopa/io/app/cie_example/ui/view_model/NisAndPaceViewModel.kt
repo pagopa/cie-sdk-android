@@ -3,7 +3,7 @@ package it.pagopa.io.app.cie_example.ui.view_model
 import androidx.compose.runtime.mutableStateOf
 import it.pagopa.io.app.cie.CieLogger
 import it.pagopa.io.app.cie.CieSDK
-import it.pagopa.io.app.cie.NisAndPace
+import it.pagopa.io.app.cie.IntAuthMRTDResponse
 import it.pagopa.io.app.cie.NisAndPaceCallback
 import it.pagopa.io.app.cie.cie.NfcError
 import it.pagopa.io.app.cie.cie.NfcEvent
@@ -12,7 +12,7 @@ import it.pagopa.io.app.cie.nfc.NfcEvents
 class NisAndPaceViewModel(
     private val cieSdk: CieSDK
 ) : BaseViewModelWithNfcDialog(cieSdk) {
-    var nisAndPaceRead = mutableStateOf<NisAndPace?>(null)
+    var intAuthMRTDResponseRead = mutableStateOf<IntAuthMRTDResponse?>(null)
     val can = mutableStateOf("")
     val challenge = mutableStateOf("")
 
@@ -32,10 +32,10 @@ class NisAndPaceViewModel(
                         (event.numeratorForNisAndPace.toFloat() / NfcEvent.totalNisAndPaceOfNumeratorEvent.toFloat())
                 }
             }, object : NisAndPaceCallback {
-                override fun onSuccess(nisAndPace: NisAndPace) {
+                override fun onSuccess(intAuthMRTDResponse: IntAuthMRTDResponse) {
                     dialogMessage.value = "ALL OK!!"
-                    this@NisAndPaceViewModel.nisAndPaceRead.value = nisAndPace
-                    CieLogger.i("Nis and pace read", nisAndPace.toTerminalString())
+                    this@NisAndPaceViewModel.intAuthMRTDResponseRead.value = intAuthMRTDResponse
+                    CieLogger.i("Nis and pace read", intAuthMRTDResponse.toTerminalString())
                     stopNfc()
                 }
 
@@ -46,7 +46,7 @@ class NisAndPaceViewModel(
     }
 
     fun resetMainUi() {
-        nisAndPaceRead.value = null
+        intAuthMRTDResponseRead.value = null
         showDialog.value = false
     }
 }

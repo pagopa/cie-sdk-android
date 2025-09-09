@@ -7,12 +7,12 @@ import it.pagopa.io.app.cie.cie.NfcError
 import it.pagopa.io.app.cie.cie.NfcEvent
 import it.pagopa.io.app.cie.nfc.NfcEvents
 import it.pagopa.io.app.cie.pace.PaceCallback
-import it.pagopa.io.app.cie.pace.PaceRead
+import it.pagopa.io.app.cie.pace.MRTDResponse
 
 class PaceViewModel(
     private val cieSdk: CieSDK
 ) : BaseViewModelWithNfcDialog(cieSdk) {
-    var paceRead = mutableStateOf<PaceRead?>(null)
+    var eMRTDResponse = mutableStateOf<MRTDResponse?>(null)
     val can = mutableStateOf("")
 
     override fun readCie() {
@@ -30,10 +30,10 @@ class PaceViewModel(
                         (event.numeratorForPace.toFloat() / NfcEvent.totalPaceOfNumeratorEvent.toFloat())
                 }
             }, object : PaceCallback {
-                override fun onSuccess(paceRead: PaceRead) {
+                override fun onSuccess(eMRTDResponse: MRTDResponse) {
                     dialogMessage.value = "ALL OK!!"
-                    this@PaceViewModel.paceRead.value = paceRead
-                    CieLogger.i("PACE READ", paceRead.toTerminalString())
+                    this@PaceViewModel.eMRTDResponse.value = eMRTDResponse
+                    CieLogger.i("PACE READ", eMRTDResponse.toTerminalString())
                     stopNfc()
                 }
 
@@ -44,7 +44,7 @@ class PaceViewModel(
     }
 
     fun resetMainUi() {
-        paceRead.value = null
+        eMRTDResponse.value = null
         showDialog.value = false
     }
 }

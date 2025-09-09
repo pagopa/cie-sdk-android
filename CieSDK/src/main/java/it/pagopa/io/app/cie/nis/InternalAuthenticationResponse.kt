@@ -1,12 +1,12 @@
 package it.pagopa.io.app.cie.nis
 
-data class NisAuthenticated(
+data class InternalAuthenticationResponse(
     val nis: String,
     val kpubIntServ: String,
     val sod: String,
     val challengeSigned: String
 ) {
     fun toStringUi(): String {
-        return "NisAuthenticated:\n nis: $nis;\n sod: $sod"
+        return "Internal Authentication Response:\n nis: $nis;\n sod: $sod"
     }
 }

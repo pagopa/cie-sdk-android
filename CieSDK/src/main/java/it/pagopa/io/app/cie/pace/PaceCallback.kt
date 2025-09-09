@@ -6,8 +6,8 @@ import it.pagopa.io.app.cie.cie.NfcError
  * @property [onSuccess]
  * @property [onError]*/
 interface PaceCallback {
-    /**@param paceRead [PaceRead]*/
-    fun onSuccess(paceRead: PaceRead)
+    /**@param eMRTDResponse [MRTDResponse]*/
+    fun onSuccess(eMRTDResponse: MRTDResponse)
 
     /**@param error [NfcError]*/
     fun onError(error: NfcError)

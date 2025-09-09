@@ -11,18 +11,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.core.util.toAndroidPair
 import it.pagopa.io.app.cie_example.R
 import it.pagopa.io.app.cie_example.ui.AppNumberTextField
 import it.pagopa.io.app.cie_example.ui.NfcDialog
 import it.pagopa.io.app.cie_example.ui.PrimaryButton
 import it.pagopa.io.app.cie_example.ui.model.LazyButtonModel
 import it.pagopa.io.app.cie_example.ui.model.NisAndPaceReadDto
-import it.pagopa.io.app.cie_example.ui.model.PaceReadDto
 import it.pagopa.io.app.cie_example.ui.model.toNisAndPaceReadDto
-import it.pagopa.io.app.cie_example.ui.model.toPaceReadDto
 import it.pagopa.io.app.cie_example.ui.view_model.NisAndPaceViewModel
-import it.pagopa.io.app.cie_example.ui.view_model.PaceViewModel
 
 @Composable
 fun NisAndPaceView(
@@ -57,9 +53,9 @@ fun NisAndPaceView(
             }
         )
     }
-    viewModel?.nisAndPaceRead?.value?.let {
+    viewModel?.intAuthMRTDResponseRead?.value?.let {
         viewModel.resetMainUi()
-        val nisAndPaceReadDto = (it.nis to it.paceRead).toNisAndPaceReadDto()
+        val nisAndPaceReadDto = (it.internalAuthentication to it.mrtd).toNisAndPaceReadDto()
         onNavigateToNisAndPaceRead.invoke(nisAndPaceReadDto)
     }
 }

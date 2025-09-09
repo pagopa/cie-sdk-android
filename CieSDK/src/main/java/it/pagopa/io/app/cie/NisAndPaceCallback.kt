@@ -6,8 +6,8 @@ import it.pagopa.io.app.cie.cie.NfcError
  * @property [onSuccess]
  * @property [onError]*/
 interface NisAndPaceCallback {
-    /**@param nisAndPace [NisAndPace]*/
-    fun onSuccess(nisAndPace: NisAndPace)
+    /**@param intAuthMRTDResponse [IntAuthMRTDResponse]*/
+    fun onSuccess(intAuthMRTDResponse: IntAuthMRTDResponse)
 
     /**@param error [NfcError]*/
     fun onError(error: NfcError)

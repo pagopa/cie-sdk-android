@@ -1,11 +1,11 @@
 package it.pagopa.io.app.cie.nfc
 
 import it.pagopa.io.app.cie.CieLogger
-import it.pagopa.io.app.cie.NisAndPace
+import it.pagopa.io.app.cie.IntAuthMRTDResponse
 import it.pagopa.io.app.cie.cie.NfcError
 import it.pagopa.io.app.cie.cie.NfcEvent
-import it.pagopa.io.app.cie.nis.NisAuthenticated
-import it.pagopa.io.app.cie.pace.PaceRead
+import it.pagopa.io.app.cie.nis.InternalAuthenticationResponse
+import it.pagopa.io.app.cie.pace.MRTDResponse
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -102,7 +102,7 @@ abstract class BaseReadCie(
                     }
 
                     override fun <T> read(element: T) {
-                        readingInterface.backResource(FunInterfaceResource.success(element as NisAuthenticated))
+                        readingInterface.backResource(FunInterfaceResource.success(element as InternalAuthenticationResponse))
                     }
 
                     override fun error(error: NfcError) {
@@ -136,7 +136,7 @@ abstract class BaseReadCie(
                     }
 
                     override fun <T> read(element: T) {
-                        readingInterface.backResource(FunInterfaceResource.success(element as PaceRead))
+                        readingInterface.backResource(FunInterfaceResource.success(element as MRTDResponse))
                     }
 
                     override fun error(error: NfcError) {
@@ -172,7 +172,7 @@ abstract class BaseReadCie(
                     }
 
                     override fun <T> read(element: T) {
-                        readingInterface.backResource(FunInterfaceResource.success(element as NisAndPace))
+                        readingInterface.backResource(FunInterfaceResource.success(element as IntAuthMRTDResponse))
                     }
 
                     override fun error(error: NfcError) {

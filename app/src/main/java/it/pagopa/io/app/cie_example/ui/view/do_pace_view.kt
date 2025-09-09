@@ -45,7 +45,7 @@ fun PaceProtocol(viewModel: PaceViewModel?, onNavigateToPaceRead: (PaceReadDto) 
             }
         )
     }
-    viewModel?.paceRead?.value?.let {
+    viewModel?.eMRTDResponse?.value?.let {
         viewModel.resetMainUi()
         onNavigateToPaceRead.invoke(it.toPaceReadDto())
     }

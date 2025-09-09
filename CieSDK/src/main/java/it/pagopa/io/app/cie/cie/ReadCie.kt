@@ -3,14 +3,14 @@ package it.pagopa.io.app.cie.cie
 import android.nfc.TagLostException
 import android.util.Base64
 import it.pagopa.io.app.cie.CieLogger
-import it.pagopa.io.app.cie.NisAndPace
+import it.pagopa.io.app.cie.IntAuthMRTDResponse
 import it.pagopa.io.app.cie.cie.commands.CieCommands
 import it.pagopa.io.app.cie.cie.commands.readCieAtr
 import it.pagopa.io.app.cie.nfc.NfcReading
 import it.pagopa.io.app.cie.nfc.Utils
-import it.pagopa.io.app.cie.nis.NisAuthenticated
+import it.pagopa.io.app.cie.nis.InternalAuthenticationResponse
 import it.pagopa.io.app.cie.pace.PaceManager
-import it.pagopa.io.app.cie.pace.PaceRead
+import it.pagopa.io.app.cie.pace.MRTDResponse
 import java.nio.charset.StandardCharsets
 
 internal class ReadCie(
@@ -30,7 +30,7 @@ internal class ReadCie(
         }
     }
 
-    private fun provideNisAuth(challenge: String): NisAuthenticated {
+    private fun provideNisAuth(challenge: String): InternalAuthenticationResponse {
         val commands = CieCommands(onTransmit)
         val efIntServ1001: ByteArray = commands.readNis()
         val nis = String(efIntServ1001, StandardCharsets.UTF_8)
@@ -40,7 +40,7 @@ internal class ReadCie(
         if (challengeSigned == null || challengeSigned.isEmpty()) {
             throw CieSdkException(NfcError.NIS_NO_CHALLENGE_SIGNED)
         } else {
-            return NisAuthenticated(
+            return InternalAuthenticationResponse(
                 nis,
                 Base64.encodeToString(bytes, Base64.DEFAULT),
                 Base64.encodeToString(sod, Base64.DEFAULT),
@@ -49,7 +49,7 @@ internal class ReadCie(
         }
     }
 
-    private fun providePaceFlow(can: String): PaceRead {
+    private fun providePaceFlow(can: String): MRTDResponse {
         val paceManager = PaceManager(onTransmit)
         val (sessionEnc, sessionMac) = paceManager.doPACE(can)
         val seq = byteArrayOf(0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00)
@@ -74,7 +74,7 @@ internal class ReadCie(
             0x011B, newSequence1, sessionEnc, sessionMac, true, NfcEvent.READ_SOD_PACE
         )
         CieLogger.i("sodBytes", Utils.bytesToString(sodBytes))
-        return PaceRead(dg1Bytes, dg11Bytes, sodBytes)
+        return MRTDResponse(dg1Bytes, dg11Bytes, sodBytes)
     }
 
     fun read(pin: String) {
@@ -117,7 +117,7 @@ internal class ReadCie(
                 NfcEvent.SELECT_EMPTY
             )
             val nisAuth = this.provideNisAuth(challenge)
-            readingInterface.read(NisAndPace(nisAuth, paceRead))
+            readingInterface.read(IntAuthMRTDResponse(nisAuth, paceRead))
         }
     }
 
