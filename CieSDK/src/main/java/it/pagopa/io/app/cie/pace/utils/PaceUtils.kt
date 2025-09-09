@@ -106,8 +106,8 @@ internal fun CieCommands.generalAuthenticateStep2(mappedPublicKey: ByteArray): A
         "MAPPED PUB KEY HEX",
         "Size: ${mappedPublicKey.size}\n${Utils.bytesToString(mappedPublicKey)}"
     )
-    val tlv82 = tlv(0x83, mappedPublicKey)
-    val tlv7c = tlv(0x7C, tlv82)
+    val tlv83 = tlv(0x83, mappedPublicKey)
+    val tlv7c = tlv(0x7C, tlv83)
     CieLogger.i("PACE_STEP2 tlv7c", "${Utils.bytesToString(tlv7c)} (${tlv7c.size} bytes)")
     val head = byteArrayOf(0x10, 0x86.toByte(), 0x00, 0x00)
     return if (tlv7c.size > ApduManager.STANDARD_APDU_SIZE) {
@@ -125,18 +125,6 @@ internal fun CieCommands.generalAuthenticateStep2(mappedPublicKey: ByteArray): A
             event = NfcEvent.GENERAL_AUTHENTICATE_STEP2
         )
     }
-}
-
-internal fun CieCommands.selectPace(): ApduResponse {
-    val aid = byteArrayOf(
-        0xA0.toByte(), 0x00, 0x00, 0x02, 0x47, 0x10, 0x01, 0x02
-    )
-    return onTransmit.sendCommand(
-        byteArrayOf(
-            0x00, 0xA4.toByte(), 0x04, 0x0C, aid.size.toByte()
-        ) + aid,
-        NfcEvent.SELECT_PACE
-    )
 }
 
 // SELECT EF.CardAccess (FID 01 1C)

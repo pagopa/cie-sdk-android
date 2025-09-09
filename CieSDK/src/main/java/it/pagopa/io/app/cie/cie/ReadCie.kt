@@ -112,6 +112,10 @@ internal class ReadCie(
     fun nisAndPace(challenge: String, can: String) {
         readIncludingExceptions {
             val paceRead = this.providePaceFlow(can)
+            onTransmit.sendCommand(
+                Utils.hexStringToByteArray("00a40000"),
+                NfcEvent.SELECT_EMPTY
+            )
             val nisAuth = this.provideNisAuth(challenge)
             readingInterface.read(NisAndPace(nisAuth, paceRead))
         }

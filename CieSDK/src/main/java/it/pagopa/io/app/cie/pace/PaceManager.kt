@@ -20,7 +20,6 @@ import it.pagopa.io.app.cie.pace.utils.offsetToBigInt
 import it.pagopa.io.app.cie.pace.utils.parseResponse
 import it.pagopa.io.app.cie.pace.utils.readEfCardAccess
 import it.pagopa.io.app.cie.pace.utils.selectEfCardAccess
-import it.pagopa.io.app.cie.pace.utils.selectPace
 import it.pagopa.io.app.cie.pace.utils.sendGeneralAuthenticateToken
 import it.pagopa.io.app.cie.pace.utils.setMsePaceCan
 import java.security.interfaces.ECPublicKey
