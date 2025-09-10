@@ -26,8 +26,10 @@ internal class NetworkClient(
     }
 
     private fun okhttpInitializer(): OkHttpClient {
-        Security.removeProvider(CieProvider.PROVIDER)
+        // Remove any previously installed instance of the provider
+        Security.removeProvider(CieProvider.PROVIDER_NAME)
         val cieProvider = CieProvider()
+        // A provider with the same name cannot be added if already installed
         Security.insertProviderAt(cieProvider, 1)
         val builder = OkHttpClient.Builder()
             .addInterceptor(loggingInterceptor)
@@ -35,7 +37,7 @@ internal class NetworkClient(
             .readTimeout(15, TimeUnit.SECONDS)
             .writeTimeout(15, TimeUnit.SECONDS)
 
-        val cieKeyStore: KeyStore = KeyStore.getInstance(CieProvider.PROVIDER)
+        val cieKeyStore: KeyStore = KeyStore.getInstance(CieProvider.KEYSTORE_TYPE)
         cieKeyStore.load(ByteArrayInputStream(certificate), null)
         val kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm())
         kmf.init(cieKeyStore, null)
