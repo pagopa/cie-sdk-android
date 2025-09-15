@@ -1,5 +1,6 @@
 package it.pagopa.io.app.cie.pace
 
+import androidx.annotation.CheckResult
 import it.pagopa.io.app.cie.CieLogger
 import it.pagopa.io.app.cie.nfc.Algorithms
 import it.pagopa.io.app.cie.nfc.Utils
@@ -18,6 +19,7 @@ internal class AuthToken {
      * @return First 8 bytes of the computed MAC (authentication token).
      */
     @Throws(Exception::class)
+    @CheckResult
     fun generateAuthenticationToken(
         publicKey: ByteArray,
         macKey: ByteArray,

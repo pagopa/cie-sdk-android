@@ -10,8 +10,6 @@ import it.pagopa.io.app.cie.nfc.Utils
 import it.pagopa.io.app.cie.pace.general_authenticate.Phase1
 import it.pagopa.io.app.cie.pace.general_authenticate.Phase2
 import it.pagopa.io.app.cie.pace.general_authenticate.Phase3
-import it.pagopa.io.app.cie.pace.general_authenticate.model.Phase1Model
-import it.pagopa.io.app.cie.pace.general_authenticate.model.Phase2Model
 import it.pagopa.io.app.cie.pace.general_authenticate.model.Phase3Model
 import it.pagopa.io.app.cie.pace.general_authenticate.model.SessionValues
 import it.pagopa.io.app.cie.pace.utils.addBcIfNeeded
@@ -26,12 +24,13 @@ internal class PaceManager(private val onTransmit: OnTransmit) {
         val commands = CieCommands(onTransmit)
         CieLogger.i("PACE-DEBUG", "=== START doPACE ===")
         CieLogger.i("PACE-DEBUG", "CAN: $can")
-        val gaPhase1 = Phase1(commands).execute(can) as Phase1Model
-        val gaPhase2 = Phase2(commands).execute(gaPhase1) as Phase2Model
-        val mutualAuth = Phase3(commands).execute(gaPhase2) as Phase3Model
+        val gaPhase1 = Phase1(commands).execute(can)
+        val gaPhase2 = Phase2(commands).execute(gaPhase1)
+        //mutual authentication, throws Exception if not ok, else gives back mac and enc keys
+        val sessionValues = Phase3(commands).execute(gaPhase2)
         CieLogger.i("PACE-DEBUG", "Mutual authentication OK - PACE completed successfully!")
         CieLogger.i("PACE-DEBUG", "=== END doPACE ===")
-        return mutualAuth
+        return sessionValues
     }
 
     fun retrieveValues(model: SessionValues): MRTDResponse {

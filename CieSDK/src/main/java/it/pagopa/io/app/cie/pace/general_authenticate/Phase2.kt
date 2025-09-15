@@ -14,7 +14,6 @@ import it.pagopa.io.app.cie.pace.evp.EvpEc
 import it.pagopa.io.app.cie.pace.evp.EvpKeyPair
 import it.pagopa.io.app.cie.pace.general_authenticate.model.Phase1Model
 import it.pagopa.io.app.cie.pace.general_authenticate.model.Phase2Model
-import it.pagopa.io.app.cie.pace.general_authenticate.model.PhaseModel
 import it.pagopa.io.app.cie.pace.utils.generalAuthenticateStep2
 import it.pagopa.io.app.cie.pace.utils.offsetToBigInt
 import it.pagopa.io.app.cie.pace.utils.parse7c82Tlv
@@ -33,7 +32,7 @@ internal class Phase2(commands: CieCommands) : Phase(commands) {
         return TlvReader(ciePublicKeyByteContainer).parse7c82Tlv()
     }
 
-    override fun <T> execute(input: T): PhaseModel {
+    override fun <T> execute(input: T): Phase2Model {
         val model = input as Phase1Model
         val kindOfAlgorithm = model.kindOfAlgorithm
         val keyPair = model.keyPair

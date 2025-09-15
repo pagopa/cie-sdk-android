@@ -19,4 +19,24 @@ data class MRTDResponse(val dg1: ByteArray, val dg11: ByteArray, val sod: ByteAr
         val (dg1, dg11, sod) = hexDg()
         return "dg1:\n\t${dg1}\ndg11:\n\t${dg11}\nsod:\n\t${sod}"
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as MRTDResponse
+
+        if (!dg1.contentEquals(other.dg1)) return false
+        if (!dg11.contentEquals(other.dg11)) return false
+        if (!sod.contentEquals(other.sod)) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = dg1.contentHashCode()
+        result = 31 * result + dg11.contentHashCode()
+        result = 31 * result + sod.contentHashCode()
+        return result
+    }
 }

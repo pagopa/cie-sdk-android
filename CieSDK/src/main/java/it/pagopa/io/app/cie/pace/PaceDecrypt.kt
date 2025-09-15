@@ -1,11 +1,13 @@
 package it.pagopa.io.app.cie.pace
 
+import androidx.annotation.CheckResult
 import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
 internal class PaceDecrypt {
     @Throws(Exception::class)
+    @CheckResult
     fun decryptNonce(
         cipherAlg: PACECipherAlgorithms,
         paceKey: ByteArray,

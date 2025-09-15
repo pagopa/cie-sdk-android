@@ -1,5 +1,6 @@
 package it.pagopa.io.app.cie.pace
 
+import androidx.annotation.CheckResult
 import it.pagopa.io.app.cie.CieLogger
 import it.pagopa.io.app.cie.pace.utils.toFixedLengthUnsigned
 import org.bouncycastle.jce.provider.BouncyCastleProvider
@@ -14,6 +15,7 @@ import javax.crypto.interfaces.DHPublicKey
 import javax.crypto.spec.DHParameterSpec
 
 internal class MappingKey {
+    @CheckResult
     fun toRawData(pubKey: PublicKey): ByteArray? {
         return when (pubKey) {
             is ECPublicKey -> {
@@ -29,7 +31,7 @@ internal class MappingKey {
         }
     }
 
-    fun dhPublicKeyRaw(dhKey: DHPublicKey): ByteArray {
+    private fun dhPublicKeyRaw(dhKey: DHPublicKey): ByteArray {
         CieLogger.i("PUB KEY", "PARSING DH: bit length: ${dhKey.params.p.bitLength()}")
         val pLen = (dhKey.params.p.bitLength() + 7) / 8 // per 2048 bit = 256
         CieLogger.i("Expected p length", "$pLen bytes")
@@ -54,6 +56,7 @@ internal class MappingKey {
 
 
     @Throws(Exception::class)
+    @CheckResult
     fun createMappingKey(
         keyAgreement: KeyAgreementAlgorithm,
         parameterSpec: PACEDomainParam

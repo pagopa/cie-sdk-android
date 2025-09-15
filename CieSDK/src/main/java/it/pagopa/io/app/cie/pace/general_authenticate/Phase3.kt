@@ -10,13 +10,13 @@ import it.pagopa.io.app.cie.pace.AuthToken
 import it.pagopa.io.app.cie.pace.TlvReader
 import it.pagopa.io.app.cie.pace.general_authenticate.model.Phase2Model
 import it.pagopa.io.app.cie.pace.general_authenticate.model.Phase3Model
-import it.pagopa.io.app.cie.pace.general_authenticate.model.PhaseModel
+import it.pagopa.io.app.cie.pace.general_authenticate.model.SessionValues
 import it.pagopa.io.app.cie.pace.utils.parseResponse
 import it.pagopa.io.app.cie.pace.utils.sendGeneralAuthenticateToken
 
 /**Mutual Authentication*/
 internal class Phase3(commands: CieCommands) : Phase(commands) {
-    override fun <T> execute(input: T): PhaseModel {
+    override fun <T> execute(input: T): SessionValues {
         val phase2Model = input as Phase2Model
         val cieEphemeralPublicKey = phase2Model.cieEphemeralPublicKey
         val macKey = phase2Model.macKey

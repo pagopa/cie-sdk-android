@@ -16,7 +16,6 @@ import it.pagopa.io.app.cie.pace.Tlv
 import it.pagopa.io.app.cie.pace.TlvReader
 import it.pagopa.io.app.cie.pace.deriveKey
 import it.pagopa.io.app.cie.pace.general_authenticate.model.Phase1Model
-import it.pagopa.io.app.cie.pace.general_authenticate.model.PhaseModel
 import it.pagopa.io.app.cie.pace.pace_model.PACEInfo
 import it.pagopa.io.app.cie.pace.utils.generalAuthenticateStep0
 import it.pagopa.io.app.cie.pace.utils.generalAuthenticateStep1
@@ -96,7 +95,7 @@ internal class Phase1(commands: CieCommands) : Phase(commands) {
         return decryptedNonce
     }
 
-    override fun <T> execute(input: T): PhaseModel {
+    override fun <T> execute(input: T): Phase1Model {
         val can = input as String
         // 1. Retrieve PACE OID and parameters
         val paceInfo = commands.getOidForPace()
