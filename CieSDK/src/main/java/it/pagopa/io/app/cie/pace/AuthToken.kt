@@ -11,7 +11,6 @@ import org.bouncycastle.crypto.params.KeyParameter
 internal class AuthToken {
     /**
      * It generates the PACE authentication token.
-     *
      * @param publicKey Ephemeral public key (raw bytes) from the PACE key exchange.
      * @param macKey    The MAC key derived during PACE.
      * @param oid       OID identifying the key agreement parameters.
@@ -116,7 +115,6 @@ internal class AuthToken {
     }
 
     /**
-     * ISO/IEC 9797-1 Method 2 padding (often wrongly called PKCS#7 here).
      * Adds 0x80 followed by zero bytes until block size is reached.
      * Default block size = 8 bytes (3DES).
      */

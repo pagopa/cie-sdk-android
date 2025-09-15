@@ -15,8 +15,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -237,15 +239,6 @@ fun NfcDialog(
                 color = MaterialTheme.colorScheme.error
             )
         }
-        val successMessage = viewModel?.successMessage?.value
-        if (successMessage?.isNotEmpty() == true) {
-            Spacer(Modifier.height(16.dp))
-            Text(
-                modifier = Modifier.padding(horizontal = 4.dp),
-                text = successMessage,
-                color = MaterialTheme.colorScheme.primary
-            )
-        }
         if (viewModel?.showProgress?.value == true) {
             Spacer(Modifier.height(16.dp))
             Row(
@@ -291,6 +284,18 @@ fun NfcDialog(
                         viewModel.progressValue.floatValue * 100f
                     ) + "%",
                     modifier = Modifier.padding(horizontal = 2.dp)
+                )
+            }
+        }
+        val successMessage = viewModel?.successMessage?.value
+        if (successMessage?.isNotEmpty() == true) {
+            Spacer(Modifier.height(16.dp))
+            Box(Modifier.padding(horizontal = 4.dp)
+                .verticalScroll(rememberScrollState())) {
+                Text(
+                    modifier = Modifier.padding(horizontal = 4.dp),
+                    text = successMessage,
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
         }

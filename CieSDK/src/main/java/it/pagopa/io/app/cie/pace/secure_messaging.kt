@@ -35,7 +35,6 @@ internal enum class SecureMessagingMode(val value: Byte) {
     PACE_MODE(0x3)
 }
 
-@OptIn(ExperimentalUnsignedTypes::class)
 internal fun deriveKey(
     keySeed: ByteArray,
     cipherAlgName: PACECipherAlgorithms,

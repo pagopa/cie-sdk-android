@@ -228,7 +228,7 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
                     0x00,
                     0x00.toByte(),
                     0x00
-                ), NfcEvent.NIS_AUTHENTICATION_RESPONSE
+                ), NfcEvent.NIS_AUTHENTICATION
             ).response
 
             else -> null

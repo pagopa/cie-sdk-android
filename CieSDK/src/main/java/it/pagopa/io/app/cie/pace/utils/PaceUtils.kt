@@ -8,6 +8,8 @@ import it.pagopa.io.app.cie.cie.NfcError
 import it.pagopa.io.app.cie.cie.NfcEvent
 import it.pagopa.io.app.cie.cie.commands.CieCommands
 import it.pagopa.io.app.cie.nfc.Utils
+import it.pagopa.io.app.cie.pace.Tlv
+import it.pagopa.io.app.cie.pace.TlvReader
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import java.math.BigInteger
 import java.security.Security
@@ -239,4 +241,36 @@ private fun ByteArray.os2i(offset: Int, length: Int): BigInteger {
         result = result.add(BigInteger.valueOf((this[i].toInt() and 0xFF).toLong()))
     }
     return result
+}
+
+internal fun TlvReader.parse7c82Tlv(): Tlv {
+    // Parse outer TLV container (tag 0x7C)
+    val tlvs = this.readRaw()
+    val container = tlvs.firstOrNull {
+        it.tag == 0x7c
+    }
+    if (container == null) {
+        CieLogger.e("parse7c82Tlv", "Unable to get public key from CIE")
+        throw CieSdkException(NfcError.GENERAL_EXCEPTION.apply {
+            this.msg = "Unable to get public key from CIE"
+        })
+    }
+
+    // Parse inner TLVs from container
+    val readerPublicKeyTlvs = TlvReader(container.value).readAll()
+    readerPublicKeyTlvs.forEach {
+        CieLogger.i("TLV", it.toString())
+    }
+
+    // Search for public key TLV tag (0x82 or 0x84)
+    val publicKeyTLv = readerPublicKeyTlvs.firstOrNull {
+        it.tag == 0x82 || it.tag == 0x83 || it.tag == 0x84
+    }
+    if (publicKeyTLv == null) {
+        CieLogger.e("parse7c82Tlv", "Unable to get public key from container")
+        throw CieSdkException(NfcError.GENERAL_EXCEPTION.apply {
+            this.msg = "Unable to get public key from CIE from container"
+        })
+    }
+    return publicKeyTLv
 }

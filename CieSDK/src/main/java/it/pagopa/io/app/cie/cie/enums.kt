@@ -82,7 +82,6 @@ enum class NfcEvent(
     READ_SOD_PACE(numeratorForPace = 12, numeratorForNisAndPace = 12),
     SETTING_NIS_AUTH(numeratorForNis = 5, numeratorForNisAndPace = 18),
     NIS_AUTHENTICATION(numeratorForNis = 6, numeratorForNisAndPace = 19),
-    NIS_AUTHENTICATION_RESPONSE(numeratorForNis = 7, numeratorForNisAndPace = 19),
     SELECT_AID(numeratorForPace = 0, numeratorForNisAndPace = 0),
     SELECT_PACE(numeratorForPace = 1, numeratorForNisAndPace = 1),
     SELECT_EF_CARDACCESS(numeratorForPace = 2, numeratorForNisAndPace = 2),

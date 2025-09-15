@@ -13,6 +13,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import it.pagopa.io.app.cie_example.R
 import it.pagopa.io.app.cie_example.ui.AppNumberTextField
+import it.pagopa.io.app.cie_example.ui.AppTextField
 import it.pagopa.io.app.cie_example.ui.NfcDialog
 import it.pagopa.io.app.cie_example.ui.PrimaryButton
 import it.pagopa.io.app.cie_example.ui.model.LazyButtonModel
@@ -39,7 +40,7 @@ fun NisAndPaceView(
             stringResource(R.string.insert_can),
         )
         Spacer(Modifier.height(16.dp))
-        AppNumberTextField(
+        AppTextField(
             viewModel?.challenge,
             stringResource(R.string.insert_challenge),
         )

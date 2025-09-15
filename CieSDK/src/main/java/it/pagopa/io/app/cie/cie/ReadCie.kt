@@ -2,15 +2,14 @@ package it.pagopa.io.app.cie.cie
 
 import android.nfc.TagLostException
 import android.util.Base64
-import it.pagopa.io.app.cie.CieLogger
 import it.pagopa.io.app.cie.IntAuthMRTDResponse
 import it.pagopa.io.app.cie.cie.commands.CieCommands
 import it.pagopa.io.app.cie.cie.commands.readCieAtr
 import it.pagopa.io.app.cie.nfc.NfcReading
 import it.pagopa.io.app.cie.nfc.Utils
 import it.pagopa.io.app.cie.nis.InternalAuthenticationResponse
-import it.pagopa.io.app.cie.pace.PaceManager
 import it.pagopa.io.app.cie.pace.MRTDResponse
+import it.pagopa.io.app.cie.pace.PaceManager
 import java.nio.charset.StandardCharsets
 
 internal class ReadCie(
@@ -51,30 +50,8 @@ internal class ReadCie(
 
     private fun providePaceFlow(can: String): MRTDResponse {
         val paceManager = PaceManager(onTransmit)
-        val (sessionEnc, sessionMac) = paceManager.doPACE(can)
-        val seq = byteArrayOf(0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00)
-        val aid = byteArrayOf(
-            0xA0.toByte(), 0x00, 0x00, 0x02, 0x47, 0x10, 0x01
-        )
-        val head = byteArrayOf(0x00, 0xA4.toByte(), 0x04, 0x0C)
-        val (sequence, response) = ApduSecureMessageManager(onTransmit).sendApduSM(
-            seq, sessionEnc, sessionMac, head, aid, null, NfcEvent.SELECT_PACE_SM
-        )
-        CieLogger.i("PACE-DEBUG", "SELECT_PACE_SM_RESPONSE:${response.swInt}")
-        val readFileManager = ReadFileManager(onTransmit)
-        val (newSequence, dg1Bytes) = readFileManager.readFileSM(
-            0x0101, sequence, sessionEnc, sessionMac, true, NfcEvent.READING_DG1
-        )
-        CieLogger.i("dg1Bytes", Utils.bytesToString(dg1Bytes))
-        val (newSequence1, dg11Bytes) = readFileManager.readFileSM(
-            0x010B, newSequence, sessionEnc, sessionMac, true, NfcEvent.READING_DG11
-        )
-        CieLogger.i("DG11", Utils.bytesToString(dg11Bytes))
-        val (_, sodBytes) = readFileManager.readFileSM(
-            0x011B, newSequence1, sessionEnc, sessionMac, true, NfcEvent.READ_SOD_PACE
-        )
-        CieLogger.i("sodBytes", Utils.bytesToString(sodBytes))
-        return MRTDResponse(dg1Bytes, dg11Bytes, sodBytes)
+        val sessionValues = paceManager.doPACE(can)
+        return paceManager.retrieveValues(sessionValues)
     }
 
     fun read(pin: String) {
