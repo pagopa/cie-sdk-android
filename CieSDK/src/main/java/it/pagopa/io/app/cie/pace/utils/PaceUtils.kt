@@ -46,12 +46,12 @@ internal fun CieCommands.setMsePaceCan(oidBytes: ByteArray): ApduResponse {
 
 internal fun CieCommands.generalAuthenticateStep0(): ApduResponse {
     // Tag 7C = wrapper
-    val tlv7c = Utils.appendByteArray(byteArrayOf(0x7C.toByte(), 0.toByte()), byteArrayOf())
+    val tlv7c = byteArrayOf(0x7C.toByte(), 0x00)
     CieLogger.i("PACE_STEP0", "APDU Data: ${Utils.bytesToString(tlv7c)}")
     return ApduManager(onTransmit = onTransmit).sendApdu(
         head = byteArrayOf(0x10, 0x86.toByte(), 0x00, 0x00),
         data = tlv7c,
-        le = null,
+        le = byteArrayOf(0x00),
         event = NfcEvent.GENERAL_AUTHENTICATE_STEP0
     )
 }
@@ -216,14 +216,14 @@ internal fun CieCommands.sendGeneralAuthenticateToken(token: ByteArray): ApduRes
         ApduManager(onTransmit).sendApduExtended(
             head = head,
             data = tlv7c,
-            le = null,
+            le = byteArrayOf(0x00),
             event = NfcEvent.GENERAL_AUTHENTICATE_STEP3
         )
     } else {
         ApduManager(onTransmit).sendApdu(
             head = head,
             data = tlv7c,
-            le = null,
+            le = byteArrayOf(0x00),
             event = NfcEvent.GENERAL_AUTHENTICATE_STEP3
         )
     }

@@ -43,7 +43,7 @@ enum class NfcEvent(
     SELECT_CIE_SERVICE_ID(numerator = 3),
     SELECT_READ_FILE_SERVICE_ID(numerator = 4),
     READ_FILE_SERVICE_ID_RESPONSE(numerator = 5),
-    SELECT_EMPTY(numeratorForNis = 0),
+    SELECT_EMPTY(numeratorForNisAndPace = 11),
     SELECT_IAS(
         numerator = 6,
         numeratorForKindOf = 2,

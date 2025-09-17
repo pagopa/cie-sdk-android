@@ -107,7 +107,7 @@ internal class Phase1(commands: CieCommands) : Phase(commands) {
 
         val paceOid = paceInfo.objIdentifier()!!
         val (cipherAlgName, digestAlgo) = paceOid.kindOfObjId()!!
-
+        CieLogger.i("cipherAlgName - digestAlgo", "$cipherAlgName - $digestAlgo")
         // 3. Derive paceKey from CAN
         val paceKey = deriveKey(
             keySeed = can.toByteArray(Charsets.UTF_8),
@@ -117,7 +117,7 @@ internal class Phase1(commands: CieCommands) : Phase(commands) {
             nonce = null,
             mode = SecureMessagingMode.PACE_MODE
         )
-
+        CieLogger.i("pace key", Utils.bytesToString(paceKey))
         // 4. Step 1: Get and decrypt nonce
         val decryptedNonce = commands.stepOne(cipherAlgName, paceKey)
 

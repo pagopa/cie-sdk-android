@@ -81,6 +81,7 @@ internal class ApduManager(private val onTransmit: OnTransmit) {
 
             CieLogger.i("SENDING THIS APDU", Utils.bytesToString(apdu))
             val response: ApduResponse = onTransmit.sendCommand(apdu, event)
+            CieLogger.i("RESPONSE RAW", Utils.bytesToString(response.response))
             val resp = getResp(response, event)
             CieLogger.i("RESPONSE", Utils.bytesToString(resp.response))
             CieLogger.i("RESPONSE SW HEX", resp.swHex)
