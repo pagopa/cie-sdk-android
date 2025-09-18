@@ -10,7 +10,14 @@ data class NisAndPaceReadDto(
     val nisAuth: String,
     val mrz: String,
     val paceReadString: String
-)
+){
+    fun mailMessage():String{
+        return """
+            $nisAuth
+            $paceReadString
+        """.trimIndent()
+    }
+}
 
 fun Pair<InternalAuthenticationResponse, MRTDResponse>.toNisAndPaceReadDto(): NisAndPaceReadDto {
     val (nisAuth, paceRead) = this

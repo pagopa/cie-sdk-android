@@ -7,6 +7,7 @@ import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -18,7 +19,9 @@ import it.pagopa.io.app.cie_example.R
 import it.pagopa.io.app.cie_example.ui.header.BackArrowIcon
 import it.pagopa.io.app.cie_example.ui.header.HeaderImage
 import it.pagopa.io.app.cie_example.ui.header.HomeIcon
+import it.pagopa.io.app.cie_example.ui.header.MailIcon
 import it.pagopa.io.app.cie_example.ui.header.hideAll
+import it.pagopa.io.app.cie_example.ui.model.MailModel
 import it.pagopa.io.app.cie_example.ui.model.NisAndPaceReadDto
 import it.pagopa.io.app.cie_example.ui.model.PaceReadDto
 import it.pagopa.io.app.cie_example.ui.view.CieSdkMethods
@@ -125,7 +128,16 @@ fun MainActivity?.CieSdkNavHost(
         ) {
             val arguments = it.toRoute<Routes.PaceRead>()
             headerLeft.BackArrowIcon(navController)
-            headerRight.HomeIcon(navController)
+            val mailSubject = stringResource(R.string.mail_subject_pace)
+            headerRight.MailIcon { recipients ->
+                this@CieSdkNavHost?.sendMail(
+                    MailModel(
+                        recipients = recipients.toList(),
+                        subject = mailSubject,
+                        body = arguments.paceReadDto.mailMessage()
+                    )
+                )
+            }
             titleResId.intValue = R.string.reading_pace
             val vm = dependenciesInjectedViewModel<PaceReadViewModel>(arguments.paceReadDto)
             PaceReadView(vm)
@@ -135,7 +147,16 @@ fun MainActivity?.CieSdkNavHost(
         ) {
             val arguments = it.toRoute<Routes.NisAndPaceRead>()
             headerLeft.BackArrowIcon(navController)
-            headerRight.HomeIcon(navController)
+            val mailSubject = stringResource(R.string.mail_subject)
+            headerRight.MailIcon { recipients ->
+                this@CieSdkNavHost?.sendMail(
+                    MailModel(
+                        recipients = recipients.toList(),
+                        subject = mailSubject,
+                        body = arguments.nisAndPaceReadDto.mailMessage()
+                    )
+                )
+            }
             titleResId.intValue = R.string.reading_pace
             val vm = dependenciesInjectedViewModel<NisAndPaceReadViewModel>(
                 arguments.nisAndPaceReadDto

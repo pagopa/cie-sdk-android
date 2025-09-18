@@ -80,7 +80,7 @@ fun PasswordTextField(
     password: MutableState<String>?,
     label: String
 ) {
-    var passwordVisible = rememberSaveable { mutableStateOf(false) }
+    val passwordVisible = rememberSaveable { mutableStateOf(false) }
     TextField(
         value = password?.value.orEmpty(),
         onValueChange = { password?.value = it },

@@ -8,7 +8,11 @@ import kotlinx.serialization.Serializable
 data class PaceReadDto(
     val mrz: String,
     val paceReadString: String
-)
+){
+    fun mailMessage():String {
+        return paceReadString
+    }
+}
 
 fun MRTDResponse.toPaceReadDto(): PaceReadDto {
     val mrz = parseMrz(this.dg1)
