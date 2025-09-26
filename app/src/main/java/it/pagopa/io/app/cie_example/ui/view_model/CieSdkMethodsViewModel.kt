@@ -19,7 +19,12 @@ class CieSdkMethodsViewModel(
     var hasNfcCtrlOk = mutableStateOf<Boolean?>(null)
     var hasNfcEnabledCtrlOk = mutableStateOf<Boolean?>(null)
     var readyForCieAuthCtrlOk = mutableStateOf<Boolean?>(null)
-    private fun initLazyButtons(onInitCieAuth: () -> Unit) = listOf<LazyButtonModel>(
+    private fun initLazyButtons(
+        onInitCieAuth: () -> Unit,
+        onInitNisAuth: () -> Unit,
+        onInitPaceProtocol: () -> Unit,
+        onInitNisAndPace: () -> Unit
+    ) = listOf<LazyButtonModel>(
         LazyButtonModel(
             R.string.has_nfc,
             ctrlOk = hasNfcCtrlOk.value,
@@ -59,10 +64,30 @@ class CieSdkMethodsViewModel(
             R.string.start_cie_auth,
             isVisible = startCieAuth.value,
             onClick = onInitCieAuth
+        ),
+        LazyButtonModel(
+            R.string.start_nis_auth,
+            isVisible = startCieAuth.value,
+            onClick = onInitNisAuth
+        ),
+        LazyButtonModel(
+            R.string.reading_pace,
+            isVisible = startCieAuth.value,
+            onClick = onInitPaceProtocol
+        ),
+        LazyButtonModel(
+            R.string.reading_nis_and_pace,
+            isVisible = startCieAuth.value,
+            onClick = onInitNisAndPace
         )
     )
 
-    fun provideLazyButtons(onInitCieAuth: () -> Unit) = initLazyButtons(onInitCieAuth).filter {
+    fun provideLazyButtons(
+        onInitCieAuth: () -> Unit,
+        onInitNisAuth: () -> Unit,
+        onInitPaceProtocol: () -> Unit,
+        onInitNisAndPace: () -> Unit
+    ) = initLazyButtons(onInitCieAuth, onInitNisAuth, onInitPaceProtocol, onInitNisAndPace).filter {
         it.isVisible
     }
 
@@ -77,7 +102,7 @@ class CieSdkMethodsViewModel(
                 override fun event(event: NfcEvent) {
                     dialogMessage.value = event.name
                     progressValue.floatValue =
-                        (event.numeratorForKindOf.toFloat() / NfcEvent.totalKindOfNumeratorEvent.toFloat()).toFloat()
+                        (event.numeratorForKindOf.toFloat() / NfcEvent.totalKindOfNumeratorEvent.toFloat())
                 }
             }, object : CieAtrCallback {
                 override fun onSuccess(atr: ByteArray) {

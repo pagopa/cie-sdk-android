@@ -18,6 +18,7 @@ retrofit = "2.11.0"
 ui-test-manifest = "1.7.8"
 kotlinxSerializationJson = "1.8.0"
 desugar_jdk_libs = "2.1.5"
+bouncy-castle = "1.79"
 
 [libraries]
 desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar_jdk_libs" }
@@ -44,6 +45,8 @@ androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
+bouncy-castle-pkix = { module = "org.bouncycastle:bcpkix-jdk18on", version.ref = "bouncy-castle" }
+bouncy-castle-prov = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "bouncy-castle" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

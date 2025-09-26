@@ -1,5 +1,6 @@
 package it.pagopa.io.app.cie.cie.commands
 
+import it.pagopa.io.app.cie.CieLogger
 import it.pagopa.io.app.cie.cie.NfcEvent
 
 /**
@@ -7,7 +8,7 @@ import it.pagopa.io.app.cie.cie.NfcEvent
  *@return: The response sent by the card
  */
 internal fun CieCommands.selectIAS(): ByteArray {
-    return onTransmit.sendCommand(
+    val ias = onTransmit.sendCommand(
         byteArrayOf(
             0x00,
             0xa4.toByte(),
@@ -28,7 +29,9 @@ internal fun CieCommands.selectIAS(): ByteArray {
             0x60,
             0x01
         ), NfcEvent.SELECT_IAS
-    ).response
+    )
+    CieLogger.i("SELECT IAS", ias.swHex)
+    return ias.response
 }
 
 /**
