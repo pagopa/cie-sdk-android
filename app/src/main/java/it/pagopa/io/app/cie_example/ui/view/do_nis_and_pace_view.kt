@@ -49,7 +49,7 @@ fun NisAndPaceView(
             modifier = Modifier.padding(bottom = 16.dp), model = LazyButtonModel(
                 textId = R.string.start
             ) {
-                if (viewModel?.can?.value?.isNotEmpty() == true)
+                if (viewModel?.can?.value?.isNotEmpty() == true && viewModel?.challenge?.value?.isNotEmpty() == true)
                     viewModel.showDialog.value = true
             }
         )
