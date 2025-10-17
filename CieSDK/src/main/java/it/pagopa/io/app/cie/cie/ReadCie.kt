@@ -1,7 +1,6 @@
 package it.pagopa.io.app.cie.cie
 
 import android.nfc.TagLostException
-import android.util.Base64
 import it.pagopa.io.app.cie.IntAuthMRTDResponse
 import it.pagopa.io.app.cie.cie.commands.CieCommands
 import it.pagopa.io.app.cie.cie.commands.readCieAtr
@@ -41,9 +40,9 @@ internal class ReadCie(
         } else {
             return InternalAuthenticationResponse(
                 nis,
-                Base64.encodeToString(bytes, Base64.DEFAULT),
-                Base64.encodeToString(sod, Base64.DEFAULT),
-                Base64.encodeToString(challengeSigned, Base64.DEFAULT)
+                Utils.bytesToString(bytes),
+                Utils.bytesToString(sod),
+                Utils.bytesToString(challengeSigned)
             )
         }
     }

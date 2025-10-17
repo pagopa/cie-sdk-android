@@ -7,6 +7,6 @@ data class InternalAuthenticationResponse(
     val challengeSigned: String
 ) {
     fun toStringUi(): String {
-        return "Internal Authentication Response:\n nis: $nis;\n sod: $sod"
+        return "Internal Authentication Response:\n nis: $nis;\n sod: $sod;\n kpubIntServ: $kpubIntServ;\n challengeSigned: $challengeSigned"
     }
 }

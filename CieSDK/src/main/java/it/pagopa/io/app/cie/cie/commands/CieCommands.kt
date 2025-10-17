@@ -191,7 +191,7 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
 
     /**Internal Authentication*/
     fun intAuth(challenge: String): ByteArray? {
-        val challengeByte: ByteArray = Base64.decode(challenge, Base64.DEFAULT)
+        val challengeByte = challenge.toByteArray(Charsets.UTF_8)
         return signIntAuth(challengeByte, onTransmit)
     }
 

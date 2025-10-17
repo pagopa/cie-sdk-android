@@ -90,14 +90,14 @@ internal fun CieCommands.generalAuthenticateStep1(ephemeralPublicKey: ByteArray)
         ApduManager(onTransmit).sendApduExtended(
             head = head,
             data = tlv7c,
-            le = null,
+            le = byteArrayOf(0x00, 0x00),
             event = NfcEvent.GENERAL_AUTHENTICATE_STEP1
         )
     } else {
         ApduManager(onTransmit).sendApdu(
             head = head,
             data = tlv7c,
-            le = null,
+            le = byteArrayOf(0x00),
             event = NfcEvent.GENERAL_AUTHENTICATE_STEP1
         )
     }
@@ -116,14 +116,14 @@ internal fun CieCommands.generalAuthenticateStep2(mappedPublicKey: ByteArray): A
         ApduManager(onTransmit).sendApduExtended(
             head = head,
             data = tlv7c,
-            le = null,
+            le = byteArrayOf(0x00, 0x00),
             event = NfcEvent.GENERAL_AUTHENTICATE_STEP2
         )
     } else {
         ApduManager(onTransmit).sendApdu(
             head = head,
             data = tlv7c,
-            le = null,
+            le = byteArrayOf(0x00),
             event = NfcEvent.GENERAL_AUTHENTICATE_STEP2
         )
     }
@@ -216,7 +216,7 @@ internal fun CieCommands.sendGeneralAuthenticateToken(token: ByteArray): ApduRes
         ApduManager(onTransmit).sendApduExtended(
             head = head,
             data = tlv7c,
-            le = byteArrayOf(0x00),
+            le = byteArrayOf(0x00, 0x00),
             event = NfcEvent.GENERAL_AUTHENTICATE_STEP3
         )
     } else {
