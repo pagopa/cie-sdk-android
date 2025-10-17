@@ -55,7 +55,7 @@ internal class PaceManager(private val onTransmit: OnTransmit) {
         )
         CieLogger.i("DG11", Utils.bytesToString(dg11Bytes))
         val (_, sodBytes) = readFileManager.readFileSM(
-            0x011B, newSequence1, sessionEnc, sessionMac, true, NfcEvent.READ_SOD_PACE
+            0x011D, newSequence1, sessionEnc, sessionMac, true, NfcEvent.READ_SOD_PACE
         )
         //TODO SOD AND DG11 are equal
         CieLogger.i("sodBytes", Utils.bytesToString(sodBytes))
