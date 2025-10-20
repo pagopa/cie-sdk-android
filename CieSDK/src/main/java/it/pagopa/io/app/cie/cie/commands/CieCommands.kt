@@ -161,34 +161,6 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
         return Utils.appendByteArray(first, second)
     }
 
-    fun readSodFileCompleted(): ByteArray {
-        //Read SOD data record
-        var idx = 0
-        val size = 0xe4
-        var sodIASData = ByteArray(0)
-        var sodLoaded = false
-        val apdu = byteArrayOf(0x00, 0xB1.toByte(), 0x00, 0x06)
-        while (!sodLoaded) {
-            //byte[] dataInput = { 0x54, (byte)0x02, Byte.parseByte(hexS.substring(0, 2), 16), Byte.parseByte(hexS.substring(2, 4), 16) };
-            val dataInput = byteArrayOf(0x54, 0x02.toByte(), highByte(idx), lowByte(idx))
-            val respApdu = ApduManager(onTransmit)
-                .sendApdu(apdu, dataInput, byteArrayOf(0xe7.toByte()), NfcEvent.READ_SOD)
-            val chn: ByteArray = respApdu.response
-            var offset = 2
-            if (chn[1] > 0x80) offset = 2 + (chn[1] - 0x80)
-            val buf = chn.copyOfRange(offset, chn.size)
-            val combined = ByteArray(sodIASData.size + buf.size)
-            sodIASData.copyInto(combined, 0, 0, sodIASData.size)
-            buf.copyInto(combined, sodIASData.size, 0, buf.size)
-            sodIASData = combined
-            //idx += size;
-            if (respApdu.swHex != "9000") {
-                sodLoaded = true
-            } else idx += size
-        }
-        return sodIASData
-    }
-
     /**Internal Authentication*/
     fun intAuth(challenge: String): ByteArray? {
         val challengeByte = challenge.toByteArray(Charsets.UTF_8)

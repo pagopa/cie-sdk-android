@@ -59,8 +59,18 @@ enum class NfcEvent(
     DH_INIT_GET_G(numerator = 8),
     DH_INIT_GET_P(numerator = 9),
     DH_INIT_GET_Q(numerator = 10),
-    SELECT_FOR_READ_FILE(numerator = 11, numeratorForKindOf = 5),
-    READ_FILE(numerator = 12, numeratorForKindOf = 6),
+    SELECT_FOR_READ_FILE(
+        numerator = 11,
+        numeratorForKindOf = 5,
+        numeratorForNis = 4,
+        numeratorForNisAndPace = 17
+    ),
+    READ_FILE(
+        numerator = 12,
+        numeratorForKindOf = 6,
+        numeratorForNis = 5,
+        numeratorForNisAndPace = 18
+    ),
     INIT_EXTERNAL_AUTHENTICATION(numerator = 13),
     SET_MSE(numerator = 14, numeratorForPace = 4, numeratorForNisAndPace = 4),
     D_H_KEY_EXCHANGE_GET_DATA(numerator = 15),
@@ -78,7 +88,6 @@ enum class NfcEvent(
     SELECT_ROOT(numeratorForKindOf = 4),
     READ_NIS(numeratorForNis = 2, numeratorForNisAndPace = 15),
     READ_PUBLIC_KEY(numeratorForNis = 3, numeratorForNisAndPace = 16),
-    READ_SOD(numeratorForNis = 4, numeratorForNisAndPace = 17),
     READ_SOD_PACE(numeratorForPace = 12, numeratorForNisAndPace = 12),
     SETTING_NIS_AUTH(numeratorForNis = 5, numeratorForNisAndPace = 18),
     NIS_AUTHENTICATION(numeratorForNis = 6, numeratorForNisAndPace = 19),
