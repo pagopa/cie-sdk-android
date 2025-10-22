@@ -16,7 +16,12 @@ internal class ReadFileManager(private val onTransmit: OnTransmit) {
     private val maxPacketSize = 256
 
     @Throws(Exception::class)
-    fun readFile(id: Int, isSelectApplication: Boolean = false): ByteArray {
+    fun readFile(
+        id: Int,
+        isSelectApplication: Boolean = false,
+        selectEvent: NfcEvent = NfcEvent.SELECT_FOR_READ_FILE,
+        readEvent: NfcEvent = NfcEvent.READ_FILE
+    ): ByteArray {
         var content = byteArrayOf()
         val fileId = byteArrayOf(hiByte(id), loByte(id))
         val apduManager = ApduManager(onTransmit)
@@ -24,7 +29,7 @@ internal class ReadFileManager(private val onTransmit: OnTransmit) {
             if (!isSelectApplication) selectFile else selectApplication,
             fileId,
             null,
-            NfcEvent.SELECT_FOR_READ_FILE
+            selectEvent
         )
         if (resp.swHex != "9000") {
             CieLogger.e(this.javaClass.name, "SELECT FILE FAILED: ${resp.swHex}")
@@ -39,7 +44,7 @@ internal class ReadFileManager(private val onTransmit: OnTransmit) {
                 readFile,
                 byteArrayOf(),
                 byteArrayOf(maxPacketSize.toByte()),
-                NfcEvent.READ_FILE
+                readEvent
             )
             var chn = response.response
             //0x6c means wrong length so we have to finish reading last bytes
@@ -77,7 +82,7 @@ internal class ReadFileManager(private val onTransmit: OnTransmit) {
         sessionEncryption: ByteArray,
         sessMac: ByteArray,
         isSelectApplication: Boolean = false,
-        event: NfcEvent= NfcEvent.READ_FILE_SM
+        event: NfcEvent = NfcEvent.READ_FILE_SM
     ): Pair<ByteArray, ByteArray> {
         var seq = sequence
         CieLogger.i("ON COMMAND", "readfileSM()")

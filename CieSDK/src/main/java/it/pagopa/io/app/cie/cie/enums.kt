@@ -71,6 +71,8 @@ enum class NfcEvent(
         numeratorForNis = 5,
         numeratorForNisAndPace = 18
     ),
+    READ_SOD_SELECT(numeratorForNis = 4, numeratorForNisAndPace = 17),
+    READ_SOD(numeratorForNis = 5, numeratorForNisAndPace = 18),
     INIT_EXTERNAL_AUTHENTICATION(numerator = 13),
     SET_MSE(numerator = 14, numeratorForPace = 4, numeratorForNisAndPace = 4),
     D_H_KEY_EXCHANGE_GET_DATA(numerator = 15),

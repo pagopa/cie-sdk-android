@@ -32,15 +32,25 @@ internal class ReadCie(
         val commands = CieCommands(onTransmit)
         val efIntServ1001: ByteArray = commands.readNis()
         val nis = String(efIntServ1001, StandardCharsets.UTF_8)
-        val bytes = commands.readPublicKey()
-        val sod = ReadFileManager(onTransmit).readFile(0x1006)
+        val pubKeyBytes = ReadFileManager(onTransmit).readFile(
+            0x1005,
+            false,
+            NfcEvent.READ_PUBLIC_KEY,
+            NfcEvent.READ_PUBLIC_KEY
+        )
+        val sod = ReadFileManager(onTransmit).readFile(
+            0x1006,
+            false,
+            NfcEvent.READ_SOD_SELECT,
+            NfcEvent.READ_SOD
+        )
         val challengeSigned = commands.intAuth(challenge)
         if (challengeSigned == null || challengeSigned.isEmpty()) {
             throw CieSdkException(NfcError.NIS_NO_CHALLENGE_SIGNED)
         } else {
             return InternalAuthenticationResponse(
                 nis,
-                Utils.bytesToString(bytes),
+                Utils.bytesToString(pubKeyBytes),
                 Utils.bytesToString(sod),
                 Utils.bytesToString(challengeSigned)
             )

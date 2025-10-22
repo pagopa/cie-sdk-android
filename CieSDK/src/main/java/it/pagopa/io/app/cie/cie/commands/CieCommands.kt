@@ -1,16 +1,12 @@
 package it.pagopa.io.app.cie.cie.commands
 
-import android.util.Base64
 import it.pagopa.io.app.cie.CieLogger
-import it.pagopa.io.app.cie.cie.ApduManager
 import it.pagopa.io.app.cie.cie.ApduSecureMessageManager
 import it.pagopa.io.app.cie.cie.CieSdkException
 import it.pagopa.io.app.cie.cie.NfcError
 import it.pagopa.io.app.cie.cie.NfcEvent
 import it.pagopa.io.app.cie.cie.OnTransmit
 import it.pagopa.io.app.cie.cie.ReadFileManager
-import it.pagopa.io.app.cie.cie.highByte
-import it.pagopa.io.app.cie.cie.lowByte
 import it.pagopa.io.app.cie.hexStringToByteArray
 import it.pagopa.io.app.cie.nfc.Utils
 
@@ -147,18 +143,6 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
             Utils.hexStringToByteArray("00B081000C"),
             NfcEvent.READ_NIS
         ).response
-    }
-
-    fun readPublicKey(): ByteArray {
-        val first = onTransmit.sendCommand(
-            Utils.hexStringToByteArray("00B0850000"),
-            NfcEvent.READ_PUBLIC_KEY
-        ).response
-        val second = onTransmit.sendCommand(
-            Utils.hexStringToByteArray("00B085E700"),
-            NfcEvent.READ_PUBLIC_KEY
-        ).response
-        return Utils.appendByteArray(first, second)
     }
 
     /**Internal Authentication*/
