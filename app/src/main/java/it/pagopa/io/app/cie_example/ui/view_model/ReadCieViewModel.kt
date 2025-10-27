@@ -51,7 +51,7 @@ class ReadCieViewModel(
                 override fun event(event: NfcEvent) {
                     dialogMessage.value = event.name
                     progressValue.floatValue =
-                        (event.numerator.toFloat() / NfcEvent.totalNumeratorEvent.toFloat()).toFloat()
+                        (event.numerator.toFloat() / NfcEvent.totalNumeratorEvent.toFloat())
                 }
             }, object : NetworkCallback {
                 override fun onSuccess(url: String) {
@@ -66,8 +66,8 @@ class ReadCieViewModel(
                     webViewLoader.value = false
                 }
 
-                override fun onError(error: NetworkError) {
-                    this@ReadCieViewModel.onError(error)
+                override fun onError(networkError: NetworkError) {
+                    this@ReadCieViewModel.onError(networkError)
                 }
             })
         } catch (e: Exception) {

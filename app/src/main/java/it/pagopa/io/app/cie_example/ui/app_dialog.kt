@@ -40,8 +40,8 @@ import it.pagopa.io.app.cie_example.ui.model.LazyButtonModel
 fun AppDialog(
     shouldShowDialog: MutableState<Boolean>?,
     @StringRes titleId: Int,
-    @StringRes descriptionId: Int,
-    @StringRes buttonText: Int,
+    @StringRes descriptionId: Int?=null,
+    @StringRes buttonText: Int?=null,
     btnAction: (() -> Unit)? = null,
     onDismiss: (() -> Unit)? = null,
     contentIn: @Composable ColumnScope.() -> Unit
@@ -74,17 +74,21 @@ fun AppDialog(
                     )
                     Spacer(Modifier.height(16.dp))
                     this.contentIn()
-                    Spacer(Modifier.height(16.dp))
-                    Text(
-                        stringResource(descriptionId),
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                    Spacer(Modifier.height(16.dp))
-                    PrimaryButton(model = LazyButtonModel(buttonText) {
-                        shouldShowDialog.value = false
-                        btnAction?.invoke()
-                    })
+                    descriptionId?.let {
+                        Spacer(Modifier.height(16.dp))
+                        Text(
+                            stringResource(descriptionId),
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
+                    buttonText?.let{
+                        Spacer(Modifier.height(16.dp))
+                        PrimaryButton(model = LazyButtonModel(buttonText) {
+                            shouldShowDialog.value = false
+                            btnAction?.invoke()
+                        })
+                    }
                     Spacer(Modifier.height(16.dp))
                 }
             }

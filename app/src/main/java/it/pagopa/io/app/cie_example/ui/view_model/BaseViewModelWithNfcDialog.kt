@@ -19,6 +19,7 @@ abstract class BaseViewModelWithNfcDialog(private val cieSdk: CieSDK) : ViewMode
         successMessage.value = ""
         dialogMessage.value = ""
         progressValue.floatValue = 0f
+        showProgress.value=true
     }
 
     protected fun <T> onError(error: T) {

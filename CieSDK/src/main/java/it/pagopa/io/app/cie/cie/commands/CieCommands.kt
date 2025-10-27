@@ -131,4 +131,63 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
         val response = pairBack.second
         return response.response
     }
+    /*******************************************************************************
+     * NIS READING
+     *******************************************************************************/
+    /**Reads the NIS value from the card and returns it
+     *@return: The NIS value in form of [ByteArray]*/
+    fun readNis(): ByteArray {
+        this.selectIAS()
+        this.selectCie()
+        return onTransmit.sendCommand(
+            Utils.hexStringToByteArray("00B081000C"),
+            NfcEvent.READ_NIS
+        ).response
+    }
+
+    /**Internal Authentication*/
+    fun intAuth(challenge: String): ByteArray? {
+        val challengeByte = challenge.toByteArray(Charsets.UTF_8)
+        return signIntAuth(challengeByte, onTransmit)
+    }
+
+    private fun signIntAuth(dataToSign: ByteArray, onTransmit: OnTransmit): ByteArray? {
+        onTransmit.sendCommand(
+            byteArrayOf(
+                0x00,
+                0x22,
+                0x41,
+                0xA4.toByte(),
+                0x06,
+                0x80.toByte(),
+                0x01,
+                0x02,
+                0x84.toByte(),
+                0x01,
+                0x83.toByte()
+            ),
+            NfcEvent.SETTING_NIS_AUTH
+        )
+        val intAuthArray = byteArrayOf(0x00, 0x88.toByte(), 0x00, 0x00, dataToSign.size.toByte())
+        val command = onTransmit.sendCommand(
+            Utils.appendByteArray(
+                intAuthArray,
+                Utils.appendByteArray(dataToSign, byteArrayOf(0x00))
+            ), NfcEvent.NIS_AUTHENTICATION
+        )
+        return when (command.swHex) {
+            "9000" -> command.response
+            "6100" -> onTransmit.sendCommand(
+                byteArrayOf(
+                    0x00,
+                    0xC0.toByte(),
+                    0x00,
+                    0x00.toByte(),
+                    0x00
+                ), NfcEvent.NIS_AUTHENTICATION
+            ).response
+
+            else -> null
+        }
+    }
 }

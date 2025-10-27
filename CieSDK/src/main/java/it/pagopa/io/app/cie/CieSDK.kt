@@ -17,6 +17,10 @@ import it.pagopa.io.app.cie.nfc.BaseReadCie
 import it.pagopa.io.app.cie.nfc.BaseReadCie.FunInterfaceStatus
 import it.pagopa.io.app.cie.nfc.NfcEvents
 import it.pagopa.io.app.cie.nfc.ReadCIE
+import it.pagopa.io.app.cie.nis.InternalAuthenticationResponse
+import it.pagopa.io.app.cie.nis.NisCallback
+import it.pagopa.io.app.cie.pace.PaceCallback
+import it.pagopa.io.app.cie.pace.MRTDResponse
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -128,6 +132,115 @@ class CieSDK private constructor() {
                 }
             }
         )
+    }
+
+    /**It starts reading CIE to read [InternalAuthenticationResponse]
+     * @param challenge  Challenge to be signed
+     * @param isoDepTimeout  Timeout to set on nfc reader
+     * @param nfcListener [NfcEvents]
+     * @param callback [NisCallback]
+     * @throws Exception if context is not initialized*/
+    fun startReadingNis(
+        challenge: String,
+        isoDepTimeout: Int,
+        nfcListener: NfcEvents,
+        callback: NisCallback
+    ) {
+        if (this.context == null)
+            throw Exception("Context not initialized well, is null..")
+        val job = Job()
+        val scope = CoroutineScope(Dispatchers.IO + job + SupervisorJob())
+        readCie = ReadCIE(this.context!!)
+        readCie?.readNis(
+            challenge = challenge,
+            scope = scope,
+            isoDepTimeout = isoDepTimeout,
+            nfcListener = nfcListener,
+            object : BaseReadCie.ReadingCieInterface {
+                override fun onTransmit(value: Boolean) {}
+                override fun <T> backResource(action: BaseReadCie.FunInterfaceResource<T>) {
+                    if (action.status == FunInterfaceStatus.SUCCESS) {
+                        val nisAuth = action.data as InternalAuthenticationResponse
+                        CieLogger.i("nis Auth", nisAuth.toString())
+                        callback.onSuccess(nisAuth)
+                    } else
+                        callback.onError(action.nfcError ?: NfcError.GENERAL_EXCEPTION)
+                    job.cancel()
+                }
+            })
+    }
+
+    /**It starts reading CIE to perform Pace flow and giving back [MRTDResponse]
+     * @param can CIE CAN from user
+     * @param isoDepTimeout  Timeout to set on nfc reader
+     * @param nfcListener [NfcEvents]
+     * @param callback [NisCallback]
+     * @throws Exception if context is not initialized*/
+    fun startDoPace(
+        can: String,
+        isoDepTimeout: Int,
+        nfcListener: NfcEvents,
+        callback: PaceCallback
+    ) {
+        if (this.context == null)
+            throw Exception("Context not initialized well, is null..")
+        val job = Job()
+        val scope = CoroutineScope(Dispatchers.IO + job + SupervisorJob())
+        readCie = ReadCIE(this.context!!)
+        readCie?.doPace(
+            can = can,
+            scope = scope,
+            isoDepTimeout = isoDepTimeout,
+            nfcListener = nfcListener,
+            object : BaseReadCie.ReadingCieInterface {
+                override fun onTransmit(value: Boolean) {}
+                override fun <T> backResource(action: BaseReadCie.FunInterfaceResource<T>) {
+                    if (action.status == FunInterfaceStatus.SUCCESS) {
+                        val eMRTDResponse = action.data as MRTDResponse
+                        callback.onSuccess(eMRTDResponse)
+                    } else
+                        callback.onError(action.nfcError ?: NfcError.GENERAL_EXCEPTION)
+                    job.cancel()
+                }
+            })
+    }
+
+    /**It starts reading CIE to perform Nis and Pace flow and giving back [IntAuthMRTDResponse]
+     * @param challenge Challenge to be signed
+     * @param can CIE CAN from user
+     * @param isoDepTimeout  Timeout to set on nfc reader
+     * @param nfcListener [NfcEvents]
+     * @param callback [NisCallback]
+     * @throws Exception if context is not initialized*/
+    fun startNisAndPace(
+        challenge: String,
+        can: String,
+        isoDepTimeout: Int,
+        nfcListener: NfcEvents,
+        callback: NisAndPaceCallback
+    ) {
+        if (this.context == null)
+            throw Exception("Context not initialized well, is null..")
+        val job = Job()
+        val scope = CoroutineScope(Dispatchers.IO + job + SupervisorJob())
+        readCie = ReadCIE(this.context!!)
+        readCie?.doNisAndPace(
+            challenge = challenge,
+            can = can,
+            scope = scope,
+            isoDepTimeout = isoDepTimeout,
+            nfcListener = nfcListener,
+            object : BaseReadCie.ReadingCieInterface {
+                override fun onTransmit(value: Boolean) {}
+                override fun <T> backResource(action: BaseReadCie.FunInterfaceResource<T>) {
+                    if (action.status == FunInterfaceStatus.SUCCESS) {
+                        val paceRead = action.data as IntAuthMRTDResponse
+                        callback.onSuccess(paceRead)
+                    } else
+                        callback.onError(action.nfcError ?: NfcError.GENERAL_EXCEPTION)
+                    job.cancel()
+                }
+            })
     }
 
     /**It stops NFC*/
