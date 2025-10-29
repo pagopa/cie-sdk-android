@@ -15,10 +15,12 @@ import it.pagopa.io.app.cie_example.ui.AppTextField
 import it.pagopa.io.app.cie_example.ui.NfcDialog
 import it.pagopa.io.app.cie_example.ui.PrimaryButton
 import it.pagopa.io.app.cie_example.ui.model.LazyButtonModel
+import it.pagopa.io.app.cie_example.ui.model.NisDto
+import it.pagopa.io.app.cie_example.ui.model.toNisDto
 import it.pagopa.io.app.cie_example.ui.view_model.ReadNisViewModel
 
 @Composable
-fun ReadNis(viewModel: ReadNisViewModel?) {
+fun ReadNis(viewModel: ReadNisViewModel?, onNavigateToNisRead: (NisDto) -> Unit) {
     NfcDialog(viewModel)
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -38,5 +40,9 @@ fun ReadNis(viewModel: ReadNisViewModel?) {
                     viewModel.showDialog.value = true
             }
         )
+    }
+    viewModel?.intAuthResp?.value?.let {
+        viewModel.resetMainUi()
+        onNavigateToNisRead.invoke(it.toNisDto())
     }
 }

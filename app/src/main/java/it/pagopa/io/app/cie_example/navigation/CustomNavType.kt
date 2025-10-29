@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.navigation.NavType
 import it.pagopa.io.app.cie.CieLogger
 import it.pagopa.io.app.cie_example.ui.model.NisAndPaceReadDto
+import it.pagopa.io.app.cie_example.ui.model.NisDto
 import it.pagopa.io.app.cie_example.ui.model.PaceReadDto
 import kotlinx.serialization.json.Json
 
@@ -39,4 +40,5 @@ object CustomNavType {
 
     val paceReadType = this.toNavTypeObject<PaceReadDto>()
     val nisAndPaceReadType = this.toNavTypeObject<NisAndPaceReadDto>()
+    val nisDtoReadType = this.toNavTypeObject<NisDto>()
 }

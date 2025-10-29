@@ -1,6 +1,7 @@
 package it.pagopa.io.app.cie_example.navigation
 
 import it.pagopa.io.app.cie_example.ui.model.NisAndPaceReadDto
+import it.pagopa.io.app.cie_example.ui.model.NisDto
 import it.pagopa.io.app.cie_example.ui.model.PaceReadDto
 import kotlinx.serialization.Serializable
 
@@ -23,6 +24,8 @@ sealed interface Routes {
     @Serializable
     data object NisAndPaceAuth : Routes
 
+    @Serializable
+    data class NisRead(val nisDto: NisDto) : Routes
     @Serializable
     data class PaceRead(val paceReadDto: PaceReadDto) : Routes
 

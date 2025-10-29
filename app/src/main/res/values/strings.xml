@@ -7,6 +7,7 @@
     <string name="send_mail">Manda e-mail</string>
     <string name="mail_subject">Valori PACE-NIS</string>
     <string name="mail_subject_pace">Valori PACE</string>
+    <string name="mail_subject_nis">Valori NIS</string>
     <string name="test_methods_title">Metodi iniziali</string>
     <string name="has_nfc">il device ha NFC?</string>
     <string name="has_nfc_enabled">il device ha NFC ed è abilitato?</string>
