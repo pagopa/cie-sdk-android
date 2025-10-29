@@ -9,7 +9,6 @@ import it.pagopa.io.app.cie.nfc.Utils
 import it.pagopa.io.app.cie.nis.InternalAuthenticationResponse
 import it.pagopa.io.app.cie.pace.MRTDResponse
 import it.pagopa.io.app.cie.pace.PaceManager
-import java.nio.charset.StandardCharsets
 
 internal class ReadCie(
     private val onTransmit: OnTransmit, private val readingInterface: NfcReading
@@ -30,8 +29,7 @@ internal class ReadCie(
 
     private fun provideNisAuth(challenge: String): InternalAuthenticationResponse {
         val commands = CieCommands(onTransmit)
-        val efIntServ1001: ByteArray = commands.readNis()
-        val nis = String(efIntServ1001, StandardCharsets.UTF_8)
+        val nis: ByteArray = commands.readNis()
         val pubKeyBytes = ReadFileManager(onTransmit).readFile(
             0x1005,
             false,
@@ -48,12 +46,7 @@ internal class ReadCie(
         if (challengeSigned == null || challengeSigned.isEmpty()) {
             throw CieSdkException(NfcError.NIS_NO_CHALLENGE_SIGNED)
         } else {
-            return InternalAuthenticationResponse(
-                nis,
-                Utils.bytesToString(pubKeyBytes),
-                Utils.bytesToString(sod),
-                Utils.bytesToString(challengeSigned)
-            )
+            return InternalAuthenticationResponse(nis, pubKeyBytes, sod, challengeSigned)
         }
     }
 

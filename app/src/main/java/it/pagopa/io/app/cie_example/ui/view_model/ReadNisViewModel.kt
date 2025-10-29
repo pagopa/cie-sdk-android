@@ -1,6 +1,7 @@
 package it.pagopa.io.app.cie_example.ui.view_model
 
 import androidx.compose.runtime.mutableStateOf
+import it.pagopa.io.app.cie.CieLogger
 import it.pagopa.io.app.cie.CieSDK
 import it.pagopa.io.app.cie.cie.NfcError
 import it.pagopa.io.app.cie.cie.NfcEvent
@@ -11,6 +12,7 @@ import it.pagopa.io.app.cie.nis.NisCallback
 class ReadNisViewModel(
     private val cieSdk: CieSDK
 ) : BaseViewModelWithNfcDialog(cieSdk) {
+    var intAuthResp = mutableStateOf<InternalAuthenticationResponse?>(null)
     val challenge = mutableStateOf("")
     override fun readCie() {
         this.cieSdk.startReadingNis(
@@ -29,7 +31,8 @@ class ReadNisViewModel(
             }, object : NisCallback {
                 override fun onSuccess(nisAuth: InternalAuthenticationResponse) {
                     dialogMessage.value = "ALL OK!!"
-                    successMessage.value = "Nis is: ${nisAuth.toStringUi()}"
+                    this@ReadNisViewModel.intAuthResp.value = nisAuth
+                    CieLogger.i("Nis", nisAuth.toStringUi())
                     stopNfc()
                 }
 
@@ -37,5 +40,10 @@ class ReadNisViewModel(
                     this@ReadNisViewModel.onError(error)
                 }
             })
+    }
+
+    fun resetMainUi() {
+        intAuthResp.value = null
+        showDialog.value = false
     }
 }

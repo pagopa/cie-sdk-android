@@ -23,11 +23,13 @@ import it.pagopa.io.app.cie_example.ui.header.MailIcon
 import it.pagopa.io.app.cie_example.ui.header.hideAll
 import it.pagopa.io.app.cie_example.ui.model.MailModel
 import it.pagopa.io.app.cie_example.ui.model.NisAndPaceReadDto
+import it.pagopa.io.app.cie_example.ui.model.NisDto
 import it.pagopa.io.app.cie_example.ui.model.PaceReadDto
 import it.pagopa.io.app.cie_example.ui.view.CieSdkMethods
 import it.pagopa.io.app.cie_example.ui.view.HomeView
 import it.pagopa.io.app.cie_example.ui.view.NisAndPaceReadView
 import it.pagopa.io.app.cie_example.ui.view.NisAndPaceView
+import it.pagopa.io.app.cie_example.ui.view.NisReadView
 import it.pagopa.io.app.cie_example.ui.view.PaceProtocol
 import it.pagopa.io.app.cie_example.ui.view.PaceReadView
 import it.pagopa.io.app.cie_example.ui.view.ReadCie
@@ -35,6 +37,7 @@ import it.pagopa.io.app.cie_example.ui.view.ReadNis
 import it.pagopa.io.app.cie_example.ui.view_model.CieSdkMethodsViewModel
 import it.pagopa.io.app.cie_example.ui.view_model.NisAndPaceReadViewModel
 import it.pagopa.io.app.cie_example.ui.view_model.NisAndPaceViewModel
+import it.pagopa.io.app.cie_example.ui.view_model.NisReadViewModel
 import it.pagopa.io.app.cie_example.ui.view_model.PaceReadViewModel
 import it.pagopa.io.app.cie_example.ui.view_model.PaceViewModel
 import it.pagopa.io.app.cie_example.ui.view_model.ReadCieViewModel
@@ -95,7 +98,9 @@ fun MainActivity?.CieSdkNavHost(
             titleResId.intValue = R.string.reading_nis
             val cieSdk = CieSDK.withContext(LocalContext.current)
             val vm = dependenciesInjectedViewModel<ReadNisViewModel>(cieSdk)
-            ReadNis(vm)
+            ReadNis(vm){
+                navController.navigate(Routes.NisRead(it))
+            }
         }
         composable<Routes.PaceAuth> {
             headerLeft.BackArrowIcon(navController)
@@ -122,6 +127,25 @@ fun MainActivity?.CieSdkNavHost(
                     navController.navigate(Routes.NisAndPaceRead(it))
                 }
             )
+        }
+        composable<Routes.NisRead>(
+            typeMap = mapOf(typeOf<NisDto>() to CustomNavType.nisDtoReadType)
+        ) {
+            val arguments = it.toRoute<Routes.NisRead>()
+            headerLeft.BackArrowIcon(navController)
+            val mailSubject = stringResource(R.string.mail_subject_nis)
+            headerRight.MailIcon { recipients ->
+                this@CieSdkNavHost?.sendMail(
+                    MailModel(
+                        recipients = recipients.toList(),
+                        subject = mailSubject,
+                        body = arguments.nisDto.mailMessage()
+                    )
+                )
+            }
+            titleResId.intValue = R.string.reading_nis
+            val vm = dependenciesInjectedViewModel<NisReadViewModel>(arguments.nisDto)
+            NisReadView(vm)
         }
         composable<Routes.PaceRead>(
             typeMap = mapOf(typeOf<PaceReadDto>() to CustomNavType.paceReadType)
