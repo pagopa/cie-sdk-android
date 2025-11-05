@@ -21,6 +21,7 @@ enum class NfcError(var numberOfAttempts: Int? = null, var msg: String? = null) 
     ASN_1_NOT_VALID,
     NIS_NO_CHALLENGE_SIGNED,
     SELECT_FILE_EXCEPTION,
+    WRONG_CAN,
     RESPONSE_EXCEPTION,
     ENCRYPTED_NONCE_NOT_FOUND
 }

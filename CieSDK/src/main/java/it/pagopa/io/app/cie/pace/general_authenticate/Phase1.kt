@@ -75,16 +75,14 @@ internal class Phase1(commands: CieCommands) : Phase(commands) {
         // Parse encrypted nonce from response
         val parser = TlvReader(resp.response)
         val encryptedNonceContainer = parser.readAll().firstOrNull()?.value
-        if (encryptedNonceContainer == null)
-            throw CieSdkException(NfcError.ENCRYPTED_NONCE_NOT_FOUND)
+            ?: throw CieSdkException(NfcError.ENCRYPTED_NONCE_NOT_FOUND)
 
         CieLogger.i("encryptedNonceContainer", Utils.bytesToString(encryptedNonceContainer))
 
         // Extract inner encrypted nonce
         val parserContainer = TlvReader(encryptedNonceContainer)
         val encryptedNonce = parserContainer.readAll().firstOrNull()?.value
-        if (encryptedNonce == null)
-            throw CieSdkException(NfcError.ENCRYPTED_NONCE_NOT_FOUND)
+            ?: throw CieSdkException(NfcError.ENCRYPTED_NONCE_NOT_FOUND)
 
         CieLogger.i("EncryptedNonce", Utils.bytesToString(encryptedNonce))
         CieLogger.i("PACE", "decrypting NONCE;\npaceKeY: ${Utils.bytesToString(paceKey)}")
