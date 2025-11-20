@@ -21,6 +21,7 @@ import it.pagopa.io.app.cie_example.ui.view_model.CieSdkMethodsViewModel
 fun CieSdkMethods(
     viewModel: CieSdkMethodsViewModel,
     onNavigate: UserInteraction,
+    onNavigateToCieCertificate: UserInteraction,
     onNavigateToNisAuth: UserInteraction,
     onNavigateToPaceAuth: UserInteraction,
     onInitNisAndPace: UserInteraction
@@ -33,10 +34,12 @@ fun CieSdkMethods(
         items(viewModel.provideLazyButtons({
             onNavigate.action()
         }, {
+            onNavigateToCieCertificate.action()
+        }, {
             onNavigateToNisAuth.action()
         }, {
             onNavigateToPaceAuth.action()
-        },{
+        }, {
             onInitNisAndPace.action()
         })) {
             PrimaryButton(model = it)

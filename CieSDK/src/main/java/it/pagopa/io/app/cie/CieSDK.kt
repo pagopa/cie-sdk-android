@@ -6,7 +6,9 @@ import android.nfc.NfcAdapter
 import android.provider.Settings
 import android.util.Base64
 import androidx.core.net.toUri
+import it.pagopa.io.app.cie.cie.CertificateData
 import it.pagopa.io.app.cie.cie.CieAtrCallback
+import it.pagopa.io.app.cie.cie.CieCertificateDataCallback
 import it.pagopa.io.app.cie.cie.CieSdkException
 import it.pagopa.io.app.cie.cie.NfcError
 import it.pagopa.io.app.cie.cie.commands.ciePinRegex
@@ -19,12 +21,19 @@ import it.pagopa.io.app.cie.nfc.NfcEvents
 import it.pagopa.io.app.cie.nfc.ReadCIE
 import it.pagopa.io.app.cie.nis.InternalAuthenticationResponse
 import it.pagopa.io.app.cie.nis.NisCallback
-import it.pagopa.io.app.cie.pace.PaceCallback
 import it.pagopa.io.app.cie.pace.MRTDResponse
+import it.pagopa.io.app.cie.pace.PaceCallback
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import org.bouncycastle.asn1.x509.X509Name
+import org.bouncycastle.jce.PrincipalUtil
+import java.io.ByteArrayInputStream
+import java.io.InputStream
+import java.security.cert.CertificateFactory
+import java.security.cert.X509Certificate
+
 
 class CieSDK private constructor() {
     private var context: Context? = null
@@ -95,6 +104,59 @@ class CieSDK private constructor() {
                         tag,
                         "PROCESS FINISHED WITH ERROR: ${action.nfcError?.msg ?: action.nfcError?.name}"
                     )
+                }
+            }
+        })
+    }
+
+    /**It starts reading CIE to read Certificate Data
+     * @param isoDepTimeout : Timeout to set on nfc reader
+     * @param callback : [CieCertificateDataCallback]
+     * @throws Exception if setPin has not been called before*/
+    @Throws(Exception::class)
+    fun startReadingCertificate(
+        isoDepTimeout: Int,
+        nfcListener: NfcEvents,
+        callback: CieCertificateDataCallback
+    ) {
+        if (!::ciePin.isInitialized)
+            throw Exception("You must call setPin before start Reading CIE")
+        if (this.context == null)
+            throw Exception("Context not initialized well, is null..")
+        val job = Job()
+        val scope = CoroutineScope(Dispatchers.IO + job + SupervisorJob())
+        readCie = ReadCIE(
+            this.context!!,
+            ciePin
+        )
+        readCie?.read(scope, isoDepTimeout, nfcListener, object : BaseReadCie.ReadingCieInterface {
+            override fun onTransmit(value: Boolean) {}
+
+            @Suppress("DEPRECATION")//for X509Name...
+            override fun <T> backResource(action: BaseReadCie.FunInterfaceResource<T>) {
+                if (action.status == FunInterfaceStatus.SUCCESS) {
+                    val cieCertificate = action.data as ByteArray
+                    if (CieLogger.enabled) {
+                        val b64 = Base64.encodeToString(cieCertificate, Base64.DEFAULT)
+                        CieLogger.i(tag, "CERTIFICATE:\n $b64")
+                    }
+                    val certFactory = CertificateFactory.getInstance("X.509")
+                    val `in`: InputStream = ByteArrayInputStream(cieCertificate)
+                    val cert = certFactory.generateCertificate(`in`) as X509Certificate?
+                    val x509Principal = PrincipalUtil.getSubjectX509Principal(cert)
+                    val name = x509Principal.getValues(X509Name.GIVENNAME)
+                    val surname = x509Principal.getValues(X509Name.SURNAME)
+                    val serialNumber = x509Principal.getValues(X509Name.SERIALNUMBER)
+                    val fiscalCode = x509Principal.getValues(X509Name.CN)
+                    val dataBack = CertificateData(
+                        name = name.firstOrNull() as? String,
+                        surname = surname.firstOrNull() as? String,
+                        fiscalCode = fiscalCode.firstOrNull() as? String,
+                        docSerialNumber = serialNumber.firstOrNull() as? String
+                    )
+                    callback.onSuccess(dataBack)
+                } else {
+                    callback.onError(action.nfcError ?: NfcError.GENERAL_EXCEPTION)
                 }
             }
         })
