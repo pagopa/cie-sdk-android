@@ -13,7 +13,6 @@ import it.pagopa.io.app.cie.pace.TlvReader
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import java.math.BigInteger
 import java.security.Security
-import kotlin.text.equals
 
 @Throws(CieSdkException::class)
 internal fun ApduResponse.parseResponse(event: NfcEvent) {
