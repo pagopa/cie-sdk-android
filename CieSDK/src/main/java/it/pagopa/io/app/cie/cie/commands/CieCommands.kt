@@ -139,10 +139,14 @@ internal class CieCommands(internal val onTransmit: OnTransmit) {
     fun readNis(): ByteArray {
         this.selectIAS()
         this.selectCie()
-        return onTransmit.sendCommand(
+        val response = onTransmit.sendCommand(
             Utils.hexStringToByteArray("00B081000C"),
             NfcEvent.READ_NIS
-        ).response
+        )
+        if (response.swHex != "9000") {
+            throw CieSdkException(NfcError.NOT_A_CIE)
+        }
+        return response.response
     }
 
     /**Internal Authentication*/
