@@ -16,6 +16,9 @@ sealed interface Routes {
     data object ReadCIE : Routes
 
     @Serializable
+    data object ReadCIECertificate : Routes
+
+    @Serializable
     data object ReadNIS : Routes
 
     @Serializable
@@ -26,6 +29,7 @@ sealed interface Routes {
 
     @Serializable
     data class NisRead(val nisDto: NisDto) : Routes
+
     @Serializable
     data class PaceRead(val paceReadDto: PaceReadDto) : Routes
 

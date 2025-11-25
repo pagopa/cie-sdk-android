@@ -21,6 +21,7 @@ class CieSdkMethodsViewModel(
     var readyForCieAuthCtrlOk = mutableStateOf<Boolean?>(null)
     private fun initLazyButtons(
         onInitCieAuth: () -> Unit,
+        onInitCieCertificate: () -> Unit,
         onInitNisAuth: () -> Unit,
         onInitPaceProtocol: () -> Unit,
         onInitNisAndPace: () -> Unit
@@ -66,6 +67,11 @@ class CieSdkMethodsViewModel(
             onClick = onInitCieAuth
         ),
         LazyButtonModel(
+            R.string.start_certificate,
+            isVisible = startCieAuth.value,
+            onClick = onInitCieCertificate
+        ),
+        LazyButtonModel(
             R.string.start_nis_auth,
             isVisible = startCieAuth.value,
             onClick = onInitNisAuth
@@ -84,10 +90,17 @@ class CieSdkMethodsViewModel(
 
     fun provideLazyButtons(
         onInitCieAuth: () -> Unit,
+        onInitCieCertificate: () -> Unit,
         onInitNisAuth: () -> Unit,
         onInitPaceProtocol: () -> Unit,
         onInitNisAndPace: () -> Unit
-    ) = initLazyButtons(onInitCieAuth, onInitNisAuth, onInitPaceProtocol, onInitNisAndPace).filter {
+    ) = initLazyButtons(
+        onInitCieAuth,
+        onInitCieCertificate,
+        onInitNisAuth,
+        onInitPaceProtocol,
+        onInitNisAndPace
+    ).filter {
         it.isVisible
     }
 

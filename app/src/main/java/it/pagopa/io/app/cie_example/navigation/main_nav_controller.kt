@@ -33,6 +33,7 @@ import it.pagopa.io.app.cie_example.ui.view.NisReadView
 import it.pagopa.io.app.cie_example.ui.view.PaceProtocol
 import it.pagopa.io.app.cie_example.ui.view.PaceReadView
 import it.pagopa.io.app.cie_example.ui.view.ReadCie
+import it.pagopa.io.app.cie_example.ui.view.ReadCieCertificate
 import it.pagopa.io.app.cie_example.ui.view.ReadNis
 import it.pagopa.io.app.cie_example.ui.view_model.CieSdkMethodsViewModel
 import it.pagopa.io.app.cie_example.ui.view_model.NisAndPaceReadViewModel
@@ -40,6 +41,7 @@ import it.pagopa.io.app.cie_example.ui.view_model.NisAndPaceViewModel
 import it.pagopa.io.app.cie_example.ui.view_model.NisReadViewModel
 import it.pagopa.io.app.cie_example.ui.view_model.PaceReadViewModel
 import it.pagopa.io.app.cie_example.ui.view_model.PaceViewModel
+import it.pagopa.io.app.cie_example.ui.view_model.ReadCieCertificateViewModel
 import it.pagopa.io.app.cie_example.ui.view_model.ReadCieViewModel
 import it.pagopa.io.app.cie_example.ui.view_model.ReadNisViewModel
 import it.pagopa.io.app.cie_example.ui.view_model.dependenciesInjectedViewModel
@@ -74,6 +76,8 @@ fun MainActivity?.CieSdkNavHost(
             val vm = dependenciesInjectedViewModel<CieSdkMethodsViewModel>(cieSdk)
             CieSdkMethods(vm, onNavigate = {
                 navController.navigate(Routes.ReadCIE)
+            }, onNavigateToCieCertificate = {
+                navController.navigate(Routes.ReadCIECertificate)
             }, onNavigateToNisAuth = {
                 navController.navigate(Routes.ReadNIS)
             }, onNavigateToPaceAuth = {
@@ -90,6 +94,15 @@ fun MainActivity?.CieSdkNavHost(
             val cieSdk = CieSDK.withContext(ctx).withCustomIdpUrl(BuildConfig.BASE_URL_IDP)
             val vm = dependenciesInjectedViewModel<ReadCieViewModel>(cieSdk)
             ReadCie(vm)
+        }
+        composable<Routes.ReadCIECertificate> {
+            headerLeft.BackArrowIcon(navController)
+            headerRight.HomeIcon(navController)
+            titleResId.intValue = R.string.cie_cert
+            val ctx = LocalContext.current
+            val cieSdk = CieSDK.withContext(ctx)
+            val vm = dependenciesInjectedViewModel<ReadCieCertificateViewModel>(cieSdk)
+            ReadCieCertificate(vm)
         }
 
         composable<Routes.ReadNIS> {
