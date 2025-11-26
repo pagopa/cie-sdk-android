@@ -17,10 +17,19 @@ import java.security.Security
 @Throws(CieSdkException::class)
 internal fun ApduResponse.parseResponse(event: NfcEvent) {
     if (this.swHex != "9000" && this.swHex != "6282") {
-        CieLogger.e(event.name, "Fail: ${this.swHex}")
-        throw CieSdkException(NfcError.RESPONSE_EXCEPTION.apply {
-            msg = "SW: ${this@parseResponse.swHex}"
-        })
+        val resp = this.swHex
+        CieLogger.e(event.name, "Fail: $resp")
+        val isWrongCan = resp.startsWith("ff") || // Generic failure
+                resp.equals("6300", ignoreCase = true) || // No information given (NV-Ram changed)
+                resp.equals("63c1", ignoreCase = true) || // Verify fail, 1 try left.
+                resp.equals("63c2", ignoreCase = true) // Verify fail, 2 tries left.
+        if (isWrongCan) {
+            throw CieSdkException(NfcError.WRONG_CAN)
+        } else {
+            throw CieSdkException(NfcError.RESPONSE_EXCEPTION.apply {
+                msg = "SW: ${this@parseResponse.swHex}"
+            })
+        }
     }
 }
 
