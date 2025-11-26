@@ -19,11 +19,10 @@ internal fun ApduResponse.parseResponse(event: NfcEvent) {
     if (this.swHex != "9000" && this.swHex != "6282") {
         val resp = this.swHex
         CieLogger.e(event.name, "Fail: $resp")
-        val isWrongCan = resp.startsWith("ff") || (
-                resp.equals("6300", ignoreCase = true) || resp.equals(
-                    "63c1",
-                    ignoreCase = true
-                ) || resp.equals("63c2", ignoreCase = true))
+        val isWrongCan = resp.startsWith("ff") || // Generic failure
+                resp.equals("6300", ignoreCase = true) || // No information given (NV-Ram changed)
+                resp.equals("63c1", ignoreCase = true) || // Verify fail, 1 try left.
+                resp.equals("63c2", ignoreCase = true) // Verify fail, 2 tries left.
         if (isWrongCan) {
             throw CieSdkException(NfcError.WRONG_CAN)
         } else {
