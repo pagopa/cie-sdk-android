@@ -68,11 +68,13 @@ class CieSDK private constructor() {
 
     /**It starts reading CIE
      * @param isoDepTimeout : Timeout to set on nfc reader
+     * @param doSound : Boolean to choose if sound should be played or not
      * @param callback : [NetworkCallback]
      * @throws Exception if setPin has not been called before*/
     @Throws(Exception::class)
     fun startReading(
         isoDepTimeout: Int,
+        doSound: Boolean,
         nfcListener: NfcEvents,
         callback: NetworkCallback
     ) {
@@ -90,32 +92,40 @@ class CieSDK private constructor() {
             idpNetworkCall.withReadCieJob(job)
         else
             throw Exception("You never call withUrl method to initialize the header!!")
-        readCie?.read(scope, isoDepTimeout, nfcListener, object : BaseReadCie.ReadingCieInterface {
-            override fun onTransmit(value: Boolean) {}
-            override fun <T> backResource(action: BaseReadCie.FunInterfaceResource<T>) {
-                if (action.status == FunInterfaceStatus.SUCCESS) {
-                    if (CieLogger.enabled) {
-                        val b64 = Base64.encodeToString(action.data as ByteArray, Base64.DEFAULT)
-                        CieLogger.i(tag, "CALLING REPOSITORY with $b64")
+        readCie?.read(
+            scope,
+            isoDepTimeout,
+            doSound,
+            nfcListener,
+            object : BaseReadCie.ReadingCieInterface {
+                override fun onTransmit(value: Boolean) {}
+                override fun <T> backResource(action: BaseReadCie.FunInterfaceResource<T>) {
+                    if (action.status == FunInterfaceStatus.SUCCESS) {
+                        if (CieLogger.enabled) {
+                            val b64 =
+                                Base64.encodeToString(action.data as ByteArray, Base64.DEFAULT)
+                            CieLogger.i(tag, "CALLING REPOSITORY with $b64")
+                        }
+                        idpNetworkCall.withCallback(callback) callWith action.data as ByteArray
+                    } else {
+                        CieLogger.e(
+                            tag,
+                            "PROCESS FINISHED WITH ERROR: ${action.nfcError?.msg ?: action.nfcError?.name}"
+                        )
                     }
-                    idpNetworkCall.withCallback(callback) callWith action.data as ByteArray
-                } else {
-                    CieLogger.e(
-                        tag,
-                        "PROCESS FINISHED WITH ERROR: ${action.nfcError?.msg ?: action.nfcError?.name}"
-                    )
                 }
-            }
-        })
+            })
     }
 
     /**It starts reading CIE to read Certificate Data
      * @param isoDepTimeout : Timeout to set on nfc reader
+     * @param doSound : Boolean to choose if sound should be played or not
      * @param callback : [CieCertificateDataCallback]
      * @throws Exception if setPin has not been called before*/
     @Throws(Exception::class)
     fun startReadingCertificate(
         isoDepTimeout: Int,
+        doSound: Boolean,
         nfcListener: NfcEvents,
         callback: CieCertificateDataCallback
     ) {
@@ -129,47 +139,54 @@ class CieSDK private constructor() {
             this.context!!,
             ciePin
         )
-        readCie?.read(scope, isoDepTimeout, nfcListener, object : BaseReadCie.ReadingCieInterface {
-            override fun onTransmit(value: Boolean) {}
+        readCie?.read(
+            scope,
+            isoDepTimeout,
+            doSound,
+            nfcListener,
+            object : BaseReadCie.ReadingCieInterface {
+                override fun onTransmit(value: Boolean) {}
 
-            @Suppress("DEPRECATION")//for X509Name...
-            override fun <T> backResource(action: BaseReadCie.FunInterfaceResource<T>) {
-                if (action.status == FunInterfaceStatus.SUCCESS) {
-                    val cieCertificate = action.data as ByteArray
-                    if (CieLogger.enabled) {
-                        val b64 = Base64.encodeToString(cieCertificate, Base64.DEFAULT)
-                        CieLogger.i(tag, "CERTIFICATE:\n $b64")
+                @Suppress("DEPRECATION")//for X509Name...
+                override fun <T> backResource(action: BaseReadCie.FunInterfaceResource<T>) {
+                    if (action.status == FunInterfaceStatus.SUCCESS) {
+                        val cieCertificate = action.data as ByteArray
+                        if (CieLogger.enabled) {
+                            val b64 = Base64.encodeToString(cieCertificate, Base64.DEFAULT)
+                            CieLogger.i(tag, "CERTIFICATE:\n $b64")
+                        }
+                        val certFactory = CertificateFactory.getInstance("X.509")
+                        val `in`: InputStream = ByteArrayInputStream(cieCertificate)
+                        val cert = certFactory.generateCertificate(`in`) as X509Certificate?
+                        val x509Principal = PrincipalUtil.getSubjectX509Principal(cert)
+                        val name = x509Principal.getValues(X509Name.GIVENNAME)
+                        val surname = x509Principal.getValues(X509Name.SURNAME)
+                        val serialNumber = x509Principal.getValues(X509Name.SERIALNUMBER)
+                        val fiscalCode = x509Principal.getValues(X509Name.CN)
+                        val dataBack = CertificateData(
+                            name = name.firstOrNull() as? String,
+                            surname = surname.firstOrNull() as? String,
+                            fiscalCode = fiscalCode.firstOrNull() as? String,
+                            docSerialNumber = serialNumber.firstOrNull() as? String
+                        )
+                        callback.onSuccess(dataBack)
+                    } else {
+                        callback.onError(action.nfcError ?: NfcError.GENERAL_EXCEPTION)
                     }
-                    val certFactory = CertificateFactory.getInstance("X.509")
-                    val `in`: InputStream = ByteArrayInputStream(cieCertificate)
-                    val cert = certFactory.generateCertificate(`in`) as X509Certificate?
-                    val x509Principal = PrincipalUtil.getSubjectX509Principal(cert)
-                    val name = x509Principal.getValues(X509Name.GIVENNAME)
-                    val surname = x509Principal.getValues(X509Name.SURNAME)
-                    val serialNumber = x509Principal.getValues(X509Name.SERIALNUMBER)
-                    val fiscalCode = x509Principal.getValues(X509Name.CN)
-                    val dataBack = CertificateData(
-                        name = name.firstOrNull() as? String,
-                        surname = surname.firstOrNull() as? String,
-                        fiscalCode = fiscalCode.firstOrNull() as? String,
-                        docSerialNumber = serialNumber.firstOrNull() as? String
-                    )
-                    callback.onSuccess(dataBack)
-                } else {
-                    callback.onError(action.nfcError ?: NfcError.GENERAL_EXCEPTION)
                 }
-            }
-        })
+            })
     }
 
     /**It starts reading CIE Atr to read CIE TYPE
      * @param isoDepTimeout  Timeout to set on nfc reader
+     * @param doSound : Boolean to choose if sound should be played or not
      * @param nfcListener [NfcEvents]
      * @param callback [CieAtrCallback]
      * @throws Exception if context is not initialized*/
     @Throws(Exception::class)
     fun startReadingCieAtr(
         isoDepTimeout: Int,
+        doSound: Boolean,
         nfcListener: NfcEvents,
         callback: CieAtrCallback
     ) {
@@ -181,6 +198,7 @@ class CieSDK private constructor() {
         readCie?.readCieAtr(
             scope,
             isoDepTimeout,
+            doSound = doSound,
             nfcListener,
             object : BaseReadCie.ReadingCieInterface {
                 override fun onTransmit(value: Boolean) {}
@@ -199,12 +217,14 @@ class CieSDK private constructor() {
     /**It starts reading CIE to read [InternalAuthenticationResponse]
      * @param challenge  Challenge to be signed
      * @param isoDepTimeout  Timeout to set on nfc reader
+     * @param doSound : Boolean to choose if sound should be played or not
      * @param nfcListener [NfcEvents]
      * @param callback [NisCallback]
      * @throws Exception if context is not initialized*/
     fun startReadingNis(
         challenge: String,
         isoDepTimeout: Int,
+        doSound: Boolean,
         nfcListener: NfcEvents,
         callback: NisCallback
     ) {
@@ -217,6 +237,7 @@ class CieSDK private constructor() {
             challenge = challenge,
             scope = scope,
             isoDepTimeout = isoDepTimeout,
+            doSound = doSound,
             nfcListener = nfcListener,
             object : BaseReadCie.ReadingCieInterface {
                 override fun onTransmit(value: Boolean) {}
@@ -235,12 +256,14 @@ class CieSDK private constructor() {
     /**It starts reading CIE to perform Pace flow and giving back [MRTDResponse]
      * @param can CIE CAN from user
      * @param isoDepTimeout  Timeout to set on nfc reader
+     * @param doSound : Boolean to choose if sound should be played or not
      * @param nfcListener [NfcEvents]
      * @param callback [NisCallback]
      * @throws Exception if context is not initialized*/
     fun startDoPace(
         can: String,
         isoDepTimeout: Int,
+        doSound: Boolean,
         nfcListener: NfcEvents,
         callback: PaceCallback
     ) {
@@ -253,6 +276,7 @@ class CieSDK private constructor() {
             can = can,
             scope = scope,
             isoDepTimeout = isoDepTimeout,
+            doSound = doSound,
             nfcListener = nfcListener,
             object : BaseReadCie.ReadingCieInterface {
                 override fun onTransmit(value: Boolean) {}
@@ -271,6 +295,7 @@ class CieSDK private constructor() {
      * @param challenge Challenge to be signed
      * @param can CIE CAN from user
      * @param isoDepTimeout  Timeout to set on nfc reader
+     * @param doSound : Boolean to choose if sound should be played or not
      * @param nfcListener [NfcEvents]
      * @param callback [NisCallback]
      * @throws Exception if context is not initialized*/
@@ -278,6 +303,7 @@ class CieSDK private constructor() {
         challenge: String,
         can: String,
         isoDepTimeout: Int,
+        doSound: Boolean,
         nfcListener: NfcEvents,
         callback: NisAndPaceCallback
     ) {
@@ -291,6 +317,7 @@ class CieSDK private constructor() {
             can = can,
             scope = scope,
             isoDepTimeout = isoDepTimeout,
+            doSound = doSound,
             nfcListener = nfcListener,
             object : BaseReadCie.ReadingCieInterface {
                 override fun onTransmit(value: Boolean) {}

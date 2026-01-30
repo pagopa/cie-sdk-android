@@ -23,10 +23,22 @@ internal class NfcImpl private constructor() : BaseNfcImpl() {
         this.adapter = NfcAdapter.getDefaultAdapter(context)
     }
 
-    override fun connect(isoDepTimeout: Int,
-                         onTagDiscovered: () -> Unit,
-                         actionDone: () -> Unit) {
+    override fun connect(
+        isoDepTimeout: Int,
+        doSound: Boolean,
+        onTagDiscovered: () -> Unit,
+        actionDone: () -> Unit
+    ) {
         val activity = context.findActivity()
+        val flags = if (doSound)
+            NfcAdapter.FLAG_READER_NFC_A or
+                    NfcAdapter.FLAG_READER_NFC_B or
+                    NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK
+        else
+            NfcAdapter.FLAG_READER_NFC_A or
+                    NfcAdapter.FLAG_READER_NFC_B or
+                    NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK or
+                    NfcAdapter.FLAG_READER_NO_PLATFORM_SOUNDS
         try {
             adapter?.enableReaderMode(
                 activity, {
@@ -45,10 +57,7 @@ internal class NfcImpl private constructor() : BaseNfcImpl() {
                         disconnect()
                         readingInterface.error(NfcError.FAIL_TO_CONNECT_WITH_TAG)
                     }
-                }, NfcAdapter.FLAG_READER_NFC_A or
-                        NfcAdapter.FLAG_READER_NFC_B or
-                        NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK or
-                        NfcAdapter.FLAG_READER_NO_PLATFORM_SOUNDS,
+                }, flags,
                 null
             )
         } catch (throwable: Throwable) {

@@ -151,11 +151,12 @@ These above are all the events while reading CIE. This enum has still two compan
 That's why all of these events have one of or both numerator and numeratorKindOf property.
 
 ## Example usage
+P.N.: For every flow you've got a param called doSound. Set to true if you want platform sound.
 Authentication:
 ```kotlin
 try {
     cieSdk.setPin(pin)
-    cieSdk.startReading(isoDepTimeout= 10000, object : NfcEvents {
+    cieSdk.startReading(isoDepTimeout = 10000, doSound = true, object : NfcEvents {
         override fun error(error: NfcError) {
             //ERROR OCCURRED!!
         }
@@ -184,6 +185,7 @@ ATR reading:
 ```kotlin
  cieSdk.startReadingCieAtr(
     isoDepTimeout= 10000,
+    doSound = true,
     object : NfcEvents {
         override fun error(error: NfcError) {
             //ERROR OCCURRED!!
@@ -207,6 +209,7 @@ NIS (Internal authentication) reading:
 ```kotlin
  cieSdk.startReadingNis(
     challenge = challenge.value,
+    doSound = true,
     isoDepTimeout = 10000,
     object : NfcEvents {
         override fun error(error: NfcError) {
@@ -244,6 +247,7 @@ PACE flow:
  cieSdk.startDoPace(
     can = can.value,
     isoDepTimeout = 10000,
+    doSound = true,
     object : NfcEvents {
         override fun error(error: NfcError) {
             //ERROR OCCURRED!!
@@ -309,6 +313,7 @@ cieSdk.startNisAndPace(
     challenge = challenge.value,
     can = can.value,
     isoDepTimeout = 10000,
+    doSound = true,
     object : NfcEvents {
         override fun error(error: NfcError) {
             //ERROR OCCURRED!!

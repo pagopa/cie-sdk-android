@@ -12,6 +12,7 @@ internal class ReadCIE(
     private var implementation: NfcImpl? = null
     override suspend fun workNfc(
         isoDepTimeout: Int,
+        doSound: Boolean,
         pin: String,
         readingInterface: NfcReading,
         onTagDiscovered: () -> Unit
@@ -19,7 +20,7 @@ internal class ReadCIE(
         withContext(Dispatchers.Default) {
             implementation = NfcImpl(context, readingInterface)
             try {
-                implementation!!.transmit(isoDepTimeout, pin, onTagDiscovered)
+                implementation!!.transmit(isoDepTimeout, doSound, pin, onTagDiscovered)
             } catch (e: Exception) {
                 readingInterface.error(NfcError.GENERAL_EXCEPTION.apply {
                     this.msg = e.message.orEmpty()
@@ -30,13 +31,14 @@ internal class ReadCIE(
 
     override suspend fun workNfcForCieAtr(
         isoDepTimeout: Int,
+        doSound: Boolean,
         readingInterface: NfcReading,
         onTagDiscovered: () -> Unit
     ) {
         withContext(Dispatchers.Default) {
             implementation = NfcImpl(context, readingInterface)
             try {
-                implementation!!.readCieAtr(isoDepTimeout, onTagDiscovered)
+                implementation!!.readCieAtr(isoDepTimeout, doSound, onTagDiscovered)
             } catch (e: Exception) {
                 readingInterface.error(NfcError.GENERAL_EXCEPTION.apply {
                     this.msg = e.message.orEmpty()
@@ -48,13 +50,14 @@ internal class ReadCIE(
     override suspend fun workNfcForNis(
         challenge: String,
         isoDepTimeout: Int,
+        doSound: Boolean,
         readingInterface: NfcReading,
         onTagDiscovered: () -> Unit
     ) {
         withContext(Dispatchers.Default) {
             implementation = NfcImpl(context, readingInterface)
             try {
-                implementation!!.readNis(challenge, isoDepTimeout, onTagDiscovered)
+                implementation!!.readNis(challenge, isoDepTimeout, doSound, onTagDiscovered)
             } catch (e: Exception) {
                 readingInterface.error(NfcError.GENERAL_EXCEPTION.apply {
                     this.msg = e.message.orEmpty()
@@ -66,13 +69,14 @@ internal class ReadCIE(
     override suspend fun workNfcForPace(
         can: String,
         isoDepTimeout: Int,
+        doSound: Boolean,
         readingInterface: NfcReading,
         onTagDiscovered: () -> Unit
     ) {
         withContext(Dispatchers.Default) {
             implementation = NfcImpl(context, readingInterface)
             try {
-                implementation!!.doPace(can, isoDepTimeout, onTagDiscovered)
+                implementation!!.doPace(can, isoDepTimeout, doSound, onTagDiscovered)
             } catch (e: Exception) {
                 readingInterface.error(NfcError.GENERAL_EXCEPTION.apply {
                     this.msg = e.message.orEmpty()
@@ -82,16 +86,23 @@ internal class ReadCIE(
     }
 
     override suspend fun workNfcForNisAndPace(
-        challenge:String,
+        challenge: String,
         can: String,
         isoDepTimeout: Int,
+        doSound: Boolean,
         readingInterface: NfcReading,
         onTagDiscovered: () -> Unit
     ) {
         withContext(Dispatchers.Default) {
             implementation = NfcImpl(context, readingInterface)
             try {
-                implementation!!.doNisAndPace(challenge,can, isoDepTimeout, onTagDiscovered)
+                implementation!!.doNisAndPace(
+                    challenge,
+                    can,
+                    isoDepTimeout,
+                    doSound,
+                    onTagDiscovered
+                )
             } catch (e: Exception) {
                 readingInterface.error(NfcError.GENERAL_EXCEPTION.apply {
                     this.msg = e.message.orEmpty()

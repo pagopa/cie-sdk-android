@@ -23,11 +23,12 @@ abstract class BaseReadCie(
     fun read(
         scope: CoroutineScope,
         isoDepTimeout: Int,
+        doSound: Boolean,
         nfcListener: NfcEvents,
         readingInterface: ReadingCieInterface
     ) {
         scope.launch {
-            workNfc(isoDepTimeout, pin.orEmpty(), object : NfcReading {
+            workNfc(isoDepTimeout, doSound, pin.orEmpty(), object : NfcReading {
                 override fun onTransmit(message: NfcEvent) {
                     CieLogger.i("message from CIE", message.name)
                     nfcListener.event(message)
@@ -54,11 +55,12 @@ abstract class BaseReadCie(
     fun readCieAtr(
         scope: CoroutineScope,
         isoDepTimeout: Int,
+        doSound: Boolean,
         nfcListener: NfcEvents,
         readingInterface: ReadingCieInterface
     ) {
         scope.launch {
-            workNfcForCieAtr(isoDepTimeout, object : NfcReading {
+            workNfcForCieAtr(isoDepTimeout, doSound, object : NfcReading {
                 override fun onTransmit(message: NfcEvent) {
                     CieLogger.i("message from CIE", message.name)
                     nfcListener.event(message)
@@ -86,6 +88,7 @@ abstract class BaseReadCie(
         challenge: String,
         scope: CoroutineScope,
         isoDepTimeout: Int,
+        doSound: Boolean,
         nfcListener: NfcEvents,
         readingInterface: ReadingCieInterface
     ) {
@@ -93,6 +96,7 @@ abstract class BaseReadCie(
             workNfcForNis(
                 challenge,
                 isoDepTimeout,
+                doSound,
                 object : NfcReading {
                     override fun onTransmit(message: NfcEvent) {
                         CieLogger.i("message from CIE", message.name)
@@ -120,6 +124,7 @@ abstract class BaseReadCie(
         can: String,
         scope: CoroutineScope,
         isoDepTimeout: Int,
+        doSound: Boolean,
         nfcListener: NfcEvents,
         readingInterface: ReadingCieInterface
     ) {
@@ -127,6 +132,7 @@ abstract class BaseReadCie(
             workNfcForPace(
                 can,
                 isoDepTimeout,
+                doSound,
                 object : NfcReading {
                     override fun onTransmit(message: NfcEvent) {
                         CieLogger.i("message from CIE", message.name)
@@ -155,6 +161,7 @@ abstract class BaseReadCie(
         can: String,
         scope: CoroutineScope,
         isoDepTimeout: Int,
+        doSound: Boolean,
         nfcListener: NfcEvents,
         readingInterface: ReadingCieInterface
     ) {
@@ -163,6 +170,7 @@ abstract class BaseReadCie(
                 challenge,
                 can,
                 isoDepTimeout,
+                doSound,
                 object : NfcReading {
                     override fun onTransmit(message: NfcEvent) {
                         CieLogger.i("message from CIE", message.name)
@@ -188,6 +196,7 @@ abstract class BaseReadCie(
 
     internal abstract suspend fun workNfc(
         isoDepTimeout: Int,
+        doSound: Boolean,
         pin: String,
         readingInterface: NfcReading,
         onTagDiscovered: () -> Unit
@@ -195,6 +204,7 @@ abstract class BaseReadCie(
 
     internal abstract suspend fun workNfcForCieAtr(
         isoDepTimeout: Int,
+        doSound: Boolean,
         readingInterface: NfcReading,
         onTagDiscovered: () -> Unit
     )
@@ -202,6 +212,7 @@ abstract class BaseReadCie(
     internal abstract suspend fun workNfcForNis(
         challenge: String,
         isoDepTimeout: Int,
+        doSound: Boolean,
         readingInterface: NfcReading,
         onTagDiscovered: () -> Unit
     )
@@ -209,6 +220,7 @@ abstract class BaseReadCie(
     internal abstract suspend fun workNfcForPace(
         can: String,
         isoDepTimeout: Int,
+        doSound: Boolean,
         readingInterface: NfcReading,
         onTagDiscovered: () -> Unit
     )
@@ -217,6 +229,7 @@ abstract class BaseReadCie(
         challenge: String,
         can: String,
         isoDepTimeout: Int,
+        doSound: Boolean,
         readingInterface: NfcReading,
         onTagDiscovered: () -> Unit
     )
