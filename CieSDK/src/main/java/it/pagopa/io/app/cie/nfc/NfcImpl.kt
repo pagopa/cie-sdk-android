@@ -11,6 +11,7 @@ import it.pagopa.io.app.cie.cie.OnTransmit
 import it.pagopa.io.app.cie.cie.ReadCie
 import it.pagopa.io.app.cie.cie.transmitLogic
 import it.pagopa.io.app.cie.findActivity
+import kotlin.or
 
 internal class NfcImpl private constructor() : BaseNfcImpl() {
     private var adapter: NfcAdapter? = null
@@ -30,15 +31,13 @@ internal class NfcImpl private constructor() : BaseNfcImpl() {
         actionDone: () -> Unit
     ) {
         val activity = context.findActivity()
-        val flags = if (doSound)
-            NfcAdapter.FLAG_READER_NFC_A or
-                    NfcAdapter.FLAG_READER_NFC_B or
-                    NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK
-        else
-            NfcAdapter.FLAG_READER_NFC_A or
-                    NfcAdapter.FLAG_READER_NFC_B or
-                    NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK or
-                    NfcAdapter.FLAG_READER_NO_PLATFORM_SOUNDS
+        var flags = NfcAdapter.FLAG_READER_NFC_A or
+                NfcAdapter.FLAG_READER_NFC_B or
+                NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK
+        if (!doSound)
+            flags = flags or NfcAdapter.FLAG_READER_NO_PLATFORM_SOUNDS
+        if (android.os.Build.VERSION.SDK_INT >= 35)
+            flags = flags or NfcAdapter.FLAG_LISTEN_DISABLE
         try {
             adapter?.enableReaderMode(
                 activity, {
