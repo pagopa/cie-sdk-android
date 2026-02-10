@@ -18,7 +18,7 @@ class ReadCieCertificateViewModel(
     ) {
         try {
             cieSdk.setPin(pin)
-            cieSdk.startReadingCertificate(10000, object : NfcEvents {
+            cieSdk.startReadingCertificate(10000, true,object : NfcEvents {
                 override fun error(error: NfcError) {
                     this@ReadCieCertificateViewModel.onError(error)
                 }

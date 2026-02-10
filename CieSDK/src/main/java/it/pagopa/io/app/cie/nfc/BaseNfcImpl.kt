@@ -7,6 +7,7 @@ internal abstract class BaseNfcImpl {
     lateinit var readingInterface: NfcReading
     abstract fun connect(
         isoDepTimeout: Int,
+        doSound: Boolean,
         onTagDiscovered: () -> Unit,
         actionDone: () -> Unit
     )
@@ -15,10 +16,11 @@ internal abstract class BaseNfcImpl {
     abstract fun disconnect()
     fun transmit(
         isoDepTimeout: Int,
+        doSound: Boolean,
         pin: String,
         onTagDiscovered: () -> Unit,
     ) {
-        connect(isoDepTimeout, onTagDiscovered) {
+        connect(isoDepTimeout, doSound, onTagDiscovered) {
             readingInterface.onTransmit(NfcEvent.CONNECTED)
             readCie.read(pin)
         }
@@ -26,9 +28,10 @@ internal abstract class BaseNfcImpl {
 
     fun readCieAtr(
         isoDepTimeout: Int,
+        doSound: Boolean,
         onTagDiscovered: () -> Unit
     ) {
-        connect(isoDepTimeout, onTagDiscovered) {
+        connect(isoDepTimeout, doSound, onTagDiscovered) {
             readingInterface.onTransmit(NfcEvent.CONNECTED)
             readCie.readCieAtr()
         }
@@ -37,9 +40,10 @@ internal abstract class BaseNfcImpl {
     fun readNis(
         challenge: String,
         isoDepTimeout: Int,
+        doSound: Boolean,
         onTagDiscovered: () -> Unit
     ) {
-        connect(isoDepTimeout, onTagDiscovered) {
+        connect(isoDepTimeout, doSound, onTagDiscovered) {
             readingInterface.onTransmit(NfcEvent.CONNECTED)
             readCie.readNis(challenge)
         }
@@ -48,9 +52,10 @@ internal abstract class BaseNfcImpl {
     fun doPace(
         can: String,
         isoDepTimeout: Int,
+        doSound: Boolean,
         onTagDiscovered: () -> Unit
     ) {
-        connect(isoDepTimeout, onTagDiscovered) {
+        connect(isoDepTimeout, doSound, onTagDiscovered) {
             readingInterface.onTransmit(NfcEvent.CONNECTED)
             readCie.doPace(can)
         }
@@ -60,9 +65,10 @@ internal abstract class BaseNfcImpl {
         challenge: String,
         can: String,
         isoDepTimeout: Int,
+        doSound: Boolean,
         onTagDiscovered: () -> Unit
     ) {
-        connect(isoDepTimeout, onTagDiscovered) {
+        connect(isoDepTimeout, doSound, onTagDiscovered) {
             readingInterface.onTransmit(NfcEvent.CONNECTED)
             readCie.nisAndPace(challenge, can)
         }

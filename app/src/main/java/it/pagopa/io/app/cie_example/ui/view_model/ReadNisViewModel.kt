@@ -18,6 +18,7 @@ class ReadNisViewModel(
         this.cieSdk.startReadingNis(
             challenge = challenge.value,
             isoDepTimeout = 10000,
+            true,
             object : NfcEvents {
                 override fun error(error: NfcError) {
                     this@ReadNisViewModel.onError(error)

@@ -19,6 +19,7 @@ class PaceViewModel(
         this.cieSdk.startDoPace(
             can = can.value,
             isoDepTimeout = 10000,
+            true,
             object : NfcEvents {
                 override fun error(error: NfcError) {
                     this@PaceViewModel.onError(error)

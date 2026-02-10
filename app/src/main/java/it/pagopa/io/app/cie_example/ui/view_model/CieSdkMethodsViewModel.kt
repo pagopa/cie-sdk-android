@@ -107,7 +107,7 @@ class CieSdkMethodsViewModel(
     override fun readCie() {
         cieSdk.startReadingCieAtr(
             10000,
-            object : NfcEvents {
+            false,object : NfcEvents {
                 override fun error(error: NfcError) {
                     this@CieSdkMethodsViewModel.onError(error)
                 }
