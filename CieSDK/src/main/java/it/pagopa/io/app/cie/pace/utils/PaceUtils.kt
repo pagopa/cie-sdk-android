@@ -22,7 +22,8 @@ internal fun ApduResponse.parseResponse(event: NfcEvent) {
         val isWrongCan = resp.startsWith("ff") || // Generic failure
                 resp.equals("6300", ignoreCase = true) || // No information given (NV-Ram changed)
                 resp.equals("63c1", ignoreCase = true) || // Verify fail, 1 try left.
-                resp.equals("63c2", ignoreCase = true) // Verify fail, 2 tries left.
+                resp.equals("63c2", ignoreCase = true) || // Verify fail, 2 tries left.
+                resp.equals("6982", ignoreCase = true)
         if (isWrongCan) {
             throw CieSdkException(NfcError.WRONG_CAN)
         } else {
