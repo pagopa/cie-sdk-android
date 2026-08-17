@@ -2,24 +2,29 @@ package it.pagopa.io.app.cie.pace
 
 import it.pagopa.io.app.cie.nfc.Utils
 
-data class MRTDResponse(val dg1: ByteArray, val dg2: ByteArray, val dg11: ByteArray, val sod: ByteArray) {
-    
-    private fun hexDg(): Triple<String, String, String> {
-        val dg1 = Utils.bytesToString(this.dg1)
-        val dg2 = Utils.bytesToString(this.dg2)
-        val dg11 = Utils.bytesToString(this.dg11)
-        val sod = Utils.bytesToString(this.sod)
-        return Triple(dg1, dg11, sod)
-    }
+data class MRTDResponse(
+    val dg1: ByteArray,
+    val dg2: ByteArray,
+    val dg11: ByteArray,
+    val sod: ByteArray
+) {
 
     override fun toString(): String {
-        val (dg1, dg11, sod) = hexDg()
-        return "dg1:\n${dg1}\ndg11:\n${dg11}\nsod:\n${sod}"
+        val dg1Hex = Utils.bytesToString(dg1)
+        val dg2Hex = Utils.bytesToString(dg2)
+        val dg11Hex = Utils.bytesToString(dg11)
+        val sodHex = Utils.bytesToString(sod)
+
+        return "dg1:\n${dg1Hex}\ndg2:\n${dg2Hex}\ndg11:\n${dg11Hex}\nsod:\n${sodHex}"
     }
 
     fun toTerminalString(): String {
-        val (dg1, dg11, sod) = hexDg()
-        return "dg1:\n\t${dg1}\ndg11:\n\t${dg11}\nsod:\n\t${sod}"
+        val dg1Hex = Utils.bytesToString(dg1)
+        val dg2Hex = Utils.bytesToString(dg2)
+        val dg11Hex = Utils.bytesToString(dg11)
+        val sodHex = Utils.bytesToString(sod)
+
+        return "dg1:\n\t${dg1Hex}\ndg2:\n\t${dg2Hex}\ndg11:\n\t${dg11Hex}\nsod:\n\t${sodHex}"
     }
 
     override fun equals(other: Any?): Boolean {
