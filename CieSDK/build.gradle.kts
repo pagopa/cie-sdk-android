@@ -43,10 +43,10 @@ android {
 }
 
 mavenPublishing {
-    coordinates("it.pagopa.io.app.cie", "cie", "0.1.11")
+    coordinates("it.pagopa.io.app.cie", "cie", "0.1.12")
 
     publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
-    signAllPublications()
+    //signAllPublications()
 
     pom {
         name.set("IOApp CIE SDK Library")
@@ -72,7 +72,7 @@ mavenPublishing {
             connection.set("scm:git:git://github.com/pagopa/cie-sdk-android.git")
             developerConnection.set("scm:git:ssh://github.com/pagopa/cie-sdk-android.git")
             url.set("https://github.com/pagopa/cie-sdk-android")
-        }
+        } 
     }
 }
 
