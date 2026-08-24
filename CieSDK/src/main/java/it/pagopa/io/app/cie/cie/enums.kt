@@ -104,7 +104,8 @@ enum class NfcEvent(
     GENERAL_AUTHENTICATE_STEP3(numeratorForPace = 8, numeratorForNisAndPace = 8),
     SELECT_PACE_SM(numeratorForPace = 9, numeratorForNisAndPace = 9),
     READING_DG1(numeratorForPace = 10, numeratorForNisAndPace = 10),
-    READING_DG11(numeratorForPace = 11, numeratorForNisAndPace = 11);
+    READING_DG2(numeratorForPace = 11, numeratorForNisAndPace = 11),
+    READING_DG11(numeratorForPace = 12, numeratorForNisAndPace = 12);
 
     companion object {
         /**It's plus one because of we have to wait for Network call which will be real 100%*/

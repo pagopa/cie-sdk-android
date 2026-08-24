@@ -50,15 +50,19 @@ internal class PaceManager(private val onTransmit: OnTransmit) {
             0x0101, sequence, sessionEnc, sessionMac, true, NfcEvent.READING_DG1
         )
         CieLogger.i("dg1Bytes", Utils.bytesToString(dg1Bytes))
-        val (newSequence1, dg11Bytes) = readFileManager.readFileSM(
-            0x010B, newSequence, sessionEnc, sessionMac, true, NfcEvent.READING_DG11
+        val (newSequence1, dg2Bytes) = readFileManager.readFileSM(
+            0x0102, newSequence, sessionEnc, sessionMac, true, NfcEvent.READING_DG2
+        )
+        CieLogger.i("dg2Bytes", Utils.bytesToString(dg2Bytes))
+        val (newSequence2, dg11Bytes) = readFileManager.readFileSM(
+            0x010B, newSequence1, sessionEnc, sessionMac, true, NfcEvent.READING_DG11
         )
         CieLogger.i("DG11", Utils.bytesToString(dg11Bytes))
         val (_, sodBytes) = readFileManager.readFileSM(
-            0x011D, newSequence1, sessionEnc, sessionMac, true, NfcEvent.READ_SOD_PACE
+            0x011D, newSequence2, sessionEnc, sessionMac, true, NfcEvent.READ_SOD_PACE
         )
         CieLogger.i("sodBytes", Utils.bytesToString(sodBytes))
         CieLogger.i("PACE-DEBUG", "=== Values retrieved!! ===")
-        return MRTDResponse(dg1Bytes, dg11Bytes, sodBytes)
+        return MRTDResponse(dg1Bytes, dg2Bytes, dg11Bytes, sodBytes)
     }
 }
